@@ -1,0 +1,582 @@
+/* Alpine: open panorama, precise alignment, quiet white product surfaces. */
+.ed-caption {
+  font-size: 13px;
+  color: var(--ep-muted);
+  display: block;
+  margin-bottom: 25px;
+}
+.ed-alpine-intro {
+  padding: 85px 0 70px;
+}
+.ed-alpine-heading {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 100px;
+  align-items: end;
+  margin-bottom: 45px;
+}
+.ft .ep .ed-alpine-heading h2 {
+  font-weight: 500;
+  font-size: clamp(64px, 6vw, 88px);
+  line-height: 0.98;
+  letter-spacing: -0.065em;
+}
+.ed-alpine-heading p {
+  font-size: 17px;
+  line-height: 1.75;
+  max-width: 36ch;
+}
+.ed-alpine-heading p + p {
+  font-size: 14px;
+  color: var(--ep-muted);
+  margin-top: 18px;
+}
+.ed-alpine-heading a {
+  display: flex;
+  justify-content: space-between;
+  gap: 25px;
+  border-bottom: 1px solid var(--ep-line);
+  padding: 17px 0 9px;
+  margin-top: 15px;
+  font-size: 14px;
+  max-width: 320px;
+}
+.ed-alpine-heading a > span {
+  font-size: 24px;
+}
+.ed-valley-window {
+  position: relative;
+  height: 390px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--ep-tint-tone);
+}
+.ed-valley-window > canvas {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 58%;
+}
+.ed-window-top {
+  position: absolute;
+  left: 25px;
+  right: 25px;
+  top: 20px;
+  display: flex;
+  justify-content: space-between;
+  gap: 25px;
+  font-size: 12px;
+  color: #fff8e6;
+  text-shadow: 0 1px 6px #20374666;
+}
+.ed-window-route {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: color-mix(in srgb, var(--ep-sheet) 95%, transparent);
+  display: flex;
+  align-items: center;
+  gap: 45px;
+  padding: 20px 28px;
+  border-top: 1px solid var(--ep-line);
+  backdrop-filter: blur(8px);
+}
+.ed-window-route > span {
+  font: 500 22px/1.2 FtDisplay;
+  letter-spacing: -0.7px;
+}
+.ed-window-route small {
+  font: 12px FtBody;
+  display: block;
+  color: var(--ep-muted);
+  margin-top: 7px;
+  letter-spacing: 0;
+}
+.ed-window-route > i {
+  width: 65px;
+  border-bottom: 1px solid var(--ep-line);
+  position: relative;
+}
+.ed-window-route > i:after {
+  content: "→";
+  position: absolute;
+  right: -3px;
+  top: -12px;
+  color: var(--ep-muted);
+  font-style: normal;
+}
+.ed-window-route > .ed-window-date {
+  margin-left: auto;
+  font: 14px FtBody;
+  letter-spacing: 0;
+}
+.ed-alpine-features {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 35px;
+  padding: 30px 0;
+  border-bottom: 1px solid var(--ep-line);
+}
+.ed-alpine-features > a {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.ed-alpine-features > a > span {
+  font-size: 30px;
+  color: var(--ep-action-tone);
+  line-height: 1;
+}
+.ft .ep .ed-alpine-features h3 {
+  font-size: 20px;
+  letter-spacing: -0.6px;
+}
+.ed-alpine-features p {
+  font-size: 13px;
+  color: var(--ep-muted);
+  margin-top: 6px;
+}
+.ed-alpine-features b {
+  margin-left: auto;
+  font-weight: 400;
+  font-size: 20px;
+}
+.ep[data-planner-direction="alpine"] .ep-section-heading {
+  align-items: center;
+}
+.ep[data-planner-direction="alpine"] .ep-planner {
+  border-radius: 3px;
+  box-shadow: 0 12px 38px #294d4809;
+}
+.ep[data-planner-direction="alpine"] .ep-tabs {
+  gap: 30px;
+}
+.ep[data-planner-direction="alpine"] .ep-place-art {
+  border-radius: 2px;
+  height: 150px;
+}
+.ep[data-planner-direction="alpine"] .ep-planner-header {
+  padding: 16px 28px;
+  background: var(--ep-sheet);
+  border-bottom: 1px solid var(--ep-line);
+}
+.ep[data-planner-direction="alpine"]
+  .ep-place-choice[aria-pressed="true"]
+  .ep-place-art {
+  outline-width: 1px;
+}
+.ep[data-planner-direction="alpine"] .ep-live-summary {
+  border-left: 1px solid var(--ep-line);
+  background: var(--ep-aside-tone);
+}
+.ep[data-direction="alpine"] .ep-revision {
+  box-shadow: none;
+  border-radius: 2px;
+}
+.ep[data-direction="alpine"] .ep-travel-journal {
+  transform: none;
+  box-shadow: 0 8px 30px #294d480c;
+  border-radius: 2px;
+}
+.ep[data-direction="alpine"] .ep-journal-spine {
+  display: none;
+}
+.ep[data-direction="alpine"] .ep-footer-brand {
+  font-weight: 500;
+}
+/* Peach: an editorial invitation, tactile postcards and a softer open ledger. */
+.ed-peach-intro {
+  display: grid;
+  grid-template-columns: 0.85fr 1.15fr;
+  gap: 65px 90px;
+  align-items: center;
+  padding: 85px 0 65px;
+}
+.ft .ep .ed-peach-copy h2 {
+  font-size: clamp(76px, 7vw, 105px);
+  line-height: 0.91;
+  font-weight: 500;
+  letter-spacing: -0.07em;
+}
+.ed-peach-copy > p {
+  font-size: 18px;
+  line-height: 1.7;
+  margin-top: 26px;
+  max-width: 31ch;
+}
+.ed-peach-copy > p + p {
+  font-size: 15px;
+  color: var(--ep-muted);
+  margin-top: 16px;
+}
+.ed-peach-start {
+  display: inline-flex;
+  align-items: center;
+  gap: 50px;
+  margin-top: 27px;
+  font-size: 15px;
+  border-bottom: 1px solid var(--ep-line);
+  padding-bottom: 11px;
+}
+.ed-peach-start span {
+  font-size: 25px;
+}
+.ed-peach-collage {
+  height: 570px;
+  position: relative;
+}
+.ed-peach-postcard {
+  position: absolute;
+  top: 30px;
+  left: 15px;
+  right: 0;
+  transform: rotate(5deg);
+  background: var(--ep-sheet);
+  border: 1px solid var(--ep-line);
+  padding: 13px 13px 22px;
+  box-shadow: 5px 7px 0 #9b79701b;
+}
+.ed-peach-postcard > canvas {
+  display: block;
+  width: 100%;
+  height: 270px;
+  object-fit: cover;
+}
+.ed-peach-postcard > div {
+  padding: 15px 9px 0;
+}
+.ed-peach-postcard > div > span {
+  font-size: 12px;
+  color: var(--ep-muted);
+  display: block;
+}
+.ed-peach-postcard strong {
+  font: 500 26px/1.2 FtDisplay;
+  letter-spacing: -1px;
+  display: block;
+  margin-top: 6px;
+}
+.ed-postcard-tape {
+  position: absolute;
+  width: 95px;
+  height: 29px;
+  background: #e5c7bca3;
+  top: -14px;
+  left: 39%;
+  transform: rotate(-8deg);
+  z-index: 1;
+  clip-path: polygon(1% 0, 98% 3%, 100% 96%, 3% 100%, 0 72%, 2% 48%);
+}
+.ed-peach-stamp {
+  position: absolute;
+  right: -10px;
+  top: -5px;
+  width: 110px;
+  height: 110px;
+  border: 1px dashed var(--ep-action-tone);
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--ep-page-tone);
+  transform: rotate(15deg);
+  z-index: 2;
+}
+.ed-peach-stamp span {
+  font-size: 9px;
+  color: var(--ep-action-tone);
+}
+.ed-peach-stamp b {
+  font-size: 35px;
+  line-height: 1.25;
+  font-weight: 400;
+  color: var(--ep-action-tone);
+}
+.ed-peach-note {
+  position: absolute;
+  left: -27px;
+  bottom: 24px;
+  background: #f4d9cb;
+  border: 1px solid #d5bcae;
+  padding: 24px 28px;
+  transform: rotate(-7deg);
+  box-shadow: 4px 5px 0 #9b79701a;
+  z-index: 3;
+}
+.ed-peach-note > span {
+  font-size: 11px;
+  color: #766d70;
+  display: block;
+}
+.ed-peach-note > strong {
+  font: 500 30px/1.08 FtDisplay;
+  letter-spacing: -1px;
+  display: block;
+  margin: 13px 0 17px;
+  color: #4d5667;
+}
+.ed-peach-note > small {
+  font-size: 12px;
+  color: #6d6874;
+}
+.ed-peach-bookmark {
+  position: absolute;
+  right: 5px;
+  bottom: 3px;
+  padding: 15px 0 15px 20px;
+  border-left: 1px solid var(--ep-line);
+  max-width: 230px;
+}
+.ed-peach-bookmark > span {
+  font-size: 10px;
+  color: var(--ep-muted);
+  display: block;
+}
+.ed-peach-bookmark strong {
+  font: 500 23px/1.2 FtDisplay;
+  letter-spacing: -0.8px;
+  display: block;
+  margin: 9px 0;
+}
+.ed-peach-bookmark small {
+  font-size: 12px;
+  color: var(--ep-muted);
+}
+.ed-peach-feature-strip {
+  grid-column: 1/-1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 40px;
+  border-top: 1px solid var(--ep-line);
+  padding: 28px 0;
+}
+.ed-peach-feature-strip > a {
+  display: grid;
+  grid-template-columns: 32px 1fr auto;
+  gap: 5px 13px;
+  align-items: center;
+}
+.ed-peach-feature-strip > a > span {
+  grid-row: 1/3;
+  font-size: 29px;
+  color: var(--ep-action-tone);
+}
+.ed-peach-feature-strip strong {
+  font: 500 20px/1.2 FtDisplay;
+  letter-spacing: -0.6px;
+}
+.ed-peach-feature-strip small {
+  grid-column: 2;
+  font-size: 12px;
+  color: var(--ep-muted);
+}
+.ed-peach-feature-strip b {
+  grid-column: 3;
+  grid-row: 1/3;
+  font-size: 21px;
+  font-weight: 400;
+}
+.ep[data-planner-direction="peach"] .ep-demo {
+  padding-top: 15px;
+}
+.ep[data-planner-direction="peach"] .ep-section-heading > div {
+  max-width: 670px;
+}
+.ep[data-planner-direction="peach"] .ep-section-heading h2 {
+  font-weight: 500;
+}
+.ep[data-planner-direction="peach"] .ep-planner {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+.ep[data-planner-direction="peach"] .ep-planner-header {
+  background: transparent;
+  padding: 0 0 20px;
+  border-color: var(--ep-line);
+}
+.ep[data-planner-direction="peach"] .ep-planner-layout {
+  grid-template-columns: 1fr;
+}
+.ep[data-planner-direction="peach"] .ep-planner-work {
+  padding: 0;
+}
+.ep[data-planner-direction="peach"] .ep-tabs {
+  display: flex;
+  gap: 10px;
+  border: 0;
+  padding: 20px 0 5px;
+}
+.ep[data-planner-direction="peach"] .ep-tabs > button {
+  border: 1px solid var(--ep-line);
+  border-radius: 35px;
+  padding: 10px 20px;
+  display: block;
+  font-size: 14px;
+}
+.ep[data-planner-direction="peach"] .ep-tabs > button > span {
+  display: none;
+}
+.ep[data-planner-direction="peach"] .ep-tabs > button[aria-selected="true"] {
+  background: var(--ep-action-tone);
+  color: var(--ep-sheet);
+  border-color: var(--ep-action-tone);
+}
+.ep[data-planner-direction="peach"] .ep-panel {
+  min-height: 0;
+  padding-top: 20px;
+}
+.ep[data-planner-direction="peach"] .ep-place-choices {
+  gap: 25px;
+}
+.ep[data-planner-direction="peach"] .ep-place-art {
+  height: 190px;
+  border: 9px solid var(--ep-sheet);
+  border-radius: 0;
+  box-shadow: 2px 4px 0 #9b79701c;
+  overflow: hidden;
+  margin-bottom: 18px;
+}
+.ep[data-planner-direction="peach"] .ep-place-choice:nth-child(1) .ep-place-art {
+  transform: rotate(-2deg);
+}
+.ep[data-planner-direction="peach"] .ep-place-choice:nth-child(2) .ep-place-art {
+  transform: rotate(1.5deg);
+}
+.ep[data-planner-direction="peach"] .ep-place-choice:nth-child(3) .ep-place-art {
+  transform: rotate(-1deg);
+}
+.ep[data-planner-direction="peach"] .ep-live-summary {
+  margin-top: 25px;
+  display: grid;
+  grid-template-columns: 1fr 1.1fr 0.9fr;
+  gap: 8px 35px;
+  border: 1px solid var(--ep-line);
+  border-radius: 6px;
+  padding: 25px 28px;
+  background: var(--ep-sheet);
+}
+.ep[data-planner-direction="peach"] .ep-summary-label {
+  grid-column: 1;
+  margin-bottom: 0;
+}
+.ep[data-planner-direction="peach"] .ep-live-summary > h3 {
+  grid-column: 1;
+  font-size: 29px;
+}
+.ep[data-planner-direction="peach"] .ep-summary-date {
+  grid-column: 1;
+  border: 0;
+  padding: 5px 0;
+}
+.ep[data-planner-direction="peach"] .ep-live-summary > .ep-cost-rows {
+  grid-column: 2;
+  grid-row: 1/4;
+  margin: 0 !important;
+  padding: 0 25px;
+  border-left: 1px solid var(--ep-line);
+  border-right: 1px solid var(--ep-line);
+}
+.ep[data-planner-direction="peach"] .ep-total {
+  grid-column: 3;
+  grid-row: 1/4;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+.ep[data-planner-direction="peach"] .ep-live-summary > p {
+  grid-column: 1/3;
+  max-width: none;
+  margin: 8px 0 0;
+}
+.ep[data-planner-direction="peach"] .ep-live-summary > .ep-button {
+  grid-column: 3;
+  margin-top: 5px;
+  align-self: end;
+}
+.ep[data-direction="peach"] .ep-weather {
+  padding-top: 50px;
+}
+.ep[data-direction="peach"] .ep-revision {
+  transform: rotate(1.3deg);
+  border-radius: 0;
+  box-shadow: 5px 7px 0 #9b797017;
+}
+.ep[data-direction="peach"] .ep-weather-picture {
+  border: 10px solid var(--ep-sheet);
+  border-radius: 0;
+  transform: rotate(-2deg);
+}
+.ep[data-direction="peach"] .ep-travel-journal {
+  transform: rotate(-5deg);
+}
+.ep[data-direction="peach"] .ep-footer {
+  border-radius: 45% 45% 0 0/4% 4% 0 0;
+}
+@media (max-width: 1400px) {
+  .ed-alpine-heading {
+    gap: 65px;
+  }
+  .ed-peach-intro {
+    gap: 45px;
+  }
+  .ed-peach-collage {
+    height: 550px;
+  }
+  .ed-peach-postcard > canvas {
+    height: 245px;
+  }
+  .ed-peach-note {
+    left: -15px;
+    bottom: 35px;
+    padding: 20px;
+  }
+  .ed-peach-bookmark {
+    max-width: 190px;
+  }
+  .ed-alpine-features {
+    gap: 25px;
+  }
+  .ft .ep .ed-alpine-features h3 {
+    font-size: 18px;
+  }
+  .ed-window-route {
+    gap: 28px;
+  }
+  .ep[data-planner-direction="peach"] .ep-live-summary {
+    gap: 8px 20px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ed-alpine-intro *,
+  .ed-peach-intro * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+.ed-peach-note{bottom:-25px;left:-17px}.ed-peach-note>strong{font-size:27px}
+
+/* Field notes adopts the postcard composition in its own paper-and-pine palette. */
+.ft[data-palette="original"] .ed-peach-postcard,
+.ft[data-palette="original"] .ep-place-art,
+.ft[data-palette="original"] .ep-revision {
+  box-shadow: 5px 7px 0 #36564314;
+}
+.ft[data-palette="original"] .ed-postcard-tape {
+  background: #b9c49ba6;
+}
+.ft[data-palette="original"] .ed-peach-note {
+  background: #dfe7c7;
+  border-color: #b7c29c;
+  box-shadow: 4px 5px 0 #36564316;
+}
+.ft[data-palette="original"] .ed-peach-note > strong {
+  color: var(--ep-ink);
+}
+.ft[data-palette="original"] .ed-peach-note > span,
+.ft[data-palette="original"] .ed-peach-note > small {
+  color: #526746;
+}

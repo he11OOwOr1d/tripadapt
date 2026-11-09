@@ -1,0 +1,568 @@
+@import url("https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap");
+:root {
+  color-scheme: light;
+  --pine: #123d30;
+  --green: #1e5846;
+  --cream: #f7f8ee;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  color: var(--pine);
+  background: #e2ece0;
+  font-family: "Plus Jakarta Sans", sans-serif;
+}
+button,
+a,
+input {
+  -webkit-tap-highlight-color: transparent;
+}
+button,
+input {
+  font: inherit;
+}
+button {
+  cursor: pointer;
+}
+button,
+a {
+  touch-action: manipulation;
+}
+button {
+  border: 0;
+  color: inherit;
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 3px solid #b66e10;
+  outline-offset: 5px;
+}
+.hero {
+  position: relative;
+  min-height: 760px;
+  height: 100svh;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.landscape {
+  position: absolute;
+  inset: 0;
+  z-index: -3;
+  background: url("/images/elsewhere-valley.png") center/cover no-repeat;
+  transition: filter 2s;
+}
+.atmosphere {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background:
+    linear-gradient(90deg, rgba(255, 250, 226, 0.25), transparent 65%),
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.13),
+      transparent 65%,
+      rgba(11, 42, 26, 0.16)
+    );
+  transition: background 2s;
+}
+.rainy .landscape {
+  filter: brightness(0.7) saturate(0.6);
+}
+.rainy .atmosphere {
+  background: linear-gradient(
+    140deg,
+    rgba(220, 230, 228, 0.55),
+    rgba(112, 142, 146, 0.3)
+  );
+}
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 30px 4.4%;
+  gap: 20px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  font:
+    italic 600 29px "Newsreader",
+    Georgia,
+    serif;
+  letter-spacing: -1.2px;
+}
+.brand-icon {
+  width: 35px;
+  height: 35px;
+  background: var(--green);
+  color: #e4f0dc;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 3px 8px #143d3026;
+}
+.brand-icon svg {
+  width: 21px;
+  height: 21px;
+}
+nav {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+.nav-pill,
+.sign-in,
+.secondary,
+.weather-pill {
+  background: #ffffffd6;
+  border: 1px solid #ffffffe6;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 5px 24px #153b2c08;
+}
+.nav-pill {
+  display: flex;
+  gap: 28px;
+  border-radius: 40px;
+  padding: 13px 24px;
+}
+.nav-pill button {
+  background: none;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+.sign-in {
+  border-radius: 30px;
+  padding: 13px 22px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.sign-in span {
+  margin-left: 10px;
+}
+.hero-copy {
+  margin: auto 0;
+  padding: 54px 4.4% 90px;
+  max-width: 730px;
+}
+.eyebrow {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  padding: 7px 12px;
+  border: 1px solid #ffffffab;
+  border-radius: 30px;
+  background: #ffffffe0;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  backdrop-filter: blur(12px);
+}
+.status-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #eaa222;
+}
+h1 {
+  font:
+    500 clamp(45px, 4.5vw, 72px)/1.04 "Newsreader",
+    Georgia,
+    serif;
+  letter-spacing: -2px;
+  margin: 21px 0 22px;
+  text-shadow: 0 2px 24px #fff9d870;
+}
+h1 em {
+  font-weight: 400;
+}
+.hero-copy > p {
+  font-size: 16px;
+  line-height: 1.7;
+  margin: 0;
+  color: #245846;
+  font-weight: 500;
+  text-shadow: 0 1px 8px #ffffffb0;
+}
+.actions {
+  display: flex;
+  gap: 13px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 25px;
+}
+.primary,
+.secondary {
+  border-radius: 40px;
+  padding: 17px 23px;
+  font-size: 12px;
+  font-weight: 600;
+  min-height: 49px;
+  transition:
+    transform 0.2s,
+    background 0.2s,
+    box-shadow 0.2s;
+}
+.primary {
+  background: var(--green);
+  color: white;
+  box-shadow: 0 7px 20px #153b2c24;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+}
+.primary span {
+  font-size: 18px;
+}
+.primary:hover {
+  background: #123d30;
+  transform: translateY(-2px);
+}
+.secondary:hover,
+.sign-in:hover {
+  background: white;
+  transform: translateY(-2px);
+}
+.quiet-note {
+  display: block;
+  margin-top: 18px;
+  font-size: 10px;
+  color: #254b39;
+  letter-spacing: 0.2px;
+}
+.footer {
+  padding: 24px 4.4%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.weather-pill {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border-radius: 30px;
+  padding: 10px 14px;
+  font-size: 10px;
+  font-weight: 500;
+}
+.weather-pill button {
+  font-size: 10px;
+  padding: 0;
+  background: none;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.weather-divider {
+  height: 12px;
+  width: 1px;
+  background: #769f8e66;
+  margin: 0 2px;
+}
+.scene-label {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 10px;
+  font-weight: 500;
+  color: #153c2a;
+}
+.compass {
+  border: 1px solid #ffffffb3;
+  background: #ffffffab;
+  border-radius: 50%;
+  width: 29px;
+  height: 29px;
+  display: grid;
+  place-items: center;
+  font-size: 17px;
+}
+.hotspot {
+  position: absolute;
+}
+.traveler {
+  left: 13%;
+  bottom: 16%;
+}
+.cottage {
+  right: 14%;
+  bottom: 23%;
+}
+.hotspot-button {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid #e4c274;
+  background: #ffffffe6;
+  box-shadow: 0 0 0 5px #ffc54433;
+  display: grid;
+  place-items: center;
+  transition: transform 0.2s;
+}
+.hotspot-button:hover {
+  transform: scale(1.13);
+}
+.hotspot-button svg {
+  width: 17px;
+  height: 17px;
+}
+.cottage .hotspot-button {
+  width: 25px;
+  height: 25px;
+  box-shadow: 0 3px 12px #193d2a26;
+  border-color: #ffffff99;
+}
+.thought,
+.cottage-note {
+  position: absolute;
+  bottom: 48px;
+  left: 0;
+  width: 250px;
+  background: #fffffff0;
+  backdrop-filter: blur(18px);
+  padding: 16px;
+  border: 1px solid white;
+  border-radius: 16px;
+  box-shadow: 0 12px 36px #193d2a26;
+}
+.thought {
+  display: flex;
+  gap: 10px;
+}
+.thought p {
+  font:
+    italic 17px/1.3 "Newsreader",
+    Georgia,
+    serif;
+  margin: 0;
+}
+.thought small {
+  display: block;
+  font:
+    500 9px/1.5 "Plus Jakarta Sans",
+    sans-serif;
+  margin-top: 8px;
+  color: #557365;
+}
+.cottage-note {
+  left: auto;
+  right: 0;
+  width: 210px;
+  font:
+    italic 17px/1.4 "Newsreader",
+    Georgia,
+    serif;
+}
+dialog {
+  position: fixed;
+  border: 1px solid white;
+  background: #f9fbf5f5;
+  color: var(--pine);
+  padding: 42px;
+  border-radius: 24px;
+  width: min(510px, calc(100% - 32px));
+  box-shadow: 0 24px 90px #0e302f55;
+}
+dialog::backdrop {
+  background: #102b264d;
+  backdrop-filter: blur(8px);
+}
+.close {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  font-size: 26px;
+  background: none;
+  width: 35px;
+  height: 35px;
+}
+.modal-eyebrow {
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: #688071;
+}
+h2 {
+  font:
+    400 38px/1.1 "Newsreader",
+    Georgia,
+    serif;
+  margin: 22px 0 16px;
+  letter-spacing: -0.8px;
+}
+dialog p {
+  font-size: 13px;
+  line-height: 1.8;
+  color: #52665e;
+}
+dialog label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  margin: 24px 0 10px;
+}
+dialog input {
+  width: 100%;
+  border: 1px solid #bbccbd;
+  border-radius: 10px;
+  padding: 13px;
+  background: white;
+  color: var(--pine);
+  font-size: 13px;
+}
+dialog .preview-note {
+  font-size: 11px;
+}
+.modal-action {
+  margin-top: 15px;
+}
+@media (min-width: 1800px) {
+  .hero-copy {
+    max-width: 900px;
+  }
+  h1 {
+    font-size: 88px;
+  }
+  .hero-copy > p {
+    font-size: 21px;
+  }
+  .eyebrow {
+    font-size: 13px;
+  }
+  .primary,
+  .secondary {
+    font-size: 15px;
+    padding: 20px 28px;
+  }
+  .quiet-note {
+    font-size: 13px;
+  }
+}
+@media (max-width: 700px) {
+  .hero {
+    min-height: 740px;
+  }
+  .header {
+    padding: 24px 22px;
+  }
+  .brand {
+    font-size: 25px;
+  }
+  .brand-icon {
+    width: 30px;
+    height: 30px;
+  }
+  .nav-pill {
+    display: none;
+  }
+  .sign-in {
+    font-size: 11px;
+    padding: 11px 16px;
+  }
+  .sign-in span {
+    display: none;
+  }
+  .landscape {
+    background-position: 48% center;
+  }
+  .atmosphere {
+    background: linear-gradient(180deg, #fff7db4d, transparent 80%);
+  }
+  .hero-copy {
+    padding: 0 24px 155px;
+    max-width: 520px;
+  }
+  h1 {
+    font-size: 49px;
+    letter-spacing: -1.8px;
+    max-width: 390px;
+  }
+  .desktop-break {
+    display: none;
+  }
+  .hero-copy > p {
+    font-size: 13px;
+    max-width: 275px;
+  }
+  .eyebrow {
+    font-size: 9px;
+  }
+  .actions {
+    gap: 10px;
+    margin-top: 22px;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .primary,
+  .secondary {
+    font-size: 11px;
+    padding: 14px 19px;
+    min-height: 45px;
+  }
+  .quiet-note {
+    max-width: 240px;
+    font-size: 9px;
+    line-height: 1.6;
+    margin-top: 15px;
+  }
+  .footer {
+    padding: 20px 22px;
+    align-items: flex-end;
+  }
+  .weather-pill {
+    font-size: 9px;
+    gap: 7px;
+    flex-wrap: wrap;
+    max-width: 235px;
+    padding: 10px 12px;
+  }
+  .weather-pill button {
+    font-size: 9px;
+  }
+  .scene-label {
+    font-size: 0;
+    gap: 0;
+  }
+  .traveler {
+    left: 13%;
+    bottom: 17%;
+  }
+  .cottage {
+    right: 9%;
+    bottom: 24%;
+  }
+  .thought {
+    width: 220px;
+  }
+  .cottage-note {
+    width: 180px;
+  }
+  dialog {
+    padding: 32px 25px;
+  }
+  h2 {
+    font-size: 34px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

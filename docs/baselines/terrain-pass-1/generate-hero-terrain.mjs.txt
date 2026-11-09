@@ -1,0 +1,42 @@
+/** Rebuild custom terrain meshes: node scripts/generate-hero-terrain.mjs (from apps/web). */
+import * as THREE from 'three';
+import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+import { writeFile, mkdir } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
+import { terrainHeight,riverCenter,riverWidth,mountainProfiles,ridgeHeight } from '../lib/landing/terrain-spec.mjs';
+// GLTFExporter uses FileReader only to turn generated buffers into a binary GLB.
+globalThis.FileReader=class {readAsArrayBuffer(blob){blob.arrayBuffer().then(result=>{this.result=result;this.onloadend?.();});}};
+const mobile=process.argv.includes('--mobile');
+const group=new THREE.Group();group.name='Elsewhere_Custom_Alpine_Terrain_Pass1';
+function grid(name,nx,nz,point,colorize){
+ const pos=[],uv=[],indices=[];
+ for(let j=0;j<=nz;j++)for(let i=0;i<=nx;i++){pos.push(...point(i/nx,j/nz));uv.push(i/nx,j/nz);if(j<nz&&i<nx){const a=j*(nx+1)+i;indices.push(a,a+nx+1,a+1,a+1,a+nx+1,a+nx+2);}}
+ const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(indices);g.computeVertexNormals();
+ const colors=[],p=g.getAttribute('position'),norm=g.getAttribute('normal');
+ for(let i=0;i<p.count;i++){const c=colorize(p.getX(i),p.getY(i),p.getZ(i),norm.getY(i));colors.push(c.r,c.g,c.b);}
+ g.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));
+ const m=new THREE.MeshStandardMaterial({color:0xffffff,vertexColors:true,roughness:.92});m.name=name.includes('bank')?'Meadow_earth_grass_zone':'Alpine_rock_grass_snow_zones';
+ const mesh=new THREE.Mesh(g,m);mesh.name=name;group.add(mesh);return mesh;
+}
+for(const side of [-1,1]){
+ // X is ascending on both banks so face winding is consistent.
+ grid(side<0?'west-bank':'east-bank',mobile?60:110,mobile?100:190,(u,v)=>{const z=-70+v*105;const d=(side<0?1-u:u)**1.8*65;const x=riverCenter(z)+side*(riverWidth(z)+d);return[x,terrainHeight(x,z)-(d<.025?.13:0),z];},(x,y,z)=>{
+ const variation=(Math.sin(x*.38+z*.2)+Math.sin(x*.91-z*.48)*.3)*.035;
+ return new THREE.Color().setHSL(.224+Math.sin(x*.1+z*.08)*.012,.58,.32+variation).convertSRGBToLinear();});
+}
+for(const spec of mountainProfiles){
+ grid(spec.name,mobile?80:144,mobile?48:88,(u,v)=>{const a=u*2-1,b=v*2-1;return[spec.x+a*spec.width,ridgeHeight(a,b,spec)-.1,spec.z+b*spec.depth];},(x,y,z,ny)=>{
+ const grass=new THREE.Color('#719242'),rock=new THREE.Color('#787f89'),snow=new THREE.Color('#e9f1f1');
+ const altitude=y/spec.tall;
+ const noise=Math.sin(x*.58+z*.37)*.035+Math.sin(x*1.7-z*.8)*.014;
+ const steep=1-ny;
+ const rockMix=THREE.MathUtils.smoothstep(steep+altitude*.18+noise,.11,.33);
+ const c=grass.lerp(rock,rockMix);
+ const snowLine=(spec.z < -90 ? .67 : .81)+Math.sin(x*.23+z*.17)*.065+Math.sin(x*.8-z*.3)*.025;
+ const snowMix=spec.tall<15&&spec.z>-80?0:THREE.MathUtils.smoothstep(altitude+(ny-.7)*.18,snowLine,snowLine+.06);
+ c.lerp(snow,snowMix);c.multiplyScalar(.95+Math.sin(x*1.2+z*.47)*.035);return c;});
+}
+const output=fileURLToPath(new URL(mobile?'../public/models/hero/alpine-terrain-v1-mobile.glb':'../public/models/hero/alpine-terrain-v1.glb',import.meta.url));await mkdir(fileURLToPath(new URL('../public/models/hero/',import.meta.url)),{recursive:true});
+const buffer=await new GLTFExporter().parseAsync(group,{binary:true});await writeFile(output,Buffer.from(buffer));
+const triangles=group.children.reduce((n,m)=>n+m.geometry.index.count/3,0);
+console.log(JSON.stringify({output,bytes:buffer.byteLength,meshes:group.children.length,triangles}));

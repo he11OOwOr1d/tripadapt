@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Elsewhere — Find your somewhere</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            serif: ['Newsreader', 'Georgia', 'serif'],
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              emerald: '#1e5846',
+              pine: '#12392c',
+              gold: '#d99726',
+              amber: '#e69d24',
+              sunbeam: '#fff7ed',
+              mist: '#f4f7f4'
+            }
+          },
+          animation: {
+            'float-gentle': 'float 7s ease-in-out infinite',
+            'sun-shimmer': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'fade-in': 'fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+            'sway': 'sway 8s ease-in-out infinite alternate',
+          },
+          keyframes: {
+            float: {
+              '0%, 100%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-6px)' },
+            },
+            sway: {
+              '0%': { transform: 'rotate(-0.5deg) translateY(0)' },
+              '100%': { transform: 'rotate(0.5deg) translateY(-2px)' },
+            },
+            fadeIn: {
+              '0%': { opacity: '0', transform: 'scale(0.96) translateY(6px)' },
+              '100%': { opacity: '1', transform: 'scale(1) translateY(0)' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @media (prefers-reduced-motion: reduce) {
+      *, ::before, ::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+    .glass-pill {
+      background: rgba(255, 255, 255, 0.82);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      box-shadow: 0 10px 30px -8px rgba(22, 60, 48, 0.08), 0 2px 6px rgba(0, 0, 0, 0.03);
+    }
+    .glass-interactive {
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.95);
+      box-shadow: 0 16px 36px -10px rgba(18, 57, 44, 0.16), 0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+    }
+    .headline-shadow {
+      text-shadow: 0 2px 14px rgba(255, 255, 255, 0.9), 0 1px 3px rgba(16, 44, 34, 0.12);
+    }
+    .subtext-shadow {
+      text-shadow: 0 1px 8px rgba(255, 255, 255, 0.9);
+    }
+  </style>
+</head>
+<body class="h-full bg-[#122e24] font-sans antialiased text-slate-800 select-none overflow-x-hidden">
+
+  <!-- ================= MAIN VIEWPORT HERO ================= -->
+  <main class="relative w-full h-screen min-h-[760px] max-h-[1100px] overflow-hidden flex flex-col justify-between">
+
+    <!-- Hero 3D Rendered Landscape Canvas / Background -->
+    <div class="absolute inset-0 z-0">
+      <img 
+        src="https://lh3.googleusercontent.com/aida-public/AB6AXuCNLd9IdfmhxxiLnlAo6gGTOQncGIOn0EtxYHeimuV8wm5GIRWl22_1dC6bgHAHZMQNhPAI7H-nLxb7P9PWxz9puqtBAsqOSY5p8m87rtPZ9Y9nSE4riQL4YAlUaONf-oGOMgeQeDI3i6BEWCAVCNngEhAyJa192Pov8bJk7Zcfn-z0B_8yuj7Sbr3dVF01rQVR69yXyylWgFVWSoGUzH_278qI5H_zYDxLMWv9qmIO" 
+        alt="Elsewhere stylized 3D sunny mountain valley with river, reclining traveler, and cottage house" 
+        class="w-full h-full object-cover object-center pointer-events-none transform scale-[1.01]"
+      />
+      <!-- Gentle atmospheric daylight vignette preserving brightness & natural colors -->
+      <div class="absolute inset-0 bg-gradient-to-b from-white/20 via-transparent to-black/15 pointer-events-none"></div>
+      <div class="absolute inset-0 bg-radial-gradient from-transparent via-transparent to-emerald-950/10 pointer-events-none"></div>
+    </div>
+
+    <!-- Top Navigation Bar -->
+    <header class="relative z-30 w-full pt-7 px-8 md:px-14 flex items-center justify-between">
+      <!-- Wordmark Brand -->
+      <a href="#hero" class="group flex items-center gap-2.5 transition-transform duration-300 hover:scale-[1.02]">
+        <div class="w-8 h-8 rounded-full bg-brand-emerald text-white flex items-center justify-center shadow-md shadow-brand-emerald/20 transition-all group-hover:bg-brand-pine">
+          <svg class="w-4 h-4 text-emerald-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <span class="font-serif italic font-semibold text-2xl text-emerald-950 tracking-tight drop-shadow-sm group-hover:text-emerald-900">
+          Elsewhere
+        </span>
+      </a>
+
+      <!-- Right Navigation Links & Sign In -->
+      <nav class="flex items-center gap-2 sm:gap-4">
+        <div class="glass-pill px-5 py-2 rounded-full flex items-center gap-6 text-sm font-medium text-emerald-950 shadow-sm">
+          <a href="#discover" class="hover:text-brand-emerald transition-colors">Discover</a>
+          <a href="#trips" class="hover:text-brand-emerald transition-colors">My trips</a>
+        </div>
+        <a href="#signin" class="glass-pill px-5 py-2 rounded-full text-sm font-semibold text-brand-emerald hover:text-white hover:bg-brand-emerald transition-all duration-200">
+          Sign in
+        </a>
+      </nav>
+    </header>
+
+    <!-- Content Center-Left Placement in Quiet Meadow/Sky Area -->
+    <!-- Positioned intentionally above middle meadow without occluding the left mountain peak, sun, river, traveler or house -->
+    <div class="relative z-20 px-8 md:px-14 mt-auto mb-auto max-w-xl pointer-events-auto">
+      <div class="space-y-4">
+        <!-- Natural pill tag -->
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold tracking-wide text-brand-pine bg-white/75 backdrop-blur-md border border-white/60 shadow-sm">
+          <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-sun-shimmer"></span>
+          Post-rain sunshine edition
+        </div>
+
+        <!-- Headline -->
+        <h1 class="font-serif text-4xl sm:text-5xl lg:text-[3.4rem] font-medium leading-[1.12] text-emerald-950 tracking-tight headline-shadow">
+          Some days, you need a different view.
+        </h1>
+
+        <!-- Supporting line -->
+        <p class="font-sans text-base sm:text-lg text-emerald-900/90 font-medium subtext-shadow max-w-md leading-relaxed">
+          Find your somewhere. Shape a trip around it.
+        </p>
+
+        <!-- CTA Action Buttons -->
+        <div class="pt-2 flex flex-wrap items-center gap-4">
+          <a href="#find" class="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-full bg-brand-emerald hover:bg-brand-pine text-white text-sm font-semibold shadow-lg shadow-brand-emerald/25 hover:shadow-xl hover:shadow-brand-emerald/30 transform hover:-translate-y-0.5 transition-all duration-200">
+            <span>Find my elsewhere</span>
+            <span class="text-base leading-none">↗</span>
+          </a>
+
+          <a href="#custom-place" class="inline-flex items-center gap-1.5 px-5 py-3.5 rounded-full bg-white/80 hover:bg-white text-emerald-950 hover:text-brand-emerald text-sm font-semibold border border-white/90 backdrop-blur-md shadow-sm transition-all duration-200">
+            I have a place in mind
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= INTERACTIVE HOTSPOTS IN THE 3D SCENE ================= -->
+
+    <!-- 1. Lower-Left: Traveler Character Hotspot & Thought Bubble -->
+    <!-- Positioned directly over the small traveler reclining on the lower-left bank -->
+    <div class="absolute left-[13%] bottom-[15%] z-30" id="traveler-interactive-anchor">
+      <!-- Clickable pulse target with clear visual affordance -->
+      <button 
+        id="character-toggle" 
+        onclick="toggleThoughtBubble()" 
+        aria-label="Interact with resting traveler"
+        class="group relative flex items-center justify-center p-3 rounded-full focus:outline-none transition-transform hover:scale-110"
+      >
+        <span class="absolute w-8 h-8 rounded-full bg-amber-400/40 animate-ping pointer-events-none"></span>
+        <span class="relative w-6 h-6 rounded-full bg-white/90 shadow-md border border-amber-300 text-amber-800 flex items-center justify-center text-xs font-bold transition-transform group-hover:rotate-12">
+          💭
+        </span>
+        <!-- Tooltip clue on hover -->
+        <span class="absolute bottom-full mb-1 opacity-0 group-hover:opacity-100 transition-opacity bg-emerald-950/80 backdrop-blur-sm text-white text-[11px] font-medium px-2.5 py-1 rounded-md whitespace-nowrap pointer-events-none shadow">
+          Tap traveler
+        </span>
+      </button>
+
+      <!-- Dynamic Thought Bubble (Click to toggle through lines) -->
+      <div 
+        id="thought-bubble" 
+        class="glass-interactive absolute bottom-11 left-2 sm:left-4 min-w-[240px] max-w-[280px] p-3.5 rounded-2xl transition-all duration-300 transform scale-95 opacity-0 pointer-events-none z-40"
+      >
+        <div class="flex items-start gap-2.5">
+          <span class="text-lg leading-none">🍃</span>
+          <div>
+            <p id="thought-text" class="text-xs sm:text-sm font-serif italic font-medium text-emerald-950 leading-snug">
+              “I could stay here a while.”
+            </p>
+            <p class="text-[10px] text-emerald-700/80 mt-1 font-sans font-medium uppercase tracking-wider">
+              Tap again to listen
+            </p>
+          </div>
+        </div>
+        <!-- Speech Bubble pointer beak -->
+        <div class="absolute -bottom-2 left-5 w-4 h-4 bg-white transform rotate-45 border-r border-b border-white/80"></div>
+      </div>
+    </div>
+
+    <!-- 2. Lower-Right: House Hotspot (Subtle environmental discovery) -->
+    <div class="absolute right-[14%] bottom-[23%] z-20">
+      <div class="group relative">
+        <button 
+          onclick="toggleHouseNote()" 
+          class="w-5 h-5 rounded-full bg-white/70 hover:bg-white border border-emerald-800/20 text-emerald-900 flex items-center justify-center text-[10px] transition-transform hover:scale-110 shadow-sm"
+          title="Meadow cottage"
+        >
+          ✦
+        </button>
+        <div 
+          id="house-note" 
+          class="absolute bottom-8 right-0 w-48 p-2.5 glass-interactive rounded-xl text-[11px] text-emerald-950 font-medium opacity-0 pointer-events-none transition-all duration-200 shadow-lg"
+        >
+          <p class="font-serif italic">“The kettle’s warm, and there’s nowhere you need to rush to.”</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Controls & Atmospheric Indicators -->
+    <footer class="relative z-30 w-full pb-6 px-8 md:px-14 flex items-end justify-between pointer-events-none">
+      
+      <!-- Weather & Ambient Mode Controls (Skip to sunshine / Sound toggle) -->
+      <div class="pointer-events-auto flex items-center gap-2.5">
+        <div class="glass-pill px-3.5 py-1.5 rounded-full flex items-center gap-2 text-xs font-medium text-emerald-950 shadow-sm">
+          <span class="inline-block w-2 h-2 rounded-full bg-amber-400"></span>
+          <span>Clear & Sunny</span>
+          <span class="text-emerald-700/40">|</span>
+          <button 
+            onclick="triggerWeatherModal()" 
+            class="text-emerald-800 hover:text-brand-emerald underline underline-offset-2 transition-colors font-medium"
+          >
+            Weather story
+          </button>
+        </div>
+
+        <button 
+          id="audio-toggle"
+          onclick="toggleAmbientAudio()" 
+          class="glass-pill p-2 rounded-full text-emerald-900 hover:text-brand-emerald transition-colors"
+          title="Sound is off by default"
+        >
+          <svg id="audio-icon-off" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+          </svg>
+          <svg id="audio-icon-on" class="w-4 h-4 hidden text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Discreet Scroll Indicator (Offset toward right, away from central foreground river) -->
+      <a href="#storyboard-section" class="pointer-events-auto flex items-center gap-2 text-xs font-semibold text-emerald-950/80 hover:text-emerald-950 transition-colors group">
+        <span class="tracking-wide">Explore mood & motion</span>
+        <div class="w-6 h-6 rounded-full bg-white/70 group-hover:bg-white flex items-center justify-center shadow-xs border border-white/80 transition-transform group-hover:translate-y-0.5">
+          <svg class="w-3.5 h-3.5 text-emerald-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+          </svg>
+        </div>
+      </a>
+    </footer>
+
+  </main>
+
+  <!-- ================= COMPACT WEATHER STORYBOARD & MOTION SPEC ================= -->
+  <!-- Companion section detailing the opening weather transition progression and composition verification -->
+  <section id="storyboard-section" class="relative z-20 bg-gradient-to-b from-[#f4f7f4] to-[#e8efe9] py-16 px-8 md:px-14 border-t border-emerald-900/10">
+    <div class="max-w-6xl mx-auto space-y-12">
+      
+      <!-- Section Header -->
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-emerald-900/10">
+        <div>
+          <span class="text-xs uppercase tracking-widest text-emerald-700 font-bold">Atmosphere & Engineering Spec</span>
+          <h2 class="font-serif text-3xl md:text-4xl text-emerald-950 font-medium mt-1">
+            Opening Weather Transition Storyboard
+          </h2>
+          <p class="text-sm text-emerald-900/70 mt-1 max-w-2xl font-normal">
+            The landscape opens with a rainstorm over the mountains and meadow, then gently clears over 10–15 seconds into the sunny hero state shown above.
+          </p>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="px-3 py-1.5 rounded-full bg-emerald-100/70 text-emerald-900 text-xs font-medium border border-emerald-200/60">
+            Reduced-motion: Direct Sunny State
+          </div>
+        </div>
+      </div>
+
+      <!-- 4-Stage Storyboard Progression Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        
+        <!-- Stage 1 -->
+        <div class="bg-white/80 backdrop-blur-sm rounded-2xl p-5 border border-emerald-900/5 shadow-sm space-y-3">
+          <div class="h-28 rounded-xl bg-gradient-to-b from-slate-600 via-slate-500 to-emerald-900/40 relative overflow-hidden flex items-center justify-center p-3">
+            <div class="absolute inset-0 opacity-40 bg-[radial-gradient(#94a3b8_1px,transparent_1px)] [background-size:8px_8px]"></div>
+            <span class="text-3xl">🌧️</span>
+            <span class="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/40 text-[10px] text-white font-mono">0:00 - 0:04</span>
+          </div>
+          <h3 class="font-serif font-semibold text-emerald-950 text-base">1. Passing Mountain Rain</h3>
+          <p class="text-xs text-slate-600 leading-relaxed">
+            Darker atmospheric cloud canopy over the peaks. Gentle rain particles sweep at an angle. Distant soft rumble and a brief mountain lightning shimmer.
+          </p>
+          <div class="text-[11px] text-emerald-800 font-medium bg-emerald-50 px-2.5 py-1 rounded-md">
+            “Skip to sunshine” pill active
+          </div>
+        </div>
+
+        <!-- Stage 2 -->
+        <div class="bg-white/80 backdrop-blur-sm rounded-2xl p-5 border border-emerald-900/5 shadow-sm space-y-3">
+          <div class="h-28 rounded-xl bg-gradient-to-b from-slate-400 via-slate-300 to-emerald-800/40 relative overflow-hidden flex items-center justify-center p-3">
+            <span class="text-3xl">⛅</span>
+            <span class="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/40 text-[10px] text-white font-mono">0:04 - 0:08</span>
+          </div>
+          <h3 class="font-serif font-semibold text-emerald-950 text-base">2. Cloud Parting</h3>
+          <p class="text-xs text-slate-600 leading-relaxed">
+            Rain subsides to a fine drizzle. The upper cloud layer slides rightward; the warm glowing sun begins breaking through near the prominent left mountain peak.
+          </p>
+          <div class="text-[11px] text-emerald-800 font-medium bg-emerald-50 px-2.5 py-1 rounded-md">
+            Atmospheric haze softens
+          </div>
+        </div>
+
+        <!-- Stage 3 -->
+        <div class="bg-white/80 backdrop-blur-sm rounded-2xl p-5 border border-emerald-900/5 shadow-sm space-y-3">
+          <div class="h-28 rounded-xl bg-gradient-to-b from-sky-300 via-amber-100 to-emerald-600/40 relative overflow-hidden flex items-center justify-center p-3">
+            <span class="text-3xl">🌤️</span>
+            <span class="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/40 text-[10px] text-white font-mono">0:08 - 0:12</span>
+          </div>
+          <h3 class="font-serif font-semibold text-emerald-950 text-base">3. Sunlight Awakening</h3>
+          <p class="text-xs text-slate-600 leading-relaxed">
+            Warm volumetric god rays illuminate the meadow. The river sparkles with refractive reflections. Contact shadows sharpen around traveler and cottage.
+          </p>
+          <div class="text-[11px] text-emerald-800 font-medium bg-emerald-50 px-2.5 py-1 rounded-md">
+            River highlights bloom
+          </div>
+        </div>
+
+        <!-- Stage 4 -->
+        <div class="bg-white/90 backdrop-blur-sm rounded-2xl p-5 border-2 border-emerald-600/30 shadow-md space-y-3 relative">
+          <span class="absolute -top-2.5 right-4 px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-bold uppercase tracking-wider">Active State</span>
+          <div class="h-28 rounded-xl bg-gradient-to-b from-sky-400 via-sky-200 to-emerald-500/50 relative overflow-hidden flex items-center justify-center p-3">
+            <span class="text-3xl">☀️</span>
+            <span class="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/40 text-[10px] text-white font-mono">Continuous</span>
+          </div>
+          <h3 class="font-serif font-semibold text-emerald-950 text-base">4. Gentle Ambient Serenity</h3>
+          <p class="text-xs text-slate-600 leading-relaxed">
+            Continuous gentle wind sways the foreground meadow. Flowing river water ripples toward the viewer. Traveler relaxes peacefully under the warm sun.
+          </p>
+          <div class="text-[11px] text-emerald-800 font-medium bg-emerald-100/80 px-2.5 py-1 rounded-md font-semibold">
+            Interactive thought bubbles live
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Composition Verification Checklist against Hand-drawn Sketch -->
+      <div class="bg-white rounded-2xl p-6 sm:p-8 border border-emerald-900/10 shadow-sm">
+        <h3 class="font-serif text-xl font-medium text-emerald-950 mb-4 flex items-center gap-2">
+          <span>Composition Verification (Sketch Fidelity)</span>
+          <span class="text-xs font-sans font-semibold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">10 / 10 Match</span>
+        </h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
+          <div class="flex items-start gap-2.5 p-3 rounded-xl bg-emerald-50/50">
+            <span class="text-emerald-700 font-bold text-sm">✓</span>
+            <div>
+              <strong class="text-emerald-950 block">Large mountain left:</strong>
+              Peak located approximately 1/3 across width with sculptural volume.
+            </div>
+          </div>
+          <div class="flex items-start gap-2.5 p-3 rounded-xl bg-emerald-50/50">
+            <span class="text-emerald-700 font-bold text-sm">✓</span>
+            <div>
+              <strong class="text-emerald-950 block">Large mountain right:</strong>
+              Second prominent mountain framing right edge with natural slopes.
+            </div>
+          </div>
+          <div class="flex items-start gap-2.5 p-3 rounded-xl bg-emerald-50/50">
+            <span class="text-emerald-700 font-bold text-sm">✓</span>
+            <div>
+              <strong class="text-emerald-950 block">Overlapping center peaks:</strong>
+              Softer mountain pass where the river source originates.
+            </div>
+          </div>
+          <div class="flex items-start gap-2.5 p-3 rounded-xl bg-emerald-50/50">
+            <span class="text-emerald-700 font-bold text-sm">✓</span>
+            <div>
+              <strong class="text-emerald-950 block">Upper-left glowing sun:</strong>
+              Sun positioned beside left mountain with soft volumetric clouds.
+            </div>
+          </div>
+          <div class="flex items-start gap-2.5 p-3 rounded-xl bg-emerald-50/50">
+            <span class="text-emerald-700 font-bold text-sm">✓</span>
+            <div>
+              <strong class="text-emerald-950 block">Widening central river:</strong>
+              Emerges narrow from gap, widening toward center-left foreground.
+            </div>
+          </div>
+          <div class="flex items-start gap-2.5 p-3 rounded-xl bg-emerald-50/50">
+            <span class="text-emerald-700 font-bold text-sm">✓</span>
+            <div>
+              <strong class="text-emerald-950 block">Lush continuous meadow:</strong>
+              Continuous green grass on both riverbanks with light variation.
+            </div>
+          </div>
+          <div class="flex items-start gap-2.5 p-3 rounded-xl bg-emerald-50/50">
+            <span class="text-emerald-700 font-bold text-sm">✓</span>
+            <div>
+              <strong class="text-emerald-950 block">Reclining traveler (lower-left):</strong>
+              Small stylized character relaxing on grass with orange scarf.
+            </div>
+          </div>
+          <div class="flex items-start gap-2.5 p-3 rounded-xl bg-emerald-50/50">
+            <span class="text-emerald-700 font-bold text-sm">✓</span>
+            <div>
+              <strong class="text-emerald-950 block">Cottage house (lower-right):</strong>
+              Charming timber cottage with pitched slate roof and warm window.
+            </div>
+          </div>
+          <div class="flex items-start gap-2.5 p-3 rounded-xl bg-emerald-50/50">
+            <span class="text-emerald-700 font-bold text-sm">✓</span>
+            <div>
+              <strong class="text-emerald-950 block">Quiet UI hierarchy:</strong>
+              Wordmark, minimal nav, headline & CTAs never occlude landmarks.
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Interactive JavaScript logic for Character & Scene Elements -->
+  <script>
+    const thoughtLines = [
+      "“I could stay here a while.”",
+      "“You’re interrupting some very important nothing.”",
+      "“The river knows where it’s going, so I don't have to.”"
+    ];
+    let thoughtIndex = 0;
+    let bubbleOpen = false;
+
+    function toggleThoughtBubble() {
+      const bubble = document.getElementById('thought-bubble');
+      const textElem = document.getElementById('thought-text');
+      
+      if (!bubbleOpen) {
+        bubbleOpen = true;
+        textElem.innerText = thoughtLines[thoughtIndex];
+        bubble.classList.remove('opacity-0', 'pointer-events-none', 'scale-95');
+        bubble.classList.add('opacity-100', 'pointer-events-auto', 'scale-100');
+      } else {
+        thoughtIndex = (thoughtIndex + 1) % thoughtLines.length;
+        if (thoughtIndex === 0) {
+          // Close bubble after cycling through
+          bubbleOpen = false;
+          bubble.classList.add('opacity-0', 'pointer-events-none', 'scale-95');
+          bubble.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100');
+        } else {
+          textElem.innerText = thoughtLines[thoughtIndex];
+          // Quick bounce animation
+          bubble.classList.add('scale-105');
+          setTimeout(() => bubble.classList.remove('scale-105'), 150);
+        }
+      }
+    }
+
+    let houseNoteOpen = false;
+    function toggleHouseNote() {
+      const note = document.getElementById('house-note');
+      houseNoteOpen = !houseNoteOpen;
+      if (houseNoteOpen) {
+        note.classList.remove('opacity-0', 'pointer-events-none');
+        note.classList.add('opacity-100');
+        setTimeout(() => {
+          if (houseNoteOpen) {
+            houseNoteOpen = false;
+            note.classList.add('opacity-0', 'pointer-events-none');
+            note.classList.remove('opacity-100');
+          }
+        }, 4000);
+      } else {
+        note.classList.add('opacity-0', 'pointer-events-none');
+        note.classList.remove('opacity-100');
+      }
+    }
+
+    let audioPlaying = false;
+    function toggleAmbientAudio() {
+      audioPlaying = !audioPlaying;
+      const offIcon = document.getElementById('audio-icon-off');
+      const onIcon = document.getElementById('audio-icon-on');
+      if (audioPlaying) {
+        offIcon.classList.add('hidden');
+        onIcon.classList.remove('hidden');
+      } else {
+        offIcon.classList.remove('hidden');
+        onIcon.classList.add('hidden');
+      }
+    }
+
+    function triggerWeatherModal() {
+      const section = document.getElementById('storyboard-section');
+      section.scrollIntoView({ behavior: 'smooth' });
+    }
+  </script>
+
+</body>
+</html>

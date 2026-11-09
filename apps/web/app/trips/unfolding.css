@@ -1,0 +1,548 @@
+/* The approved Unfolding direction, adapted to the real trip draft. */
+.trip-unfolding {
+  background: #e9e8d5;
+}
+.trip-unfolding .trip-header {
+  background: #e9e8d5;
+  border-color: #c5cbb2;
+}
+.trip-unfolding .trip-heading {
+  align-items: flex-end;
+}
+.trip-unfolding .trip-heading h1 {
+  max-width: 16ch;
+  font-size: clamp(37px, 4.5vw, 64px);
+  letter-spacing: -0.068em;
+  text-shadow: none;
+}
+.trip-unfolding .trip-heading .trip-kicker {
+  margin-bottom: 16px;
+  color: #61775a;
+}
+.trip-unfolding .trip-heading > div > p:last-child {
+  font-size: 17px;
+  margin-top: 19px;
+  max-width: 41ch;
+}
+.trip-unfolding .trip-status {
+  margin: 25px 0 30px;
+  font-size: 13px;
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+.trip-unfolding .trip-shell {
+  padding-top: 30px;
+}
+.unfolding-journey .creation-layout {
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 30px;
+}
+.unfold-stack {
+  min-width: 0;
+}
+.trip-app .unfold-leaf {
+  border: 1px solid #97ad81;
+  border-bottom: 0;
+  border-radius: 14px 14px 0 0;
+  margin-top: -1px;
+  background: #d5dfbd;
+  position: relative;
+  overflow: hidden;
+  padding: 0;
+}
+.trip-app .unfold-leaf-1 {
+  background: #eeeccf;
+}
+.trip-app .unfold-leaf-2 {
+  background: #b9cd9b;
+}
+.trip-app .unfold-leaf-3 {
+  background: #d8e0c5;
+}
+.trip-app .unfold-leaf-heading {
+  display: grid;
+  grid-template-columns: 1fr auto 24px;
+  align-items: center;
+  gap: 18px;
+  min-height: 86px;
+  padding: 20px 28px;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  border-radius: 0;
+  text-align: left;
+  position: relative;
+}
+.trip-app .unfold-leaf-heading:hover {
+  background: #294d3d08;
+}
+.trip-app .unfold-leaf-heading > span {
+  font:
+    550 23px/1.15 EscapeDisplay,
+    sans-serif;
+  letter-spacing: -0.05em;
+  min-width: 0;
+}
+.trip-app .unfold-leaf-heading > small {
+  font-size: 13px;
+  max-width: 29ch;
+  overflow-wrap: anywhere;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #536c46;
+}
+.trip-app .unfold-leaf-heading > b {
+  font-size: 26px;
+  font-weight: 300;
+  text-align: center;
+}
+.trip-app .unfold-leaf-heading > em {
+  grid-column: 2;
+  font-size: 11px;
+  font-style: normal;
+  margin-top: -14px;
+  color: #536c46;
+}
+.trip-app .unfold-leaf-heading:disabled {
+  opacity: 1;
+  cursor: default;
+}
+.trip-app .unfold-leaf-heading:disabled > span {
+  opacity: 0.67;
+}
+.trip-app .unfold-leaf-heading:disabled > b {
+  opacity: 0.4;
+}
+.unfold-active-body {
+  padding: 8px 28px 26px;
+}
+.unfold-active-body[hidden] {
+  display: none;
+}
+.unfold-active-body .creation-step-label {
+  display: none;
+}
+.trip-app .unfold-active-body > h2 {
+  font-size: 29px;
+  letter-spacing: -0.055em;
+  line-height: 1.1;
+  margin-bottom: 13px;
+  text-shadow: none;
+  scroll-margin-top: 25px;
+}
+.unfold-active-body .creation-intro {
+  font-size: 16px;
+  max-width: 48ch;
+  margin-bottom: 27px !important;
+}
+.unfold-active-body .creation-actions {
+  border-color: #9eaf87;
+  margin-top: 26px;
+  padding-top: 22px;
+}
+.unfold-active-body .creation-save-note {
+  font-size: 12px;
+  color: #536b45;
+}
+.unfold-active-body .creation-note {
+  color: #516a43;
+  font-size: 13px;
+}
+.trip-app
+  .unfold-active-body
+  :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  background: #fffaf03d;
+  border: 0;
+  border-bottom: 1px solid #819c6b;
+  border-radius: 0;
+  padding: 10px 3px;
+  min-height: 48px;
+}
+.unfold-active-body .trip-fields {
+  gap: 0 25px;
+}
+.trip-app .unfold-leaf-0 .unfold-active-body > label:first-of-type > input {
+  font:
+    500 clamp(29px, 3vw, 39px) EscapeDisplay,
+    sans-serif;
+  letter-spacing: -0.05em;
+  min-height: 62px;
+}
+.unfold-active-body .creation-choices {
+  gap: 12px;
+}
+.trip-app .unfold-active-body .creation-choices label {
+  background: transparent;
+  border-color: #96aa7e;
+  border-radius: 5px;
+  padding: 12px;
+}
+.trip-app .unfold-active-body .creation-choices label:has(:checked) {
+  background: #eef1d8;
+  border-color: #4f7343;
+}
+.unfold-active-body .creation-disclosure {
+  border-color: #a2b38b;
+}
+.unfold-active-body .creation-add-place {
+  background: transparent;
+  border: 1px solid #b7c19b;
+  border-radius: 6px;
+  padding: 20px;
+}
+.unfold-active-body .creation-empty {
+  background: #f5f1dc80;
+  border-color: #b4c19a;
+  padding: 24px;
+}
+.unfold-active-body .creation-stop {
+  border-color: #b4c19a;
+  padding: 20px 0;
+}
+.trip-app .unfold-active-body .creation-stop-actions button {
+  background: transparent;
+  border-color: #a1b18b;
+  min-width: 44px;
+  min-height: 44px;
+}
+.unfold-active-body .creation-time-strip {
+  background: #e4edce;
+  border: 1px solid #93ad77;
+  padding: 18px 20px;
+}
+.unfold-active-body .creation-time-stop,
+.unfold-active-body .creation-leg {
+  border-color: #92aa76;
+}
+.unfold-active-body .creation-time-stop label {
+  width: 100px;
+}
+.trip-app .unfold-active-body .creation-time-stop input {
+  font:
+    500 29px EscapeDisplay,
+    sans-serif;
+  text-align: center;
+  background: #edf2da;
+}
+.unfold-active-body .creation-proposal {
+  background: #eef3dc;
+  border: 1px solid #829e66;
+  border-radius: 5px;
+  padding: 20px;
+}
+.unfold-active-body .creation-info {
+  background: #eff0da88;
+  border-color: #829b6a;
+}
+.unfold-active-body .creation-preference {
+  border-color: #a6b88f;
+}
+.unfold-active-body .creation-costs dl > div {
+  border-color: #adbd98;
+}
+.unfolding-journey .creation-summary {
+  background: transparent;
+  border: 0;
+  border-left: 1px solid #b4c19e;
+  padding: 14px 0 16px 24px;
+  border-radius: 0;
+}
+.unfolding-journey .creation-summary-top {
+  font-size: 13px;
+  margin-bottom: 24px;
+}
+.trip-app .unfolding-journey .creation-summary h2 {
+  font-size: 25px;
+}
+.unfolding-journey .creation-summary-cost > strong {
+  font-size: 25px;
+}
+.unfolding-journey .creation-summary p {
+  font-size: 13px;
+}
+.unfolding-journey .creation-summary-time span {
+  font-size: 11px;
+}
+.unfolding-journey .creation-route {
+  margin: 22px 0;
+}
+.unfolding-journey .creation-route li {
+  font-size: 14px;
+}
+.unfolding-journey .creation-route small {
+  font-size: 12px;
+}
+.unfolding-journey .creation-summary-cost {
+  font-size: 13px;
+}
+.unfold-review-return {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 20px;
+  font-size: 13px;
+  color: #536c46;
+}
+.trip-app .unfold-review-return button {
+  background: transparent;
+  border: 0;
+  padding-left: 0;
+  text-decoration: underline;
+  text-underline-offset: 5px;
+}
+.trip-app .unfolding-review .creation-paper {
+  background: #fffaf0;
+  color: #294d3d;
+  border: 1px solid #b1bf9b;
+  border-radius: 10px;
+}
+.unfolding-review .unfold-active-body {
+  padding: 34px 30px 24px;
+}
+.trip-app .unfolding-review .unfold-active-body > h2 {
+  font-size: 39px;
+}
+.unfolding-review .creation-step-label {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 16px;
+  color: #61775a;
+}
+.unfolding-review .unfold-active-body .creation-actions {
+  border-color: #c5cfb4;
+}
+.unfolding-review .creation-review-header {
+  border-color: #c5cfb4;
+}
+.unfolding-review .creation-info {
+  margin-top: 28px;
+  background: #edf0de;
+}
+.unfolding-review .creation-costs dt small {
+  color: #62765a;
+}
+@media (max-width: 1100px) {
+  .unfolding-journey .creation-layout {
+    grid-template-columns: minmax(0, 1fr) 260px;
+    gap: 24px;
+  }
+  .trip-app .unfold-leaf-heading {
+    grid-template-columns: 1fr 24px;
+    gap: 7px 16px;
+    padding: 20px 24px;
+  }
+  .unfold-leaf-heading > span {
+    grid-column: 1;
+  }
+  .trip-app .unfold-leaf-heading > small {
+    grid-column: 1;
+    max-width: none;
+    font-size: 12px;
+  }
+  .unfold-leaf-heading > b {
+    grid-column: 2;
+    grid-row: 1/3;
+  }
+  .trip-app .unfold-leaf-heading > em {
+    grid-column: 1;
+    margin: 0;
+    font-size: 10px;
+  }
+  .unfold-active-body {
+    padding: 6px 24px 24px;
+  }
+  .trip-app .unfold-leaf-heading > span {
+    font-size: 24px;
+  }
+}
+@media (max-width: 760px) {
+  .trip-unfolding .trip-heading {
+    align-items: flex-start;
+    gap: 20px;
+  }
+  .trip-unfolding .trip-heading h1 {
+    font-size: 42px;
+    max-width: 14ch;
+  }
+  .trip-unfolding .trip-heading > div > p:last-child {
+    font-size: 16px;
+    max-width: 29ch;
+    margin-top: 18px;
+  }
+  .trip-unfolding .trip-shell {
+    padding: 25px 16px 45px;
+  }
+  .trip-unfolding .trip-status {
+    font-size: 12px;
+    margin: 22px 0;
+  }
+  .unfolding-journey .creation-layout {
+    display: block;
+  }
+  .unfolding-journey .creation-mobile-summary {
+    background: #e0e7c9;
+    border-color: #b1c097;
+    padding: 0 16px;
+    top: 7px;
+    margin-bottom: 24px;
+    border-radius: 6px;
+    max-height: 75svh;
+  }
+  .unfolding-journey .creation-mobile-summary > summary {
+    font-size: 14px;
+    min-height: 55px;
+    padding: 12px 0;
+  }
+  .unfolding-journey .creation-mobile-summary > summary > span {
+    font-size: 12px;
+  }
+  .trip-app .unfold-leaf {
+    border-radius: 12px 12px 0 0;
+  }
+  .trip-app .unfold-leaf-heading {
+    padding: 19px 18px;
+    min-height: 98px;
+    gap: 7px 12px;
+  }
+  .trip-app .unfold-leaf-heading > span {
+    font-size: 25px;
+  }
+  .trip-app .unfold-leaf-heading > small {
+    font-size: 12px;
+    max-width: 33ch;
+  }
+  .trip-app .unfold-leaf-heading > b {
+    font-size: 25px;
+  }
+  .unfold-active-body {
+    padding: 4px 18px 24px;
+  }
+  .trip-app .unfold-active-body > h2 {
+    font-size: 25px;
+    max-width: 17ch;
+    scroll-margin-top: 100px;
+  }
+  .unfold-active-body .creation-intro {
+    font-size: 15px;
+    line-height: 1.5;
+    margin-bottom: 24px !important;
+  }
+  .trip-app .unfold-active-body label {
+    font-size: 14px;
+  }
+  .trip-app
+    .unfold-active-body
+    :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+    font-size: 16px;
+  }
+  .trip-app .unfold-leaf-0 .unfold-active-body > label:first-of-type > input {
+    font-size: 31px;
+  }
+  .unfold-active-body .creation-note {
+    font-size: 12px;
+  }
+  .unfold-active-body .trip-fields {
+    gap: 0 18px;
+  }
+  .trip-app .unfold-active-body .creation-choices label {
+    padding: 10px;
+    font-size: 13px;
+  }
+  .unfold-active-body .creation-add-place {
+    padding: 17px;
+  }
+  .unfold-active-body .creation-time-stop {
+    gap: 10px;
+  }
+  .unfold-active-body .creation-time-stop label {
+    width: 80px;
+    font-size: 12px;
+  }
+  .trip-app .unfold-active-body .creation-time-stop input {
+    font-size: 27px;
+  }
+  .unfold-active-body .creation-stop-actions {
+    gap: 7px;
+  }
+  .unfold-active-body .creation-actions .trip-primary {
+    font-size: 14px;
+    min-width: 165px;
+  }
+  .unfold-active-body .creation-save-note {
+    font-size: 11px;
+    line-height: 1.5;
+  }
+  .unfolding-journey .creation-summary {
+    display: none;
+  }
+  .unfold-review-return {
+    font-size: 11px;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .trip-app .unfold-review-return button {
+    font-size: 13px;
+  }
+  .unfolding-review .unfold-active-body {
+    padding: 26px 19px 23px;
+  }
+  .trip-app .unfolding-review .unfold-active-body > h2 {
+    font-size: 32px;
+  }
+  .unfolding-review .creation-step-label {
+    font-size: 12px;
+  }
+  .unfolding-review .creation-review-header {
+    gap: 10px;
+  }
+  .trip-app .unfolding-review .creation-paper {
+    border-radius: 8px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .unfolding-journey * {
+    transition: none !important;
+    animation: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+/* Date flexibility gets its own short leaf, so the beginning stays approachable. */
+.trip-app .unfold-leaf-4 {
+  background: #d8e0c5;
+  color: #294d3d;
+  border-bottom: 0;
+  border-radius: 14px 14px 0 0;
+}
+.trip-app .unfold-leaf-4 .unfold-leaf-heading > small,
+.trip-app .unfold-leaf-4 .unfold-leaf-heading > em {
+  color: #536c46;
+}
+.trip-app .unfold-leaf-5 {
+  background: #294d3d;
+  color: #fff5dc;
+  border-bottom: 1px solid #97ad81;
+  border-radius: 14px 14px 6px 6px;
+}
+.trip-app .unfold-leaf-5 .unfold-leaf-heading > small,
+.trip-app .unfold-leaf-5 .unfold-leaf-heading > em {
+  color: #d6dfbd;
+}
+.trip-app .unfolding-review .creation-paper {
+  background: #fffaf0;
+  color: #294d3d;
+  border: 1px solid #b1bf9b;
+  border-radius: 10px;
+}
+@media (max-width: 760px) {
+  .trip-app .unfold-leaf-4 {
+    border-radius: 12px 12px 0 0;
+  }
+  .trip-app .unfold-leaf-5 {
+    border-radius: 12px 12px 5px 5px;
+  }
+  .trip-app .unfolding-review .creation-paper {
+    border-radius: 8px;
+  }
+}

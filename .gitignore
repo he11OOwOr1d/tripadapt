@@ -1,0 +1,17 @@
+node_modules/
+.next/
+*.tsbuildinfo
+.env*
+!.env.example
+.DS_Store
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.local/
+
+# Local deployment state and scratch exports
+.vercel/
+.vercel*.json
+work/
+*.log

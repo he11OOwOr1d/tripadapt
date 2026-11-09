@@ -1,0 +1,13 @@
+.nature-scene {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  background: #bbd9ea;
+  isolation: isolate;
+}
+.nature-scene > canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}

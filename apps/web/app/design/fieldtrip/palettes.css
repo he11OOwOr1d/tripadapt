@@ -1,0 +1,186 @@
+.ft[data-palette="alpine"] {
+  --ep-page-tone: #eef5f7;
+  --ep-sheet-tone: #fbfdff;
+  --ep-ink-tone: #294d48;
+  --ep-muted-tone: #617580;
+  --ep-line-tone: #bbcdd3;
+  --ep-tint-tone: #e1edf2;
+  --ep-selected-tone: #d5e5e1;
+  --ep-aside-tone: #e5eff2;
+  --ep-footer-tone: #dbe8ec;
+  --ep-action-tone: #3b5d84;
+}
+.ft[data-palette="dusk"] {
+  --ep-page-tone: #f1eef8;
+  --ep-sheet-tone: #fcfaff;
+  --ep-ink-tone: #393b65;
+  --ep-muted-tone: #706b87;
+  --ep-line-tone: #c5bdd8;
+  --ep-tint-tone: #e7e2f2;
+  --ep-selected-tone: #dad4ec;
+  --ep-aside-tone: #e9e5f3;
+  --ep-footer-tone: #e0daed;
+  --ep-action-tone: #565b98;
+}
+.ft[data-palette="peach"] {
+  --ep-page-tone: #fff2ed;
+  --ep-sheet-tone: #fffaf8;
+  --ep-ink-tone: #3c4e65;
+  --ep-muted-tone: #786e77;
+  --ep-line-tone: #d9c3c0;
+  --ep-tint-tone: #f7e5df;
+  --ep-selected-tone: #f0d7d2;
+  --ep-aside-tone: #f6e7e3;
+  --ep-footer-tone: #efd9d3;
+  --ep-action-tone: #576c8f;
+}
+.ft[data-palette] {
+  --ep-ink: var(--ep-ink-tone);
+  --ep-paper: var(--ep-page-tone);
+  --ep-sheet: var(--ep-sheet-tone);
+  --ep-line: var(--ep-line-tone);
+  --ep-muted: var(--ep-muted-tone);
+}
+.ft[data-palette] .ep-button {
+  background: var(--ep-action-tone) !important;
+  border-color: var(--ep-action-tone);
+  color: var(--ep-sheet-tone) !important;
+}
+.ft[data-palette] .ep-button:hover:not(:disabled) {
+  background: var(--ep-ink-tone) !important;
+}
+.ft[data-palette] .ep-button:disabled {
+  background: var(--ep-selected-tone) !important;
+  color: var(--ep-ink-tone) !important;
+  border-color: var(--ep-line-tone);
+}
+.ep-palette-review {
+  max-width: 1260px;
+  margin: 20px auto 30px;
+  padding: 20px 0;
+  border-top: 1px dashed var(--ep-line-tone);
+  border-bottom: 1px dashed var(--ep-line-tone);
+  display: flex;
+  gap: 25px;
+  align-items: center;
+  color: var(--ep-ink-tone);
+}
+.ep-palette-review > div:first-child > span {
+  display: block;
+  font-size: 13px;
+}
+.ep-palette-review small {
+  font-size: 11px;
+  display: block;
+  color: var(--ep-muted-tone);
+  margin-top: 4px;
+}
+.ep-palette-review > div[role="group"] {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  flex: 1;
+}
+.ep-palette-review button {
+  border: 1px solid var(--ep-line-tone);
+  border-radius: 5px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  background: var(--ep-sheet-tone);
+  min-width: 0;
+}
+.ep-palette-review button[aria-pressed="true"] {
+  border-color: var(--ep-action-tone);
+  box-shadow: inset 0 -3px 0 var(--ep-action-tone);
+}
+.ep-palette-review strong {
+  font-size: 13px;
+  font-weight: 400;
+  display: block;
+}
+.ep-palette-review b {
+  font-weight: 400;
+  margin-left: auto;
+  font-size: 13px;
+  min-width: 10px;
+}
+.ep-palette-swatches {
+  display: flex;
+  flex-shrink: 0;
+}
+.ep-palette-swatches i {
+  display: block;
+  width: 13px;
+  height: 24px;
+}
+.ep-palette-swatches i:first-child {
+  border-radius: 12px 0 0 12px;
+  border: 1px solid #00000015;
+  border-right: 0;
+}
+.ep-palette-swatches i:last-child {
+  border-radius: 0 12px 12px 0;
+}
+.ep-palette-review > a {
+  font-size: 11px;
+  white-space: nowrap;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.ep-palette-review button:focus-visible,
+.ep-palette-review > a:focus-visible {
+  outline: 3px solid var(--ep-action-tone);
+  outline-offset: 4px;
+}
+@media (max-width: 1400px) {
+  .ep-palette-review {
+    margin-left: 6%;
+    margin-right: 6%;
+    gap: 15px;
+  }
+  .ep-palette-review > div:first-child {
+    max-width: 130px;
+  }
+  .ep-palette-review button {
+    padding: 10px;
+    gap: 8px;
+  }
+  .ep-palette-review button small {
+    font-size: 10px;
+  }
+  .ep-palette-review > a {
+    max-width: 70px;
+    white-space: normal;
+  }
+}
+.ft[data-palette="original"] {
+  --ep-page-tone: #f3ecd7;
+  --ep-sheet-tone: #fff8e6;
+  --ep-ink-tone: #365643;
+  --ep-muted-tone: #6d7c64;
+  --ep-line-tone: #c4c6a8;
+  --ep-tint-tone: #e5ebd2;
+  --ep-selected-tone: #d5dfc2;
+  --ep-aside-tone: #edf0df;
+  --ep-footer-tone: #e2dfc7;
+  --ep-action-tone: #365643;
+}
+.ep-palette-review {
+  flex-wrap: wrap;
+}
+.ep-palette-review > div:first-child {
+  flex: 1;
+  max-width: none;
+}
+.ep-palette-review > div[role="group"] {
+  order: 3;
+  flex-basis: 100%;
+  grid-template-columns: repeat(4, 1fr);
+}
+.ep-palette-review > a {
+  max-width: none;
+  white-space: nowrap;
+}
