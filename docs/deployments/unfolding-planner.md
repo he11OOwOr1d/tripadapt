@@ -34,3 +34,15 @@ Backend, auth, suppliers, itinerary generation and accepted-plan operations are 
 - Saved desktop/phone captures in `docs/references/deployed-unfolding/`.
 
 The documentation-only follow-up commit records this release; it does not change the deployed source provenance.
+
+## Persistent Git integration — 9 November 2026
+
+Connected `he11OOwOr1d/tripadapt` to the existing `elsewhere-ui-review` Vercel project through Project Settings → Git. Verified the connected repository and Disconnect control, then reloaded the Production environment settings: branch tracking is `main`, and custom production domains auto-assign. Future pushes to `main` create production deployments; unassigned branches use Preview. Root directory remains `apps/web`. This supersedes the earlier statement that only a commit-source deployment had been verified.
+
+### Environment requirements now
+
+The current landing and browser-local mock planner require **no custom environment variables or API keys**. Do not put backend/provider secrets in the frontend environment.
+
+The existing optional frontend setting is `NEXT_PUBLIC_API_BASE_URL`. When an HTTPS backend is deployed, its value should be the public API base ending in `/api/v1`. It currently feeds the `/system` health diagnostic; setting it alone does not connect trip persistence or make the mock adapter live. The localhost value in `.env.example` is for local development and must not be used as a production backend URL.
+
+Backend deployment will separately need its database configuration and explicit frontend CORS origins. Identity-provider, map/provider and AI credentials must be selected and configured with their actual integrations; they are not required to keep this UI deployment working. Configure future secret values directly in the appropriate hosting environment rather than sharing them in chat or committing real `.env` files.
