@@ -131,6 +131,8 @@ The approved API design refines older architecture endpoint sketches. The genera
 
 ## Deployment and remaining work
 
+[Latest release and verification record](docs/deployments/unfolding-planner.md).
+
 The web review is hosted on Vercel at [elsewhere-ui-review.vercel.app](https://elsewhere-ui-review.vercel.app). The FastAPI/PostgreSQL backend is not part of that frontend deployment. For a Git-based Vercel import, select **Next.js** and root directory **`apps/web`**; use the committed npm lockfile. Backend hosting and production identity/database provisioning remain separate decisions. Do not add secret-bearing CI deployment workflows merely to publish the frontend.
 
 Next integration work: verified authentication, real trip adapter and draft command mapping, provider-backed place search, dated stay/transport information with provenance, timezone-aware scheduled transfers, activity generation and atomic proposal acceptance/history. Keep manual/provisional paths and unknown data visible throughout.
