@@ -42,7 +42,7 @@ class ConversationPage(StrictModel):
     next_cursor: UUID | None
 
 
-def turn_view(db, turn):
+def turn_view(db, turn, job=None):
     return {
         **{
             key: getattr(turn, key)
@@ -55,7 +55,7 @@ def turn_view(db, turn):
                 "created_at",
             )
         },
-        "job": job_view(db.get(PlanningJob, turn.job_id)),
+        "job": job_view(job if job is not None else db.get(PlanningJob, turn.job_id)),
     }
 
 
@@ -69,7 +69,13 @@ def messages(
     db: Session = Depends(session),
 ):
     owned(db, user, trip_id)
-    query = select(ConversationTurn).where(ConversationTurn.trip_id == trip_id)
+    # One PostgreSQL statement gives message and job the same READ COMMITTED
+    # snapshot. Separate reads can see an old empty reply and a completed job.
+    query = (
+        select(ConversationTurn, PlanningJob)
+        .join(PlanningJob, PlanningJob.id == ConversationTurn.job_id)
+        .where(ConversationTurn.trip_id == trip_id)
+    )
     if before:
         cursor = db.scalar(
             select(ConversationTurn).where(
@@ -88,7 +94,7 @@ def messages(
             )
         )
     rows = list(
-        db.scalars(
+        db.execute(
             query.order_by(
                 ConversationTurn.created_at.desc(), ConversationTurn.id.desc()
             ).limit(limit + 1)
@@ -97,8 +103,8 @@ def messages(
     return wrap(
         request,
         {
-            "turns": [turn_view(db, t) for t in reversed(rows[:limit])],
-            "next_cursor": rows[limit - 1].id if len(rows) > limit else None,
+            "turns": [turn_view(db, t, j) for t, j in reversed(rows[:limit])],
+            "next_cursor": rows[limit - 1][0].id if len(rows) > limit else None,
         },
     )
 

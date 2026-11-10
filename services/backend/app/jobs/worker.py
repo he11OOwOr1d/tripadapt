@@ -10,13 +10,14 @@ from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.agents.conversation import respond
-from app.agents.day_graph import AI_ISSUE, run_day_graph, validate_ai_candidate
+from app.agents.day_graph import run_day_graph
 from app.agents.groq_provider import GroqProvider, PlanningFailure
 from app.api.proposals import persist_candidate
 from app.config import settings
 from app.persistence.database import engine
 from app.persistence.models import ConversationTurn, PlanningJob, PlanVersion, Trip
-from app.planning.fixture import FIXTURE_ISSUE, generate_day, validate_scope
+from app.planning.candidate import validate_job_candidate
+from app.planning.fixture import generate_day
 from app.planning.validation import validate_plan
 from app.trips.schemas import PlanInput
 
@@ -161,25 +162,11 @@ def publish(db, ident, token, candidate, metadata=None):
         return False
     trip, draft = pair
     original = job.input
-    scope = original["request"]["scope"]
-    validate_scope(
-        PlanInput.model_validate(original["plan"]),
-        candidate,
-        scope["stop_logical_id"],
-        scope["local_day_offset"],
-    )
     report = validate_plan(candidate)
+    report["issues"].append(
+        validate_job_candidate(original, candidate, job.id, metadata or {})
+    )
     is_ai = original["request"]["engine"] == "groq"
-    if is_ai:
-        validate_ai_candidate(
-            PlanInput.model_validate(original["plan"]),
-            candidate,
-            scope["stop_logical_id"],
-            scope["local_day_offset"],
-            job.id,
-            metadata or {},
-        )
-    report["issues"].append(AI_ISSUE if is_ai else FIXTURE_ISSUE)
     job.result_metadata = metadata or {}
     proposal = persist_candidate(
         db, trip, draft, candidate, job.id, report, source="agent"
@@ -193,7 +180,9 @@ def publish(db, ident, token, candidate, metadata=None):
             if is_ai
             else "Test suggestions are ready to review"
         )
-        if len(candidate.activities) > len(original["plan"]["activities"])
+        if (metadata or {}).get("operation")
+        in ("move_activity", "resize_activity", "remove_activity")
+        or len(candidate.activities) > len(original["plan"]["activities"])
         else "No open slots; your existing day is unchanged",
     )
     db.flush()
@@ -271,7 +260,11 @@ def run_once():
                         payload.get("conversation", []),
                         provider,
                     )
-                if reply is None or reply["kind"] == "proposal":
+                if reply is not None and "candidate" in reply:
+                    progress("Checking the requested time change")
+                    candidate, metadata = reply.pop("candidate"), reply.pop("metadata")
+                    metadata.update(model=settings.groq_model, calls=provider.calls)
+                elif reply is None or reply["kind"] == "proposal":
                     candidate, metadata = run_day_graph(
                         plan,
                         scope["stop_logical_id"],

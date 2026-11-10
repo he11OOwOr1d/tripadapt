@@ -92,7 +92,16 @@ def proposal_view(db, proposal):
 
     job = db.scalar(select(PlanningJob).where(PlanningJob.proposal_id == proposal.id))
     return dict(
-        generation=job.result_metadata if job else None,
+        generation=job.result_metadata
+        if job
+        else (
+            {
+                "operation": "restore_plan",
+                "restoration": candidate.validation_report.get("restoration"),
+            }
+            if candidate.source == "restore"
+            else None
+        ),
         id=proposal.id,
         status=proposal.status,
         source="fixture"
@@ -107,7 +116,9 @@ def proposal_view(db, proposal):
         base_current_version_id=proposal.base_current_id,
         base_draft_id=proposal.base_draft_id,
         base_edit_sequence=proposal.base_edit_sequence,
-        validation=candidate.validation_report,
+        validation={
+            key: candidate.validation_report[key] for key in ("status", "issues")
+        },
         plan=plan_input(db, candidate).model_dump(mode="json"),
     )
 
@@ -121,6 +132,17 @@ def find_proposal(db, trip_id, proposal_id):
     if result is None:
         raise HTTPException(404, "RESOURCE_NOT_FOUND")
     return result
+
+
+def apply_plan(row, plan):
+    values = plan.model_dump(exclude={"stops", "activities", "budget"}, mode="python")
+    for key in ("preferences", "origin", "return_location"):
+        value = getattr(plan, key)
+        values[key] = value.model_dump(mode="json") if value else None
+    for key, value in values.items():
+        setattr(row, key, value)
+    row.budget_amount = plan.budget.amount if plan.budget else None
+    row.budget_mode = plan.budget.mode if plan.budget else "target"
 
 
 def persist_candidate(db, trip, draft, plan, key, report, source="user"):
@@ -153,6 +175,7 @@ def persist_candidate(db, trip, draft, plan, key, report, source="user"):
         validation_status=report["status"],
         validation_report=report,
     )
+    apply_plan(candidate, plan)
     db.add(candidate)
     db.flush()
     sync_route(db, candidate, plan.stops, plan.activities, cascade=True)
@@ -274,7 +297,7 @@ def accept(
     report = validate_plan(candidate_plan)
     if candidate.source == "agent":
         from app.persistence.models import PlanningJob
-        from app.planning.fixture import FIXTURE_ISSUE, validate_scope
+        from app.planning.candidate import validate_job_candidate
 
         job = db.scalar(
             select(PlanningJob).where(PlanningJob.proposal_id == proposal.id)
@@ -282,34 +305,27 @@ def accept(
         if job is None or job.status != "succeeded":
             raise HTTPException(409, "UNSUPPORTED_CANDIDATE")
         try:
-            scope = job.input["request"]["scope"]
-            validate_scope(
-                PlanInput.model_validate(job.input["plan"]),
-                candidate_plan,
-                scope["stop_logical_id"],
-                scope["local_day_offset"],
-            )
-        except ValueError:
-            raise HTTPException(409, "PLAN_CONFLICT") from None
-        if job.input["request"]["engine"] == "groq":
-            from app.agents.day_graph import AI_ISSUE, validate_ai_candidate
-
-            try:
-                validate_ai_candidate(
-                    PlanInput.model_validate(job.input["plan"]),
-                    candidate_plan,
-                    scope["stop_logical_id"],
-                    scope["local_day_offset"],
-                    job.id,
-                    job.result_metadata,
+            report["issues"].append(
+                validate_job_candidate(
+                    job.input, candidate_plan, job.id, job.result_metadata or {}
                 )
-            except ValueError:
-                raise HTTPException(409, "PLAN_CONFLICT") from None
+            )
+        except (ValueError, KeyError, TypeError):
+            raise HTTPException(409, "PLAN_CONFLICT") from None
 
-            report["issues"].append(AI_ISSUE)
-        else:
-            report["issues"].append(FIXTURE_ISSUE)
+    if candidate.source == "restore":
+        from app.planning.restoration import restoration_report
 
+        historical = db.get(PlanVersion, candidate.parent_version_id)
+        if (
+            historical is None
+            or historical.trip_id != trip.id
+            or historical.status != "accepted"
+            or plan_input(db, historical) != candidate_plan
+        ):
+            raise HTTPException(409, "PLAN_CONFLICT")
+        report = restoration_report(plan_input(db, draft), candidate_plan)
+        report["restoration"] = candidate.validation_report.get("restoration")
     if any(i["blocking"] for i in report["issues"]):
         raise HTTPException(409, "PLAN_CONFLICT")
     required = {i["id"] for i in report["issues"] if i["acknowledgeable"]}
@@ -321,7 +337,8 @@ def accept(
     trip.current_version_id = candidate.id
     trip.lock_version += 1
     trip.updated_at = datetime.now(timezone.utc)
-    if candidate.source == "agent":
+    if candidate.source in ("agent", "restore"):
+        apply_plan(draft, candidate_plan)
         sync_route(
             db, draft, candidate_plan.stops, candidate_plan.activities, cascade=True
         )

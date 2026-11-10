@@ -1,4 +1,5 @@
 import json
+from datetime import timedelta
 from uuid import uuid4
 
 import pytest
@@ -11,7 +12,7 @@ from app.api.identity import TrustedIdentity, verified_identity
 from app.config import settings
 from app.jobs.worker import claim, publish_reply
 from app.main import app
-from app.persistence.models import AppUser
+from app.persistence.models import AppUser, ConversationTurn
 from app.trips.schemas import PlanInput
 
 
@@ -113,6 +114,25 @@ def test_message_idempotency_and_readonly_reply_survive_reload(context):
         client.get(base + f"/versions/{trip['draft_version_id']}").headers["etag"]
         == tag
     )
+
+    # A joined turn/job read must preserve cursor pagination and terminal replies.
+    second = send(client, base, tag, {**body, "text": "Summarize my route"})
+    assert second.status_code == 202
+    # PostgreSQL now() is transaction-stable inside the outer rollback fixture.
+    # Give these turns distinct dates rather than depending on random UUID order.
+    first_row = db.scalar(
+        select(ConversationTurn).where(ConversationTurn.job_id == job.id)
+    )
+    first_row.created_at -= timedelta(seconds=1)
+    db.commit()
+    latest = client.get(base + "/messages?limit=1").json()["data"]
+    assert latest["turns"][0]["id"] == second.json()["data"]["id"]
+    older = client.get(
+        base + f"/messages?limit=1&before={latest['next_cursor']}"
+    ).json()["data"]
+    assert older["turns"][0]["id"] == turn["id"]
+    assert older["turns"][0]["assistant_text"]
+    assert older["turns"][0]["job"]["status"] == "succeeded"
 
 
 def test_messages_are_private_and_cursor_scoped(context):
