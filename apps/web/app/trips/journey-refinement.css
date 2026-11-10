@@ -1,0 +1,618 @@
+/* Paper, forest, leaf and warm white are inherited from the approved Unfolding palette. */
+.trip-app .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.trip-app .trip-quiet-header {
+  min-height: 84px;
+  padding: 18px max(5vw, 24px);
+  gap: 24px;
+}
+.trip-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  margin-left: auto;
+}
+.trip-app .trip-library-trigger {
+  background: none;
+  border: 0;
+  padding: 10px 0;
+  border-bottom: 1px solid #879c7c;
+  border-radius: 0;
+  min-height: 44px;
+}
+.trip-save-state {
+  font-size: 12px;
+  color: #58714e;
+  white-space: nowrap;
+}
+.trip-account-menu {
+  position: relative;
+}
+.trip-account-menu > summary {
+  display: grid;
+  place-items: center;
+  list-style: none;
+  width: 44px;
+  height: 44px;
+  border: 1px solid #a4b595;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.trip-account-menu > summary::-webkit-details-marker {
+  display: none;
+}
+.trip-account-menu > div {
+  position: absolute;
+  right: 0;
+  top: 54px;
+  width: 215px;
+  background: #fff9ea;
+  border: 1px solid #b4c1a2;
+  padding: 12px;
+  border-radius: 10px;
+  z-index: 10;
+  box-shadow: 0 12px 30px #294d3d12;
+}
+.trip-account-menu > div > p {
+  font-size: 12px;
+  margin: 4px 8px 8px;
+  color: #617657;
+}
+.trip-account-menu > div > button {
+  display: block;
+  text-align: left;
+  width: 100%;
+  border: 0;
+  background: none;
+  min-height: 44px;
+}
+.trip-app .trip-heading {
+  margin-bottom: 30px;
+}
+.trip-unfolding .trip-heading h1 {
+  font-size: clamp(35px, 4vw, 54px);
+  max-width: 19ch;
+}
+.trip-unfolding .trip-heading .trip-kicker {
+  display: none;
+}
+.trip-unfolding .trip-heading > div > p:last-child {
+  margin-top: 14px;
+  font-size: 16px;
+}
+.trip-sync-error {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 16px;
+  background: #f3e1c4;
+  border-radius: 8px;
+  margin: 12px 0 24px;
+}
+.trip-sync-error > p {
+  flex: 1 1 240px;
+  font-size: 14px;
+}
+.trip-library {
+  color: #294d3d;
+  background: #f3efdf;
+  border: 0;
+  border-radius: 20px;
+  width: min(590px, calc(100vw - 32px));
+  max-height: 85svh;
+  margin: auto;
+  padding: 0;
+  box-shadow: 0 28px 100px #14362640;
+  font-family: EscapeBody, sans-serif;
+}
+.trip-library::backdrop {
+  background: #17372b6b;
+  backdrop-filter: blur(4px);
+}
+.trip-library-inner {
+  padding: 32px;
+}
+.trip-library-inner > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+.trip-library h2 {
+  font-size: 39px;
+  letter-spacing: -0.055em;
+  line-height: 1.1;
+  margin: 8px 0 0;
+  font-weight: 550;
+}
+.trip-library header p {
+  font-size: 13px;
+  color: #65795a;
+  margin: 0;
+}
+.trip-library button {
+  font: inherit;
+  cursor: pointer;
+  color: inherit;
+  min-height: 44px;
+}
+.trip-library header button {
+  border: 0;
+  background: none;
+  font-size: 28px;
+  width: 44px;
+  margin-top: -8px;
+}
+.trip-library .library-new {
+  background: #294d3d;
+  color: #fff9e9;
+  border: 0;
+  border-radius: 7px;
+  width: 100%;
+  padding: 14px;
+  margin-bottom: 22px;
+}
+.library-rows {
+  display: grid;
+  gap: 10px;
+}
+.library-rows > button {
+  display: grid;
+  grid-template-columns: 32px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 20px;
+  text-align: left;
+  border: 1px solid #c0cbb0;
+  border-radius: 9px;
+  background: #faf6e8;
+}
+.library-rows strong {
+  font-weight: 550;
+  font-size: 18px;
+  overflow-wrap: anywhere;
+}
+.library-rows > button > span:last-child {
+  font-size: 12px;
+  color: #647a59;
+}
+.library-empty {
+  line-height: 1.6;
+  max-width: 33ch;
+  margin: 20px auto 30px;
+  text-align: center;
+}
+.library-footnote {
+  text-align: center;
+  font-size: 12px;
+  color: #6f8164;
+  margin: 26px 0 0;
+}
+.trip-library :is(button, a):focus-visible,
+.trip-account-menu > summary:focus-visible {
+  outline: 3px solid #4264ae;
+  outline-offset: 3px;
+}
+.trip-app .time-budget {
+  padding: 22px 24px;
+  background: #e3e9d3;
+  border-radius: 12px;
+  margin: 0 0 26px;
+}
+.time-budget > div:first-child {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.time-budget strong {
+  font-size: 20px;
+  font-weight: 550;
+  letter-spacing: -0.03em;
+}
+.time-budget > div > span {
+  font-size: 13px;
+  color: #5c7452;
+}
+.time-budget > p {
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 14px 0 0 !important;
+  color: #596f50;
+  max-width: 49ch;
+}
+.time-budget > p > strong {
+  font: inherit;
+  font-weight: 650;
+}
+.time-ribbon {
+  display: flex;
+  gap: 3px;
+  height: 37px;
+  margin-top: 18px;
+  border-radius: 5px;
+  overflow: hidden;
+  min-width: 0;
+}
+.time-ribbon > span {
+  min-width: 0;
+  display: grid;
+  place-items: center;
+  font-size: 13px !important;
+}
+.ribbon-stop-0 {
+  background: #395e45;
+  color: #fff4d9 !important;
+}
+.ribbon-stop-1 {
+  background: #819968;
+  color: #fff9e8 !important;
+}
+.ribbon-stop-2 {
+  background: #b5c492;
+  color: #294d3d !important;
+}
+.ribbon-stop-3 {
+  background: #cfc099;
+  color: #294d3d !important;
+}
+.ribbon-travel {
+  background: repeating-linear-gradient(
+    45deg,
+    #708e78,
+    #708e78 3px,
+    #a1b4a0 3px,
+    #a1b4a0 6px
+  );
+  color: #fff9ea !important;
+}
+.ribbon-open {
+  background: #f8f5e6;
+  border: 1px dashed #aab995;
+  color: #607755;
+}
+.time-stop-list {
+  display: grid;
+}
+.trip-app .time-stop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border-bottom: 1px solid #c6cfb7;
+  padding: 22px 0;
+}
+.time-stop > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+.time-stop h3 {
+  font-size: 22px !important;
+  font-weight: 550;
+  margin: 0 0 6px;
+  letter-spacing: -0.04em;
+  overflow-wrap: anywhere;
+}
+.time-stop p {
+  font-size: 13px;
+  color: #66795c;
+  margin: 0;
+}
+.time-stop-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.trip-app .night-stepper {
+  display: flex;
+  align-items: center;
+  border: 1px solid #9bad8c;
+  border-radius: 9px;
+  background: #fff9e8;
+  flex-shrink: 0;
+}
+.trip-app .night-stepper button {
+  border: 0;
+  background: none;
+  min-width: 44px;
+  height: 56px;
+  padding: 0;
+  font-size: 22px;
+}
+.trip-app .night-stepper label {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 52px;
+  gap: 0;
+  font-size: 10px;
+  color: #6b7d5d;
+}
+.trip-app .night-stepper input {
+  border: 0;
+  background: none;
+  text-align: center;
+  padding: 0;
+  width: 52px !important;
+  min-height: 29px;
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.1;
+  font-weight: 550;
+  appearance: textfield;
+}
+.night-stepper input::-webkit-inner-spin-button,
+.night-stepper input::-webkit-outer-spin-button {
+  appearance: none;
+  margin: 0;
+}
+.time-split-action {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex-wrap: wrap;
+  margin: 22px 0 8px;
+}
+.trip-app .time-split-action button {
+  background: none;
+  border: 1px solid #91a37f;
+  min-height: 44px;
+  border-radius: 6px;
+}
+.time-split-action > span {
+  font-size: 12px;
+  color: #6c7e60;
+}
+.preference-intro {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin: 32px 0 5px;
+}
+.preference-intro:first-child {
+  margin-top: 0;
+}
+.preference-intro > span {
+  font-size: 28px;
+  color: #68805a;
+}
+.preference-intro h3 {
+  font-size: 23px !important;
+  margin: 0 0 5px;
+  letter-spacing: -0.04em;
+}
+.preference-intro p {
+  margin: 0;
+  font-size: 13px;
+  color: #718164;
+}
+.trip-app .simple-preference {
+  padding: 25px 0;
+  border-bottom: 1px solid #c4cdb4;
+}
+.simple-preference-title {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  justify-content: space-between;
+}
+.simple-preference-title > span {
+  font-size: 12px;
+  color: #6d7e60;
+  white-space: nowrap;
+}
+.simple-preference h3 {
+  font-size: 19px !important;
+  font-weight: 550;
+  margin: 0 0 14px;
+  letter-spacing: -0.025em;
+}
+.trip-app .stay-choices {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.trip-app .stay-choices label {
+  position: relative;
+  display: block;
+  cursor: pointer;
+}
+.stay-choices input {
+  position: absolute;
+  width: 1px !important;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+.stay-choices label > span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 9px 14px;
+  border: 1px solid #b3c0a1;
+  border-radius: 22px;
+  font-size: 13px;
+  color: #58714c;
+}
+.stay-choices input:checked + span {
+  background: #294d3d;
+  border-color: #294d3d;
+  color: #fff7df;
+}
+.stay-choices input:focus-visible + span {
+  outline: 3px solid #4264ae;
+  outline-offset: 3px;
+}
+.preference-details {
+  font-size: 13px;
+  margin-top: 18px;
+}
+.preference-details > summary {
+  cursor: pointer;
+  min-height: 44px;
+  align-content: center;
+  color: #58734d;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.preference-details > .trip-fields {
+  margin-top: 16px;
+}
+.preference-details .creation-note {
+  font-size: 12px;
+  line-height: 1.5;
+}
+.journey-mode {
+  display: block;
+  max-width: 330px;
+}
+.journey-mode select {
+  min-height: 48px;
+  width: 100%;
+}
+.leg-arrow {
+  color: #8c9e7b;
+}
+.preference-honesty {
+  font-size: 12px;
+  color: #708263;
+  margin: 25px 0 0;
+}
+@media (max-width: 760px) {
+  .trip-app .trip-quiet-header {
+    padding: 14px 6%;
+    min-height: 80px;
+    flex-wrap: nowrap;
+    gap: 10px;
+  }
+  .trip-header-actions {
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    position: relative;
+  }
+  .trip-save-state {
+    position: absolute;
+    top: 48px;
+    right: 0;
+    font-size: 10px;
+  }
+  .trip-unfolding .trip-shell {
+    padding-top: 32px;
+  }
+  .trip-unfolding .trip-heading h1 {
+    font-size: 37px;
+  }
+  .trip-library-inner {
+    padding: 25px 20px;
+  }
+  .library-rows > button {
+    grid-template-columns: 25px 1fr;
+    padding: 18px 14px;
+  }
+  .library-rows > button > span:last-child {
+    display: none;
+  }
+  .trip-app .time-budget {
+    padding: 18px;
+  }
+  .time-budget strong {
+    font-size: 19px;
+  }
+  .trip-app .time-stop {
+    gap: 12px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .time-stop h3 {
+    font-size: 21px !important;
+  }
+  .trip-app .night-stepper {
+    margin-left: 25px;
+  }
+  .trip-app .night-stepper button {
+    height: 50px;
+  }
+  .time-stop > div:first-child {
+    flex: 1 1 180px;
+  }
+  .time-budget > p {
+    font-size: 12px;
+  }
+  .trip-app .simple-preference {
+    padding: 22px 0;
+  }
+  .trip-app .stay-choices label > span {
+    padding: 8px 12px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .trip-library::backdrop {
+    backdrop-filter: none;
+  }
+}
+/* Answered steps become compact bookmarks; the active question gets the space. */
+.trip-app .unfold-leaf-heading[aria-expanded="false"] {
+  min-height: 58px;
+  padding: 13px 28px;
+}
+.trip-app .unfold-leaf-heading[aria-expanded="false"] > span {
+  font-size: 18px;
+}
+.trip-app .unfold-leaf-heading[aria-expanded="false"] > small {
+  font-size: 12px;
+}
+.trip-progressed .trip-heading {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+@media (max-width: 760px) {
+  .trip-app .unfold-leaf-heading[aria-expanded="false"] {
+    padding: 13px 18px;
+    min-height: 57px;
+  }
+  .trip-app .unfold-leaf-heading[aria-expanded="false"] > span {
+    font-size: 17px;
+  }
+}
+.trip-app .unfold-leaf-heading > em {
+  display: none;
+}
+@media (max-width: 760px) {
+  .trip-app .unfold-active-body > h2 {
+    scroll-margin-top: 110px;
+  }
+}
+.trip-app .unfold-active-body .night-stepper input[type="number"] {
+  min-height: 31px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-size: 22px;
+  line-height: 1.1;
+}
