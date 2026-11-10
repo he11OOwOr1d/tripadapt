@@ -1,42 +1,80 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import {
+  accountTripAdapter,
+  SignInRequired,
+} from "../../lib/trips/account-adapter";
+import { authClient } from "../../lib/auth/client";
+import { authConfigured } from "../../lib/auth/config";
 import {
   emptyTrip,
   sampleTrip,
   mockTripAdapter,
+  guestTripAdapter,
   mockSampleAdapter,
-  issuesFor,
+  isTrip,
   type Trip,
   type Activity,
 } from "../../lib/trips/adapter";
 import TripCreation from "./TripCreation";
-import { planningCosts } from "../../lib/trips/planning";
+import TripLibrary from "./TripLibrary";
+import ItineraryWorkspace from "./ItineraryWorkspace";
+import ActivityEditor from "./ActivityEditor";
+import ProposalReview from "./ProposalReview";
+import DayPlanning from "./DayPlanning";
+import TripChat from "./TripChat";
+import "./chat.css";
+import { tripUrl } from "../../lib/trips/itinerary";
+import { useTripAutosave } from "../../lib/trips/use-trip-autosave";
 import "./workspace.css";
 import "./creation.css";
 import "./unfolding.css";
+import "./journey-refinement.css";
+import "./itinerary.css";
 
 export default function TripWorkbench({
   initialView,
 }: {
   initialView: "setup" | "itinerary";
 }) {
+  const allowLeave = useRef(false);
+  const [ready, setReady] = useState(false);
+  const [libraryOpen, setLibraryOpen] = useState(false);
+  const [libraryError, setLibraryError] = useState("");
   const [trip, setTrip] = useState<Trip>(() =>
     structuredClone(initialView === "setup" ? emptyTrip : sampleTrip),
   );
   const [view, setView] = useState(initialView);
+  const [creationStep, setCreationStep] = useState(0);
   const [loadGeneration, setLoadGeneration] = useState(0);
   const adapter = initialView === "setup" ? mockTripAdapter : mockSampleAdapter;
+  const [account, setAccount] = useState<{
+    id: string;
+    tripEtag: string;
+    versionEtag: string;
+  } | null>(null);
+  const [accountRows, setAccountRows] = useState<
+    { id: string; title: string }[] | null
+  >(null);
+  const [accountCursor, setAccountCursor] = useState<string | null>(null);
+  const [signedIn, setSignedIn] = useState(false);
+  const [accountLoading, setAccountLoading] = useState(false);
   const [selected, setSelected] = useState("jaipur");
   const [day, setDay] = useState(1);
-  const [notice, setNotice] = useState(
-    "Changes stay in this draft. No accepted plan is connected.",
-  );
+  const [notice, setNotice] = useState("");
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState<Activity | null>(null);
   const [removing, setRemoving] = useState<string | null>(null);
-  const modalOpen = !!editing || !!removing;
+  const [chatOpen, setChatOpen] = useState(false);
+  const [planningOpen, setPlanningOpen] = useState(false);
+  const [generatedProposalId, setGeneratedProposalId] = useState<
+    string | undefined
+  >();
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [removedActivity, setRemovedActivity] = useState<Activity | null>(null);
+  const modalOpen = !!removing;
   useEffect(() => {
     if (!modalOpen) return;
     const previous = document.activeElement as HTMLElement | null;
@@ -78,19 +116,309 @@ export default function TripWorkbench({
   useEffect(() => {
     if (!dirty) return;
     const warn = (event: BeforeUnloadEvent) => {
-      event.preventDefault();
+      if (!allowLeave.current) event.preventDefault();
     };
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
   }, [dirty]);
-  const stop = trip.stops.find((s) => s.id === selected) ?? trip.stops[0];
-  const issues = issuesFor(trip);
+  useEffect(() => {
+    if (initialView !== "setup") return;
+    let active = true;
+    async function restore() {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const id = params.get("trip");
+        if (params.get("view") === "itinerary") {
+          setView("itinerary");
+          const destination = params.get("stop");
+          if (destination) setSelected(destination);
+          const requestedDay = Number(params.get("day"));
+          if (Number.isSafeInteger(requestedDay) && requestedDay > 0)
+            setDay(requestedDay);
+        }
+        const pending = sessionStorage.getItem(
+          "elsewhere.pending-account-save",
+        );
+        if (id && !pending && active) setAccountLoading(true);
+        if (pending) {
+          let pendingTrip: Trip | null = null;
+          try {
+            const stored = JSON.parse(pending);
+            if (isTrip(stored.trip)) pendingTrip = stored.trip;
+            if (
+              active &&
+              Number.isInteger(stored.step) &&
+              stored.step >= 0 &&
+              stored.step <= 5
+            )
+              setCreationStep(stored.step);
+            if (
+              active &&
+              (stored.view === "setup" || stored.view === "itinerary")
+            )
+              setView(stored.view);
+            if (active && typeof stored.selected === "string")
+              setSelected(stored.selected);
+            if (active && Number.isSafeInteger(stored.day) && stored.day > 0)
+              setDay(stored.day);
+            if (stored.account && active) setAccount(stored.account);
+          } catch {
+            /* Older pending marker denotes a new trip. */
+          }
+          try {
+            const local = pendingTrip ?? (await mockTripAdapter.load());
+            if (active && local) {
+              setTrip(local);
+              setDirty(true);
+              setLoadGeneration((n) => n + 1);
+              setNotice("");
+            }
+          } catch {
+            if (active)
+              setNotice(
+                "Could not restore your browser draft. Your existing browser save has been kept.",
+              );
+          }
+          sessionStorage.removeItem("elsewhere.pending-account-save");
+        }
+        if (!id && !pending) {
+          try {
+            const local = await guestTripAdapter.load();
+            if (active && local) {
+              setTrip(local);
+              setLoadGeneration((n) => n + 1);
+            }
+          } catch {
+            if (active)
+              setNotice(
+                "Your device copy could not be opened. You can still start a new trip.",
+              );
+          }
+        }
+        if (authConfigured) {
+          try {
+            const { data } = await authClient().auth.getUser();
+            if (active) setSignedIn(!!data.user);
+          } catch {
+            if (active) setSignedIn(false);
+          }
+        }
+        if (id && !pending) {
+          if (active) setAccountLoading(true);
+          try {
+            const saved = await accountTripAdapter.load(id);
+            if (active) {
+              setTrip(saved.trip);
+              setAccount(saved);
+              setDirty(false);
+              setLoadGeneration((n) => n + 1);
+              setNotice("");
+            }
+          } catch (error) {
+            if (active)
+              setNotice(
+                error instanceof Error
+                  ? error.message
+                  : "Could not open the account trip.",
+              );
+          } finally {
+            if (active) setAccountLoading(false);
+          }
+        }
+      } finally {
+        if (active) setReady(true);
+      }
+    }
+    void restore().catch(() => {
+      if (active)
+        setNotice(
+          "Account connection is unavailable. Your browser draft is kept.",
+        );
+    });
+    return () => {
+      active = false;
+    };
+  }, [initialView]);
+  const autosave = useTripAutosave({
+    trip,
+    dirty,
+    ready: ready && initialView === "setup",
+    signedIn,
+    generation: loadGeneration,
+    account,
+    onSaved: (snapshot, reference, synced) => {
+      if (reference) {
+        setAccount(reference);
+        window.history.replaceState(
+          null,
+          "",
+          tripUrl(reference.id, { view, stop: selected, day }),
+        );
+      }
+      if (
+        (!signedIn || synced) &&
+        JSON.stringify(snapshot) === JSON.stringify(trip)
+      )
+        setDirty(false);
+    },
+  });
+  useEffect(() => {
+    if (initialView !== "setup" || !ready || accountLoading) return;
+    const current = trip.stops.find((s) => s.id === selected) ?? trip.stops[0];
+    if (view === "itinerary" && current) {
+      if (selected !== current.id) setSelected(current.id);
+      if (day > current.nights + 1 || day < 1)
+        setDay(Math.max(1, Math.min(current.nights + 1, day)));
+    }
+    window.history.replaceState(
+      null,
+      "",
+      tripUrl(account?.id ?? null, { view, stop: current?.id ?? "", day }),
+    );
+  }, [
+    view,
+    selected,
+    day,
+    ready,
+    accountLoading,
+    account?.id,
+    trip.stops,
+    initialView,
+  ]);
+  async function signIn() {
+    try {
+      await mockTripAdapter.save(trip);
+      sessionStorage.setItem(
+        "elsewhere.pending-account-save",
+        JSON.stringify({
+          account,
+          trip,
+          step: creationStep,
+          view,
+          selected,
+          day,
+        }),
+      );
+      allowLeave.current = true;
+      window.location.assign(
+        `/sign-in?next=${encodeURIComponent(account ? `/trips/new?trip=${account.id}` : "/trips/new")}`,
+      );
+    } catch {
+      setNotice(
+        "Could not keep a device copy. Keep this page open and try again.",
+      );
+    }
+  }
+  async function newTrip() {
+    try {
+      await autosave.flush();
+    } catch {
+      setNotice(
+        "Your current trip hasn’t synced. Resolve the saving error before starting another.",
+      );
+      return;
+    }
+    setRemovedActivity(null);
+    setLibraryOpen(false);
+    setAccount(null);
+    setTrip(structuredClone(emptyTrip));
+    setCreationStep(0);
+    setDirty(false);
+    setLoadGeneration((n) => n + 1);
+    setView("setup");
+    setNotice("");
+    window.history.replaceState(null, "", "/trips/new");
+  }
+  async function signOut() {
+    try {
+      await autosave.flush();
+      const { error } = await authClient().auth.signOut();
+      if (error) throw error;
+      setSignedIn(false);
+      setAccount(null);
+      setAccountRows(null);
+      setLoadGeneration((n) => n + 1);
+      window.history.replaceState(null, "", "/trips/new");
+      setNotice(
+        "Signed out. A device copy remains here; clear it on shared devices.",
+      );
+    } catch {
+      setNotice(
+        "Could not sign out safely. Your current edits are still here.",
+      );
+    }
+  }
+  async function listAccount(more = false) {
+    setLibraryOpen(true);
+    setLibraryError("");
+    if (!more) setAccountRows(null);
+    setBusy(true);
+    try {
+      if (!autosave.conflict) await autosave.flush();
+      const page = await accountTripAdapter.list(
+        more ? (accountCursor ?? undefined) : undefined,
+      );
+      setAccountRows((previous) =>
+        more ? [...(previous ?? []), ...page.rows] : page.rows,
+      );
+      setAccountCursor(page.nextCursor);
+    } catch (error) {
+      setLibraryError(
+        error instanceof SignInRequired
+          ? "Sign in to see trips saved to your account."
+          : error instanceof Error
+            ? error.message
+            : "Your trips could not be opened. Try again.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function openAccount(id: string) {
+    try {
+      if (autosave.conflict) {
+        if (
+          !window.confirm(
+            "Open the saved version? Your unsynced edits are kept in the device copy.",
+          )
+        )
+          return;
+      } else await autosave.flush();
+    } catch {
+      setLibraryError(
+        "Your current trip hasn’t synced yet. Resolve the saving error before opening another.",
+      );
+      return;
+    }
+    setAccountLoading(true);
+    try {
+      const saved = await accountTripAdapter.load(id);
+      setRemovedActivity(null);
+      setTrip(saved.trip);
+      setAccount(saved);
+      setLoadGeneration((n) => n + 1);
+      setView(saved.trip.activities.length ? "itinerary" : "setup");
+      setSelected(saved.trip.stops[0]?.id ?? "");
+      setDay(1);
+      setDirty(false);
+      setAccountRows(null);
+      window.history.replaceState(null, "", `/trips/new?trip=${id}`);
+      setCreationStep(0);
+      setLibraryOpen(false);
+      setNotice("");
+    } catch (error) {
+      setNotice(
+        error instanceof Error ? error.message : "Could not open this trip.",
+      );
+    } finally {
+      setAccountLoading(false);
+    }
+  }
   const nights = trip.stops.reduce((n, s) => n + s.nights, 0);
-  const costs = planningCosts(trip);
   function update(patch: Partial<Trip>) {
     setTrip((t) => ({ ...t, ...patch }));
     setDirty(true);
-    setNotice("Unsaved draft changes.");
+    setNotice("");
   }
   function reorder(index: number, delta: number) {
     const stops = [...trip.stops];
@@ -119,15 +447,25 @@ export default function TripWorkbench({
   async function load() {
     setBusy(true);
     try {
-      const saved = await adapter.load();
+      const saved = await (
+        initialView === "setup" && !signedIn ? guestTripAdapter : adapter
+      ).load();
       if (saved) {
+        try {
+          await autosave.flush();
+        } catch {
+          setNotice("Resolve the sync error before opening a device copy.");
+          return;
+        }
         setTrip(saved);
+        setAccount(null);
+        window.history.replaceState(null, "", "/trips/new");
         setLoadGeneration((n) => n + 1);
         setView("setup");
         setDirty(false);
         setSelected(saved.stops[0]?.id ?? "");
         setDay(1);
-        setNotice("Loaded your draft saved in this browser.");
+        setNotice("");
       } else setNotice("No saved draft in this browser yet.");
     } catch {
       setNotice(
@@ -138,65 +476,218 @@ export default function TripWorkbench({
     }
   }
   return (
-    <main className={`trip-app ${view === "setup" ? "trip-unfolding" : ""}`}>
-      <header className="trip-header">
+    <main
+      className={`trip-app ${view === "setup" ? "trip-unfolding" : ""} ${view === "setup" && creationStep > 0 ? "trip-progressed" : ""}`}
+    >
+      <header className="trip-header trip-quiet-header">
         <Link href="/" className="trip-wordmark">
           elsewhere<span> / your journey</span>
         </Link>
-        <span className="trip-demo">
-          {initialView === "itinerary"
-            ? "Editable sample · browser-local"
-            : "Browser-local draft · no live services"}
-        </span>
-        <button
-          disabled={busy}
-          onClick={() => {
-            if (
-              !dirty ||
-              window.confirm(
-                "Replace unsaved edits with the saved browser draft?",
-              )
-            )
-              void load();
-          }}
-        >
-          Open saved draft
-        </button>
-      </header>
-      <div className="trip-shell">
-        <div className="trip-heading">
-          <div>
-            <p className="trip-kicker">A few places. One journey.</p>
-            <h1>
-              {view === "setup"
-                ? "You don’t need it all figured out."
-                : trip.title || "Your untitled journey"}
-            </h1>
-            <p>
-              {view === "setup"
-                ? "Just a beginning. We’ll open the rest as you go."
-                : `${trip.stops.length} destinations · ${nights} nights planned · ${trip.mode === "duration" ? "Dates open" : trip.mode === "window" ? "Tentative window" : "Exact dates"}`}
-            </p>
+        {initialView === "setup" ? (
+          <div className="trip-header-actions">
+            <span className="trip-save-state" role="status" aria-live="polite">
+              {!ready ? "Opening your trip…" : autosave.status}
+            </span>
+            <button
+              className="trip-library-trigger"
+              onClick={() => void listAccount()}
+              disabled={!ready}
+            >
+              My trips
+            </button>
+            <details
+              className="trip-account-menu"
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  e.currentTarget.open = false;
+                  e.currentTarget.querySelector("summary")?.focus();
+                }
+              }}
+              onBlur={(e) => {
+                if (!e.currentTarget.contains(e.relatedTarget))
+                  e.currentTarget.open = false;
+              }}
+              onClick={(e) => {
+                if ((e.target as HTMLElement).closest("button"))
+                  e.currentTarget.open = false;
+              }}
+            >
+              <summary aria-label="Account options">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="8" r="3.5" />
+                  <path d="M5 21v-2a7 7 0 0 1 14 0v2" />
+                </svg>
+              </summary>
+              <div>
+                <p>{signedIn ? "Your account" : "Keep your plans"}</p>
+                {signedIn ? (
+                  <>
+                    <button
+                      onClick={() => void newTrip()}
+                      disabled={autosave.saving}
+                    >
+                      New trip
+                    </button>
+                    <button
+                      onClick={() => void signOut()}
+                      disabled={autosave.saving}
+                    >
+                      Sign out
+                    </button>
+                  </>
+                ) : (
+                  <button onClick={() => void signIn()}>Sign in to sync</button>
+                )}
+                <button onClick={() => void load()} disabled={autosave.saving}>
+                  Open device copy
+                </button>
+              </div>
+            </details>
           </div>
-          <button className="trip-primary" onClick={save} disabled={busy}>
-            {busy ? "Working…" : dirty ? "Save draft" : "Save browser draft"}
-          </button>
-        </div>
-        <div className="trip-status" role="status">
-          {notice}
-        </div>
+        ) : (
+          <>
+            <span className="trip-demo">Editable sample</span>
+            <button onClick={save} disabled={busy}>
+              Save sample
+            </button>
+          </>
+        )}
+      </header>
+      <TripLibrary
+        open={libraryOpen}
+        loading={busy || accountLoading}
+        error={libraryError}
+        rows={accountRows}
+        hasMore={!!accountCursor}
+        onClose={() => setLibraryOpen(false)}
+        onOpen={(id) => void openAccount(id)}
+        onMore={() => void listAccount(true)}
+        onNew={() => void newTrip()}
+        onRetry={() => void listAccount()}
+      />
+      <div
+        className="trip-shell"
+        inert={
+          (initialView === "setup" && !ready) || accountLoading || undefined
+        }
+      >
+        {autosave.error && (
+          <div className="trip-sync-error" role="alert">
+            <p>{autosave.error}</p>
+            {autosave.conflict ? (
+              <button onClick={() => void listAccount()}>
+                Open saved version
+              </button>
+            ) : (
+              <button onClick={autosave.retry}>Retry sync</button>
+            )}
+            {(!signedIn || autosave.needsSignIn) && (
+              <button onClick={() => void signIn()}>Sign in</button>
+            )}
+          </div>
+        )}
+        {view === "setup" && (
+          <div className="trip-heading">
+            <div>
+              <p className="trip-kicker">A few places. One journey.</p>
+              <h1>
+                {view === "setup"
+                  ? "Let’s make room for elsewhere."
+                  : trip.title || "Your untitled journey"}
+              </h1>
+              <p>
+                {view === "setup"
+                  ? "A few choices. A journey of your own."
+                  : `${trip.stops.length} destinations · ${nights} nights planned · ${trip.mode === "duration" ? "Dates open" : trip.mode === "window" ? "Tentative window" : "Exact dates"}`}
+              </p>
+            </div>
+          </div>
+        )}
+        {removedActivity && (
+          <div className="day-undo" role="status">
+            Removed {removedActivity.title}.{" "}
+            <button
+              onClick={() => {
+                if (trip.stops.some((s) => s.id === removedActivity.stopId)) {
+                  update({ activities: [...trip.activities, removedActivity] });
+                  setRemovedActivity(null);
+                }
+              }}
+            >
+              Undo
+            </button>
+            <button
+              aria-label="Dismiss undo"
+              onClick={() => setRemovedActivity(null)}
+            >
+              ×
+            </button>
+          </div>
+        )}
+        {notice && (
+          <div className="trip-status" role="status">
+            {notice}
+          </div>
+        )}
         {view === "itinerary" && (
           <nav className="trip-tabs" aria-label="Trip workspace">
-            <button onClick={() => setView("setup")}>Edit trip & route</button>
-            <button aria-current="page" onClick={() => setView("itinerary")}>
-              Itinerary draft
+            <button
+              onClick={() => {
+                setCreationStep(5);
+                setLoadGeneration((n) => n + 1);
+                setView("setup");
+              }}
+            >
+              Trip outline
             </button>
+            <button
+              aria-current="page"
+              onClick={() => {
+                setView("itinerary");
+                setChatOpen(false);
+              }}
+            >
+              Plan your days
+            </button>
+            {account &&
+              process.env.NEXT_PUBLIC_PLANNING_AI_ENABLED === "true" && (
+                <button
+                  aria-pressed={chatOpen}
+                  onClick={() => setChatOpen((open) => !open)}
+                >
+                  Chat with Elsewhere
+                </button>
+              )}
+            {initialView === "setup" && (
+              <button
+                disabled={
+                  !account || dirty || autosave.saving || !!autosave.error
+                }
+                onClick={() => {
+                  setGeneratedProposalId(undefined);
+                  setReviewOpen(true);
+                }}
+              >
+                Review plan
+              </button>
+            )}
           </nav>
         )}
         {view === "setup" ? (
           <TripCreation
             key={loadGeneration}
             trip={trip}
+            accountSavingAvailable={initialView === "setup"}
+            initialStep={creationStep}
+            onStepChange={setCreationStep}
             update={update}
             reorder={reorder}
             remove={setRemoving}
@@ -207,182 +698,60 @@ export default function TripWorkbench({
             }}
           />
         ) : (
-          <div className="trip-workspace">
-            <aside className="trip-panel trip-route">
-              <p className="trip-kicker">THE JOURNEY</p>
-              <h2>A place at a time.</h2>
-              {trip.stops.map((s, i) => (
-                <button
-                  key={s.id}
-                  className={`trip-route-stop ${stop?.id === s.id ? "is-active" : ""}`}
-                  onClick={() => {
-                    setSelected(s.id);
-                    setDay(1);
-                  }}
-                >
-                  <span className="trip-number">{i + 1}</span>
-                  <span>
-                    <strong>{s.name || "Unnamed destination"}</strong>
-                    <small>
-                      {s.nights} nights · {s.timezone || "Timezone unknown"}
-                    </small>
-                  </span>
-                </button>
-              ))}
-              <button className="trip-add" onClick={() => setView("setup")}>
-                Edit route & stay lengths
-              </button>
-              <div className="trip-budget">
-                <p className="trip-kicker">BUDGET TARGET</p>
-                <strong>
-                  {trip.budget
-                    ? `${trip.currency} ${Number(trip.budget).toLocaleString()}`
-                    : "Not set"}
-                </strong>
-                <p>
-                  Stay & travel subtotal:{" "}
-                  {costs.known
-                    ? `${trip.currency} ${costs.total.toLocaleString()}`
-                    : "not entered"}
-                </p>
-                <small>
-                  User-entered allowances only. Meals, activities, taxes and
-                  local travel remain unpriced.
-                </small>
-              </div>
-            </aside>
-            <section className="trip-panel trip-timeline">
-              <div className="trip-section-title">
-                <div>
-                  <p className="trip-kicker">EDITABLE DRAFT</p>
-                  <h2>{stop?.name || "Start with a destination"}</h2>
-                </div>
-                <span className="trip-badge">Not accepted</span>
-              </div>
-              {stop ? (
-                <>
-                  <label className="trip-day">
-                    Day at this destination
-                    <input
-                      type="number"
-                      min="1"
-                      max={stop.nights + 1}
-                      value={day}
-                      onChange={(e) =>
-                        setDay(
-                          Math.min(
-                            stop.nights + 1,
-                            Math.max(1, Number(e.target.value)),
-                          ),
-                        )
-                      }
-                    />
-                    <span>of {stop.nights + 1} days</span>
-                  </label>
-                  <p className="trip-muted">
-                    Local time · {stop.timezone || "Timezone not entered"} ·{" "}
-                    {trip.mode === "duration"
-                      ? "No calendar date assigned"
-                      : "Calendar scheduling pending validation"}
-                  </p>
-                  <div className="trip-activities">
-                    {trip.activities
-                      .filter((a) => a.stopId === stop.id && a.day === day)
-                      .sort((a, b) => a.start.localeCompare(b.start))
-                      .map((a) => (
-                        <article className="trip-activity" key={a.id}>
-                          <time>{a.start}</time>
-                          <div>
-                            <h3>{a.title}</h3>
-                            <p>
-                              {a.minutes} min ·{" "}
-                              {a.booked
-                                ? "User-entered booking"
-                                : "Planned · not booked"}
-                              {a.fixed ? " · Keep fixed" : ""}
-                              {a.completed ? " · Completed" : ""}
-                            </p>
-                            <small>
-                              Mock / user-entered · hours, travel and
-                              availability unchecked
-                            </small>
-                          </div>
-                          <button
-                            onClick={() => setEditing({ ...a })}
-                            aria-label={`Edit ${a.title}`}
-                          >
-                            Edit
-                          </button>
-                        </article>
-                      ))}
-                  </div>
-                  <div className="trip-free">
-                    <span>↗</span>
-                    <div>
-                      <h3>Space is part of the plan.</h3>
-                      <p>
-                        Unscheduled time is left open. Add an activity when
-                        you’re ready.
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    className="trip-add"
-                    onClick={() =>
-                      setEditing({
-                        id: crypto.randomUUID(),
-                        stopId: stop.id,
-                        day,
-                        title: "",
-                        start: "09:00",
-                        minutes: 60,
-                        fixed: false,
-                        completed: false,
-                        booked: false,
-                      })
-                    }
-                  >
-                    + Add activity or free time
-                  </button>
-                </>
-              ) : (
-                <button className="trip-add" onClick={() => setView("setup")}>
-                  Add your first destination →
-                </button>
-              )}
-            </section>
-            <aside className="trip-panel trip-review">
-              <p className="trip-kicker">BEFORE YOU GO</p>
-              <h2>Keep the gaps visible.</h2>
-              <p className="trip-badge">
-                {issues.length
-                  ? `${issues.length} draft issues`
-                  : "Checks incomplete"}
-              </p>
-              {issues.length ? (
-                <ul>
-                  {issues.map((issue, i) => (
-                    <li key={i}>{issue}</li>
-                  ))}
-                </ul>
-              ) : (
-                <p>
-                  No local time overlaps detected. This is not a validated
-                  travel plan.
-                </p>
-              )}
-              <p>
-                Opening hours, route durations, stays and supplier availability
-                remain unknown. Local checks only cover activity overlaps, day
-                bounds and stay length.
-              </p>
-              <hr />
-              <h3>Draft, then decide.</h3>
-              <p>
-                Saving keeps an editable browser draft. Proposal review and
-                acceptance will connect when the backend is available.
-              </p>
-            </aside>
+          <div
+            className={`trip-conversation-layout ${chatOpen ? "chat-open" : ""}`}
+          >
+            <div className="trip-plan-surface">
+              <ItineraryWorkspace
+                trip={trip}
+                selected={selected}
+                day={day}
+                onSelect={setSelected}
+                onDay={setDay}
+                onEdit={setEditing}
+                onAdd={setEditing}
+                planningMode={
+                  process.env.NEXT_PUBLIC_PLANNING_AI_ENABLED === "true"
+                    ? "groq"
+                    : "fixture"
+                }
+                onGenerate={
+                  (process.env.NEXT_PUBLIC_PLANNING_AI_ENABLED === "true" ||
+                    process.env.NEXT_PUBLIC_PLANNING_FIXTURES_ENABLED ===
+                      "true") &&
+                  account &&
+                  !dirty &&
+                  !autosave.saving &&
+                  !autosave.error
+                    ? () => setPlanningOpen(true)
+                    : undefined
+                }
+                onUpdate={update}
+                onSetup={(step = 5) => {
+                  setCreationStep(step);
+                  setLoadGeneration((n) => n + 1);
+                  setView("setup");
+                }}
+              />
+            </div>
+            {chatOpen && account && (
+              <TripChat
+                key={account.id}
+                account={account}
+                stopId={selected}
+                day={day}
+                place={
+                  trip.stops.find((s) => s.id === selected)?.name ??
+                  "Selected destination"
+                }
+                canSend={!dirty && !autosave.saving && !autosave.error}
+                onClose={() => setChatOpen(false)}
+                onReview={(id) => {
+                  setGeneratedProposalId(id);
+                  setReviewOpen(true);
+                }}
+              />
+            )}
           </div>
         )}
         {removing && (
@@ -421,150 +790,78 @@ export default function TripWorkbench({
             </section>
           </div>
         )}
+        {planningOpen && account && (
+          <DayPlanning
+            engine={
+              process.env.NEXT_PUBLIC_PLANNING_AI_ENABLED === "true"
+                ? "groq"
+                : "fixture"
+            }
+            account={account}
+            stopId={selected}
+            day={day}
+            place={
+              trip.stops.find((s) => s.id === selected)?.name ??
+              "Selected destination"
+            }
+            onClose={() => setPlanningOpen(false)}
+            onReview={(id) => {
+              setPlanningOpen(false);
+              setGeneratedProposalId(id);
+              setReviewOpen(true);
+            }}
+          />
+        )}
+        {reviewOpen && account && (
+          <ProposalReview
+            account={account}
+            proposalId={generatedProposalId}
+            onClose={() => setReviewOpen(false)}
+            onAccepted={async () => {
+              const saved = await accountTripAdapter.load(account.id);
+              setAccount(saved);
+              setTrip(saved.trip);
+              setDirty(false);
+              setLoadGeneration((n) => n + 1);
+              setReviewOpen(false);
+              setNotice(
+                "Provisional plan accepted. You can keep editing your draft; later edits do not change the accepted snapshot.",
+              );
+            }}
+          />
+        )}
         {editing && (
-          <div className="trip-overlay">
-            <form
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="activity-title"
-              className="trip-dialog"
-              onSubmit={(e) => {
-                e.preventDefault();
-                update({
-                  activities: [
-                    ...trip.activities.filter((a) => a.id !== editing.id),
-                    editing,
-                  ],
-                });
-                setEditing(null);
-              }}
-            >
-              <h2 id="activity-title">Shape this part of the day.</h2>
-              <label>
-                Activity or free time
-                <input
-                  autoFocus
-                  required
-                  value={editing.title}
-                  onChange={(e) =>
-                    setEditing({ ...editing, title: e.target.value })
-                  }
-                />
-              </label>
-              <div className="trip-fields">
-                <label>
-                  Destination
-                  <select
-                    value={editing.stopId}
-                    onChange={(e) =>
-                      setEditing({ ...editing, stopId: e.target.value, day: 1 })
-                    }
-                  >
-                    {trip.stops.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Day
-                  <input
-                    required
-                    type="number"
-                    min="1"
-                    value={editing.day}
-                    onChange={(e) =>
-                      setEditing({
-                        ...editing,
-                        day: Math.max(1, Number(e.target.value)),
-                      })
-                    }
-                  />
-                </label>
-                <label>
-                  Local start
-                  <input
-                    required
-                    type="time"
-                    value={editing.start}
-                    onChange={(e) =>
-                      setEditing({ ...editing, start: e.target.value })
-                    }
-                  />
-                </label>
-                <label>
-                  Duration · minutes
-                  <input
-                    required
-                    type="number"
-                    min="1"
-                    value={editing.minutes}
-                    onChange={(e) =>
-                      setEditing({
-                        ...editing,
-                        minutes: Math.max(1, Number(e.target.value)),
-                      })
-                    }
-                  />
-                </label>
-              </div>
-              <label className="trip-check">
-                <input
-                  type="checkbox"
-                  checked={editing.fixed}
-                  onChange={(e) =>
-                    setEditing({ ...editing, fixed: e.target.checked })
-                  }
-                />
-                Keep fixed during future replanning
-              </label>
-              <label className="trip-check">
-                <input
-                  type="checkbox"
-                  checked={editing.completed}
-                  onChange={(e) =>
-                    setEditing({ ...editing, completed: e.target.checked })
-                  }
-                />
-                Completed
-              </label>
-              <p className="trip-muted">
-                Fixed is separate from booked. You can explicitly edit fixed
-                items here.
-              </p>
-              <div className="trip-dialog-actions">
-                <button type="button" onClick={() => setEditing(null)}>
-                  Cancel
-                </button>
-                <button className="trip-primary" type="submit">
-                  Save activity to draft
-                </button>
-              </div>
-              {trip.activities.some((a) => a.id === editing.id) && (
-                <button
-                  type="button"
-                  className="trip-danger"
-                  onClick={() => {
-                    if (
-                      window.confirm(
-                        "Remove this activity from the draft? This does not cancel a booking.",
-                      )
-                    ) {
-                      update({
-                        activities: trip.activities.filter(
-                          (a) => a.id !== editing.id,
-                        ),
-                      });
-                      setEditing(null);
-                    }
-                  }}
-                >
-                  Remove activity
-                </button>
-              )}
-            </form>
-          </div>
+          <ActivityEditor
+            key={editing.id}
+            initial={editing}
+            trip={trip}
+            onClose={() => setEditing(null)}
+            onSave={(activity) => {
+              update({
+                activities: [
+                  ...trip.activities.filter((a) => a.id !== activity.id),
+                  activity,
+                ],
+              });
+              setSelected(activity.stopId);
+              setDay(activity.day);
+              setEditing(null);
+            }}
+            onRemove={() => {
+              if (
+                (editing.fixed || editing.completed || editing.booked) &&
+                !window.confirm(
+                  "Remove this protected or completed item? This changes your plan only and does not cancel a reservation.",
+                )
+              )
+                return;
+              setRemovedActivity({ ...editing });
+              update({
+                activities: trip.activities.filter((a) => a.id !== editing.id),
+              });
+              setEditing(null);
+            }}
+          />
         )}
       </div>
     </main>

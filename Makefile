@@ -1,4 +1,4 @@
-.PHONY: setup db db-local db-local-stop migrate api web check
+.PHONY: setup db db-local db-local-stop migrate migrate-supabase api web check
 setup:
 	cd services/backend && uv sync --locked
 	cd apps/web && npm ci
@@ -15,6 +15,9 @@ db-local-stop:
 migrate:
 	cd services/backend && uv run alembic upgrade head
 
+migrate-supabase:
+	cd services/backend && uv run python -m scripts.migrate_supabase
+
 api:
 	cd services/backend && uv run uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 
@@ -23,4 +26,10 @@ web:
 
 check:
 	cd services/backend && uv run ruff check . && uv run pytest
-	cd apps/web && npm run typecheck && npm run build
+	cd apps/web && npm test && npm run typecheck && npm run build
+
+# Explicit local fixture planner; requires PLANNING_FIXTURES_ENABLED=true.
+worker:
+	cd services/backend && uv run python -m app.jobs.worker
+
+.PHONY: worker

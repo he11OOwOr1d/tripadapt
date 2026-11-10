@@ -13,7 +13,7 @@ const steps = [
   "A beginning",
   "When you go",
   "Places to follow",
-  "Room for each place",
+  "Time in each place",
   "Stay & travel",
   "All together",
 ];
@@ -21,16 +21,16 @@ const headings = [
   "Where does your escape begin?",
   "When feels right?",
   "The places that pull you.",
-  "Give each place a little time.",
-  "A way there. A place to land.",
+  "How long in each place?",
+  "How would you like to travel?",
   "Your escape, all together.",
 ];
 const introductions = [
   "Start with what you know. There’s room to change your mind.",
   "Choose your dates, a window, or leave the calendar open.",
   "Add your destinations in travel order. One place or many, anywhere.",
-  "Stay a little longer, or just pass through. The route is yours to shape.",
-  "Keep preferences and allowances together. You can leave details open.",
+  "Choose your overnight stays. Leave a little time open if you like.",
+  "Choose a place to sleep and a way to get there. Everything here is optional.",
   "A route to build around, with space for the days still to come.",
 ];
 
@@ -40,20 +40,28 @@ export default function TripCreation({
   reorder,
   remove,
   onOpen,
+  initialStep = 0,
+  onStepChange,
+  accountSavingAvailable = false,
 }: {
+  accountSavingAvailable?: boolean;
+  initialStep?: number;
+  onStepChange?: (step: number) => void;
   trip: Trip;
   update: (patch: Partial<Trip>) => void;
   reorder: (index: number, delta: number) => void;
   remove: (id: string) => void;
   onOpen: () => void;
 }) {
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(initialStep);
   const [collapsed, setCollapsed] = useState(false);
   const [furthest, setFurthest] = useState(() =>
-    trip.origin.trim() && trip.stops.length ? 5 : trip.origin.trim() ? 1 : 0,
+    Math.max(
+      initialStep,
+      trip.origin.trim() && trip.stops.length ? 5 : trip.origin.trim() ? 1 : 0,
+    ),
   );
   const [errors, setErrors] = useState<string[]>([]);
-  const [proposal, setProposal] = useState<Stop[] | null>(null);
   const [place, setPlace] = useState("");
   const [timezone, setTimezone] = useState("");
   const [placeError, setPlaceError] = useState("");
@@ -66,9 +74,9 @@ export default function TripCreation({
     `${trip.currency} ${amount.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
   function go(next: number) {
     setStep(next);
+    onStepChange?.(next);
     setCollapsed(false);
     setErrors([]);
-    setProposal(null);
     setFurthest((n) => Math.max(n, next));
     requestAnimationFrame(() => {
       title.current?.focus();
@@ -197,9 +205,7 @@ export default function TripCreation({
             <span>
               {s.name}
               <small>
-                {s.nights
-                  ? `${s.nights} stay nights`
-                  : "Day visit · no stay night"}
+                {s.nights ? `${s.nights} nights` : "Day visit · no stay night"}
               </small>
             </span>
           </li>
@@ -220,11 +226,11 @@ export default function TripCreation({
       <div className="creation-summary-time">
         <div>
           <strong>{time.stays}</strong>
-          <span>stay nights</span>
+          <span>in accommodation</span>
         </div>
         <div>
           <strong>{time.travelNights}</strong>
-          <span>travel nights</span>
+          <span>on the move</span>
         </div>
         <div>
           <strong>{time.days ?? "—"}</strong>
@@ -233,20 +239,22 @@ export default function TripCreation({
       </div>
       <p className="creation-note">
         {time.remaining === null
-          ? "Total duration is open. Allocated nights are a partial outline."
+          ? "Dates are open. Keep shaping your route."
           : time.remaining < 0
-            ? `${-time.remaining} nights over your available time.`
-            : `${time.remaining} ${time.remaining === 1 ? "night" : "nights"} unallocated. Leave time open or plan it later.`}
+            ? `${-time.remaining} ${-time.remaining === 1 ? "night" : "nights"} over your available time.`
+            : time.remaining === 0
+              ? "All nights accounted for."
+              : `${time.remaining} ${time.remaining === 1 ? "night" : "nights"} left open.`}
       </p>
       <div className="creation-summary-cost">
-        <span>User-entered stay & travel subtotal</span>
-        <strong>{costs.known ? money(costs.total) : "Not priced yet"}</strong>
+        <span>Your estimated costs</span>
+        <strong>{costs.known ? money(costs.total) : "Budget left open"}</strong>
         {!!costs.known && (
           <span>{money(costs.total / trip.travelers)} per traveler</span>
         )}
         <small>
-          {costs.unknown} stay/leg allowances not entered. Meals, activities,
-          taxes and local travel are extra and unknown.
+          {costs.unknown > 0 ? "Some costs are still open. " : ""}Meals and
+          local spending are extra.
         </small>
       </div>
     </>
@@ -266,11 +274,11 @@ export default function TripCreation({
       ? trip.stops.map((s) => s.name).join(" / ")
       : "One place, or many. Anywhere.",
     trip.stops.length
-      ? `${time.stays} stay nights + ${time.travelNights} travel nights${time.days ? ` / ${time.days} days` : " / duration open"}`
+      ? `${time.stays} nights across ${trip.stops.length} ${trip.stops.length === 1 ? "place" : "places"}`
       : "Give the route a little time",
     costs.known
       ? `${money(costs.total)} entered / other costs still open`
-      : "Preferences first. Details can come later.",
+      : "Sleep, transport and optional budgets",
     "Your route, time and allowances together",
   ];
   function leafHeader(index: number, active = false) {
@@ -299,7 +307,7 @@ export default function TripCreation({
         <summary>
           View your trip summary{" "}
           <span>
-            {trip.stops.length} stops · {time.stays} stay nights
+            {trip.stops.length} places · {time.stays} nights
           </span>
         </summary>
         {summary}
@@ -375,8 +383,7 @@ export default function TripCreation({
                     />
                   </label>
                   <p id="origin-help" className="creation-note">
-                    Manual entry for now. Include the region or country to
-                    distinguish namesakes.
+                    Include the region or country if there are namesakes.
                   </p>
                   <div className="trip-fields">
                     <label>
@@ -492,9 +499,7 @@ export default function TripCreation({
                     )}
                   </div>
                   <p className="creation-note">
-                    Departure and finish are inclusive travel days. A 7-day trip
-                    has 6 nights; overnight travel uses a night, too. Same-day
-                    travel fits within a day.
+                    You can adjust these dates later.
                   </p>
                   <details className="creation-disclosure">
                     <summary>A few optional preferences</summary>
@@ -709,100 +714,377 @@ export default function TripCreation({
               )}
               {step === 3 && (
                 <>
-                  <div className="creation-time-strip">
-                    <strong>
-                      {time.days === null
-                        ? "Duration open"
-                        : `${time.days} days / ${time.available} nights`}
-                    </strong>
-                    <span>
-                      {time.stays} stay nights + {time.travelNights} overnight
-                      travel nights
-                    </span>
+                  <section
+                    className="time-budget"
+                    aria-label="Trip time allocation"
+                  >
+                    <div>
+                      <strong>
+                        {time.days === null
+                          ? `${time.stays} nights planned`
+                          : `${time.days} days, ${time.available} nights`}
+                      </strong>
+                      <span>
+                        {time.remaining === null
+                          ? "Keep your dates open"
+                          : time.remaining < 0
+                            ? `${-time.remaining} ${-time.remaining === 1 ? "night" : "nights"} over`
+                            : time.remaining === 0
+                              ? "All nights accounted for"
+                              : `${time.remaining} nights still open`}
+                      </span>
+                    </div>
+                    <div
+                      className="time-ribbon"
+                      role="img"
+                      aria-label={
+                        trip.stops
+                          .map((s) => `${s.name}: ${s.nights} nights`)
+                          .join(", ") +
+                        (time.travelNights
+                          ? `, travel: ${time.travelNights} ${time.travelNights === 1 ? "night" : "nights"}`
+                          : "")
+                      }
+                    >
+                      {trip.stops.map((s, i) =>
+                        s.nights > 0 ? (
+                          <span
+                            key={s.id}
+                            className={`ribbon-stop ribbon-stop-${i % 4}`}
+                            style={{ flex: s.nights }}
+                            title={`${s.name}: ${s.nights} nights`}
+                          >
+                            {s.nights}
+                          </span>
+                        ) : null,
+                      )}
+                      {time.travelNights > 0 && (
+                        <span
+                          className="ribbon-travel"
+                          style={{ flex: time.travelNights }}
+                          title="Nights on the move"
+                        >
+                          {time.travelNights}
+                        </span>
+                      )}
+                      {(time.remaining ?? 0) > 0 && (
+                        <span
+                          className="ribbon-open"
+                          style={{ flex: time.remaining! }}
+                          title="Nights left open"
+                        >
+                          {time.remaining}
+                        </span>
+                      )}
+                    </div>
+                    <p>
+                      A night means sleeping in that place. Arrive Monday, leave
+                      Wednesday: <strong>2 nights.</strong>
+                    </p>
+                  </section>
+                  {!trip.stops.length ? (
+                    <div className="creation-info">
+                      <p>Add a destination to start dividing your time.</p>
+                      <button type="button" onClick={() => go(2)}>
+                        Add a place
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="time-stop-list">
+                        {trip.stops.map((s, i) => (
+                          <section className="time-stop" key={s.id}>
+                            <div>
+                              <span
+                                className={`time-stop-dot ribbon-stop-${i % 4}`}
+                                aria-hidden="true"
+                              />
+                              <div>
+                                <h3>{s.name}</h3>
+                                <p>
+                                  {s.nights === 0
+                                    ? "Day visit · no overnight stay"
+                                    : `${s.nights} ${s.nights === 1 ? "night" : "nights"} of accommodation`}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="night-stepper">
+                              <button
+                                type="button"
+                                aria-label={`One fewer night in ${s.name}, stop ${i + 1}`}
+                                disabled={s.nights === 0}
+                                onClick={() =>
+                                  update({
+                                    stops: trip.stops.map((x) =>
+                                      x.id === s.id
+                                        ? {
+                                            ...x,
+                                            nights: Math.max(0, s.nights - 1),
+                                          }
+                                        : x,
+                                    ),
+                                  })
+                                }
+                              >
+                                −
+                              </button>
+                              <label>
+                                <span className="sr-only">
+                                  Nights in {s.name}, stop {i + 1}
+                                </span>
+                                <input
+                                  aria-label={`Nights in ${s.name}, stop ${i + 1}`}
+                                  type="number"
+                                  min="0"
+                                  required
+                                  value={s.nights}
+                                  onChange={(e) =>
+                                    update({
+                                      stops: trip.stops.map((x) =>
+                                        x.id === s.id
+                                          ? {
+                                              ...x,
+                                              nights: Number(e.target.value),
+                                            }
+                                          : x,
+                                      ),
+                                    })
+                                  }
+                                />
+                                <span>nights</span>
+                              </label>
+                              <button
+                                type="button"
+                                aria-label={`One more night in ${s.name}, stop ${i + 1}`}
+                                onClick={() =>
+                                  update({
+                                    stops: trip.stops.map((x) =>
+                                      x.id === s.id
+                                        ? { ...x, nights: s.nights + 1 }
+                                        : x,
+                                    ),
+                                  })
+                                }
+                              >
+                                ＋
+                              </button>
+                            </div>
+                          </section>
+                        ))}
+                      </div>
+                      <div className="time-split-action">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            update({ stops: suggestedSplit(trip) })
+                          }
+                        >
+                          Split nights evenly
+                        </button>
+                        <span>A starting point you can change.</span>
+                      </div>
+                    </>
+                  )}
+                  {time.travelNights > 0 && (
+                    <p className="creation-note">
+                      {time.travelNights}{" "}
+                      {time.travelNights === 1 ? "night is" : "nights are"} on
+                      the move, rather than in accommodation. Change this in
+                      Stay & travel.
+                    </p>
+                  )}
+                  {problems.length > 0 && (
+                    <div className="creation-alert">
+                      <strong>Your nights don’t fit yet.</strong>
+                      {problems.map((p) => (
+                        <p key={p}>{p}</p>
+                      ))}
+                      <button type="button" onClick={() => go(1)}>
+                        Adjust dates or duration
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
+              {step === 4 && (
+                <>
+                  <div className="preference-intro">
+                    <span aria-hidden="true">⌂</span>
+                    <div>
+                      <h3>Where you’ll sleep</h3>
+                      <p>Your style, not a booking.</p>
+                    </div>
                   </div>
                   {trip.stops.map((s, i) => (
-                    <div key={s.id} className="creation-time-stop">
-                      <span className="route-dot">{i + 1}</span>
-                      <div>
+                    <section className="simple-preference" key={s.id}>
+                      <div className="simple-preference-title">
                         <h3>{s.name}</h3>
-                        <small>
-                          {s.nights
-                            ? `${s.nights} nights at this destination`
-                            : "Day visit · no accommodation night"}
-                        </small>
+                        <span>
+                          {s.nights === 0 ? "Day visit" : `${s.nights} nights`}
+                        </span>
                       </div>
-                      <label>
-                        Stay nights
-                        <input
-                          aria-label={`Stay nights for stop ${i + 1}: ${s.name}`}
-                          type="number"
-                          min="0"
-                          required
-                          value={s.nights}
-                          onChange={(e) => {
-                            setProposal(null);
-                            update({
-                              stops: trip.stops.map((x) =>
-                                x.id === s.id
-                                  ? { ...x, nights: Number(e.target.value) }
-                                  : x,
+                      {s.nights === 0 ? (
+                        <p className="creation-note">
+                          No overnight stay needed.
+                        </p>
+                      ) : (
+                        <>
+                          <fieldset className="stay-choices">
+                            <legend className="sr-only">
+                              Stay style for {s.name}, stop {i + 1}
+                            </legend>
+                            {["Guesthouse", "Hotel", "Apartment", "Hostel"].map(
+                              (style) => (
+                                <label key={style}>
+                                  <input
+                                    type="radio"
+                                    name={`stay-${s.id}`}
+                                    checked={
+                                      trip.stayPreferences?.[s.id]?.style ===
+                                      style
+                                    }
+                                    onChange={() => stay(s.id, { style })}
+                                  />
+                                  <span>{style}</span>
+                                </label>
                               ),
-                            });
-                          }}
-                        />
-                      </label>
-                    </div>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={() => setProposal(suggestedSplit(trip))}
-                  >
-                    Suggest a split
-                  </button>
-                  <p className="creation-note">
-                    An illustrative equal split of available nights; for open
-                    duration, {trip.pace === "relaxed" ? 3 : 2} nights per stop.
-                    Not a researched recommendation. Your allocation changes
-                    only if you accept.
-                  </p>
-                  {proposal && (
-                    <section className="creation-proposal">
-                      <h3>A split to consider</h3>
-                      <p>
-                        {proposal
-                          .map((s) => `${s.name}: ${s.nights} nights`)
-                          .join(" · ")}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          update({ stops: proposal });
-                          setProposal(null);
-                          setErrors([]);
-                        }}
-                      >
-                        Use this split
-                      </button>
-                      <button type="button" onClick={() => setProposal(null)}>
-                        Keep my allocation
-                      </button>
+                            )}
+                            <label>
+                              <input
+                                type="radio"
+                                name={`stay-${s.id}`}
+                                checked={!trip.stayPreferences?.[s.id]?.style}
+                                onChange={() => stay(s.id, { style: "" })}
+                              />
+                              <span>Decide later</span>
+                            </label>
+                            {trip.stayPreferences?.[s.id]?.style &&
+                              ![
+                                "Guesthouse",
+                                "Hotel",
+                                "Apartment",
+                                "Hostel",
+                              ].includes(trip.stayPreferences[s.id].style) && (
+                                <label>
+                                  <input
+                                    type="radio"
+                                    name={`stay-${s.id}`}
+                                    checked
+                                    readOnly
+                                  />
+                                  <span>
+                                    {trip.stayPreferences[s.id].style}
+                                  </span>
+                                </label>
+                              )}
+                          </fieldset>
+                          <details className="preference-details">
+                            <summary>
+                              {trip.stayPreferences?.[s.id]?.rate
+                                ? `${money(Number(trip.stayPreferences[s.id].rate))} per ${trip.stayPreferences[s.id].basis === "bed" ? "bed" : "room"} / night`
+                                : "Add a nightly budget"}
+                            </summary>
+                            <div className="trip-fields">
+                              <label>
+                                Nightly budget · {trip.currency}
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  placeholder="Leave open"
+                                  value={
+                                    trip.stayPreferences?.[s.id]?.rate ?? ""
+                                  }
+                                  onChange={(e) =>
+                                    stay(s.id, { rate: e.target.value })
+                                  }
+                                />
+                              </label>
+                              <label>
+                                For each
+                                <select
+                                  value={
+                                    trip.stayPreferences?.[s.id]?.basis ||
+                                    "room"
+                                  }
+                                  onChange={(e) =>
+                                    stay(s.id, {
+                                      basis: e.target.value as "room" | "bed",
+                                    })
+                                  }
+                                >
+                                  <option value="room">Room</option>
+                                  <option value="bed">Bed</option>
+                                </select>
+                              </label>
+                            </div>
+                            <p className="creation-note">
+                              {s.nights} nights ×{" "}
+                              {trip.stayPreferences?.[s.id]?.basis === "bed"
+                                ? `${trip.travelers} beds`
+                                : `${trip.rooms} rooms`}
+                              . Your estimate; taxes and fees are extra.
+                            </p>
+                          </details>
+                        </>
+                      )}
                     </section>
-                  )}
-                  <details className="creation-disclosure" open>
-                    <summary>Make room for travel</summary>
-                    <p>
-                      Enter your own provisional travel time. Hours do not
-                      automatically add whole days. Count a night here only when
-                      it is spent traveling instead of staying.
-                    </p>
-                    {routeLegs(trip).map((l) => (
-                      <div key={l.key} className="creation-leg">
-                        <h3>
-                          {l.from} → {l.to}
-                        </h3>
+                  ))}
+                  <div className="preference-intro">
+                    <span aria-hidden="true">↗</span>
+                    <div>
+                      <h3>How you’ll get there</h3>
+                      <p>Between places, in your route order.</p>
+                    </div>
+                  </div>
+                  {routeLegs(trip).map((l, i) => (
+                    <section className="simple-preference" key={l.key}>
+                      <h3>
+                        {l.from}
+                        <span className="leg-arrow" aria-label="to">
+                          {" "}
+                          →{" "}
+                        </span>
+                        {l.to}
+                      </h3>
+                      <label className="journey-mode">
+                        <span className="sr-only">
+                          Transport from {l.from} to {l.to}
+                        </span>
+                        <select
+                          aria-label={`Transport from ${l.from} to ${l.to}`}
+                          value={trip.travelPreferences?.[l.key]?.mode || ""}
+                          onChange={(e) =>
+                            travel(l.key, { mode: e.target.value })
+                          }
+                        >
+                          <option value="">Choose transport later</option>
+                          {[
+                            "Rail",
+                            "Bus",
+                            "Flight",
+                            "Private transfer",
+                            "Own vehicle",
+                            "Other",
+                          ].map((m) => (
+                            <option key={m}>{m}</option>
+                          ))}
+                        </select>
+                      </label>
+                      <details className="preference-details">
+                        <summary>
+                          Travel time & overnight journeys
+                          {(trip.travelPreferences?.[l.key]?.overnight ?? 0) > 0
+                            ? ` · ${trip.travelPreferences![l.key].overnight} ${trip.travelPreferences![l.key].overnight === 1 ? "night" : "nights"}`
+                            : ""}
+                        </summary>
+                        <p className="creation-note">
+                          Only count nights spent on a train, bus or flight.
+                          These replace accommodation nights.
+                        </p>
                         <div className="trip-fields">
                           <label>
-                            Journey hours · optional
+                            Approximate hours
                             <input
                               type="number"
                               min="0"
@@ -810,217 +1092,95 @@ export default function TripCreation({
                               value={
                                 trip.travelPreferences?.[l.key]?.hours ?? ""
                               }
+                              placeholder="Not sure yet"
                               onChange={(e) =>
                                 travel(l.key, { hours: e.target.value })
                               }
                             />
                           </label>
                           <label>
-                            Nights spent traveling
+                            Nights on the move
                             <input
                               type="number"
                               min="0"
                               value={
                                 trip.travelPreferences?.[l.key]?.overnight ?? 0
                               }
-                              onChange={(e) => {
-                                setProposal(null);
+                              onChange={(e) =>
                                 travel(l.key, {
                                   overnight: Number(e.target.value),
-                                });
-                              }}
+                                })
+                              }
                             />
                           </label>
                         </div>
-                      </div>
-                    ))}
-                    <p className="creation-note">
-                      User-entered assumptions only. Departure/arrival
-                      schedules, timezone changes and boarding buffers are not
-                      validated here. Travel dates remain provisional.
-                    </p>
-                  </details>
-                  {problems.length > 0 && (
-                    <div className="creation-alert">
-                      <h3>The route needs more room.</h3>
-                      {problems.map((p) => (
-                        <p key={p}>{p}</p>
-                      ))}
-                      <button type="button" onClick={() => go(1)}>
-                        Change dates or duration
-                      </button>
-                      <p className="creation-note">
-                        You can use Save draft above to keep this unresolved
-                        draft.
-                      </p>
-                    </div>
-                  )}
-                  <p className="creation-note">
-                    {time.allHours
-                      ? `${time.hours} journey hours entered. `
-                      : "Some journey times remain unknown. "}
-                    Stay nights + travel nights do not prove that the
-                    connections fit. Remaining nights stay unallocated.
-                  </p>
-                </>
-              )}
-              {step === 4 && (
-                <>
-                  <div className="creation-info">
-                    Preferences, not reservations. No live inventory or prices
-                    are connected. Leave an allowance blank when you don’t know
-                    it.
-                  </div>
-                  <h3>Places to stay</h3>
-                  {trip.stops.map((s) => (
-                    <section
-                      className="creation-preference"
-                      key={s.id}
-                      aria-label={`Stay at ${s.name}, visit ${trip.stops.indexOf(s) + 1}`}
-                    >
-                      <h3>
-                        {s.name} <small>{s.nights} stay nights</small>
-                      </h3>
-                      {s.nights === 0 ? (
-                        <p>Day visit. No stay allowance needed.</p>
-                      ) : (
-                        <>
-                          <div className="trip-fields">
-                            <label>
-                              Stay preference
-                              <select
-                                value={
-                                  trip.stayPreferences?.[s.id]?.style || ""
-                                }
-                                onChange={(e) =>
-                                  stay(s.id, { style: e.target.value })
-                                }
-                              >
-                                <option value="">Decide later</option>
-                                <option>Hostel</option>
-                                <option>Guesthouse</option>
-                                <option>Hotel</option>
-                                <option>Apartment</option>
-                                <option>Other / own arrangement</option>
-                              </select>
-                            </label>
-                            <label>
-                              Allowance basis
-                              <select
-                                value={
-                                  trip.stayPreferences?.[s.id]?.basis || "room"
-                                }
-                                onChange={(e) =>
-                                  stay(s.id, {
-                                    basis: e.target.value as "room" | "bed",
-                                  })
-                                }
-                              >
-                                <option value="room">Per room per night</option>
-                                <option value="bed">Per bed per night</option>
-                              </select>
-                            </label>
-                          </div>
+                        <p className="creation-note">
+                          Your estimate. Actual schedules still need checking.
+                        </p>
+                      </details>
+                      <details className="preference-details">
+                        <summary>
+                          {trip.travelPreferences?.[l.key]?.rate
+                            ? `${money(Number(trip.travelPreferences[l.key].rate))} per ${trip.travelPreferences[l.key].basis === "vehicle" ? "vehicle" : "person"}`
+                            : "Add a journey budget"}
+                        </summary>
+                        <div className="trip-fields">
                           <label>
-                            Your nightly allowance · {trip.currency}
+                            Journey budget · {trip.currency}
                             <input
                               type="number"
                               min="0"
                               step="0.01"
-                              placeholder="Unknown"
-                              value={trip.stayPreferences?.[s.id]?.rate ?? ""}
+                              placeholder="Leave open"
+                              value={
+                                trip.travelPreferences?.[l.key]?.rate ?? ""
+                              }
                               onChange={(e) =>
-                                stay(s.id, { rate: e.target.value })
+                                travel(l.key, { rate: e.target.value })
                               }
                             />
                           </label>
-                          <p className="creation-note">
-                            {s.nights} nights ×{" "}
-                            {trip.stayPreferences?.[s.id]?.basis === "bed"
-                              ? `${trip.travelers} beds`
-                              : `${trip.rooms} rooms`}
-                            . Occupancy, availability, taxes and fees need
-                            checking.
-                          </p>
-                        </>
-                      )}
+                          <label>
+                            For each
+                            <select
+                              value={
+                                trip.travelPreferences?.[l.key]?.basis ||
+                                "person"
+                              }
+                              onChange={(e) =>
+                                travel(l.key, {
+                                  basis: e.target.value as "person" | "vehicle",
+                                })
+                              }
+                            >
+                              <option value="person">Person</option>
+                              <option value="vehicle">Vehicle</option>
+                            </select>
+                          </label>
+                        </div>
+                      </details>
                     </section>
                   ))}
-                  <h3>Journeys between places</h3>
-                  {routeLegs(trip).map((l) => (
-                    <section
-                      key={l.key}
-                      className="creation-preference"
-                      aria-label={`Travel from ${l.from} to ${l.to}`}
-                    >
-                      <h3>
-                        {l.from} → {l.to}
-                      </h3>
-                      <div className="trip-fields">
-                        <label>
-                          Transport preference
-                          <select
-                            value={trip.travelPreferences?.[l.key]?.mode || ""}
-                            onChange={(e) =>
-                              travel(l.key, { mode: e.target.value })
-                            }
-                          >
-                            <option value="">Decide later</option>
-                            {[
-                              "Bus",
-                              "Rail",
-                              "Flight",
-                              "Private transfer",
-                              "Own vehicle",
-                              "Other",
-                            ].map((m) => (
-                              <option key={m}>{m}</option>
-                            ))}
-                          </select>
-                        </label>
-                        <label>
-                          Allowance basis
-                          <select
-                            value={
-                              trip.travelPreferences?.[l.key]?.basis || "person"
-                            }
-                            onChange={(e) =>
-                              travel(l.key, {
-                                basis: e.target.value as "person" | "vehicle",
-                              })
-                            }
-                          >
-                            <option value="person">
-                              Per person for this leg
-                            </option>
-                            <option value="vehicle">
-                              Per vehicle for this leg
-                            </option>
-                          </select>
-                        </label>
-                      </div>
-                      <label>
-                        Your allowance for this leg · {trip.currency}
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          placeholder="Unknown"
-                          value={trip.travelPreferences?.[l.key]?.rate ?? ""}
-                          onChange={(e) =>
-                            travel(l.key, { rate: e.target.value })
-                          }
-                        />
-                      </label>
-                      <p className="creation-note">
-                        {trip.travelPreferences?.[l.key]?.basis === "vehicle"
-                          ? "One vehicle assumed; capacity not checked."
-                          : `${trip.travelers} travelers.`}{" "}
-                        A preference does not confirm a service exists.
-                      </p>
-                    </section>
-                  ))}
-                  <CostBreakdown trip={trip} />
+                  {problems.length > 0 && (
+                    <div className="creation-alert">
+                      {problems.map((p) => (
+                        <p key={p}>{p}</p>
+                      ))}
+                      <button type="button" onClick={() => go(3)}>
+                        Adjust nights in each place
+                      </button>
+                    </div>
+                  )}
+                  <p className="preference-honesty">
+                    Preferences and your own estimates only. Nothing is
+                    reserved.
+                  </p>
+                  {costs.known > 0 && (
+                    <details className="preference-details">
+                      <summary>Your estimated costs</summary>
+                      <CostBreakdown trip={trip} />
+                    </details>
+                  )}
                 </>
               )}
               {step === 5 && (
@@ -1045,9 +1205,7 @@ export default function TripCreation({
                         <span className="route-dot">{i + 1}</span>
                         <div>
                           <h3>{s.name}</h3>
-                          <p>
-                            {s.nights} stay nights · {s.timezone}
-                          </p>
+                          <p>{s.nights} nights</p>
                           <small>
                             {trip.stayPreferences?.[s.id]?.style ||
                               "Stay preference open"}
@@ -1063,8 +1221,11 @@ export default function TripCreation({
                     </button>
                   </div>
                   <p>
-                    {time.stays} stay nights + {time.travelNights} travel
-                    nights.{" "}
+                    {time.stays} nights in accommodation
+                    {time.travelNights > 0
+                      ? ` + ${time.travelNights} on the move`
+                      : ""}
+                    .{" "}
                     {time.days === null
                       ? "Total duration still open."
                       : `${time.days} total trip days; ${Math.max(0, time.remaining ?? 0)} nights still open.`}
@@ -1076,35 +1237,35 @@ export default function TripCreation({
                           {l.from} → {l.to}
                         </strong>
                         <span>
-                          {trip.travelPreferences?.[l.key]?.mode || "Mode open"}{" "}
-                          ·{" "}
+                          {trip.travelPreferences?.[l.key]?.mode ||
+                            "Transport to decide"}
                           {trip.travelPreferences?.[l.key]?.hours
-                            ? `${trip.travelPreferences[l.key].hours} hours`
-                            : "Time unknown"}{" "}
-                          · {trip.travelPreferences?.[l.key]?.overnight || 0}{" "}
-                          travel nights
+                            ? ` · ${trip.travelPreferences[l.key].hours} hours`
+                            : ""}
+                          {(trip.travelPreferences?.[l.key]?.overnight ?? 0) > 0
+                            ? ` · ${trip.travelPreferences![l.key].overnight} nights on the move`
+                            : ""}
                         </span>
                       </li>
                     ))}
                   </ul>
                   <div className="creation-review-header">
-                    <h3>Your allowances</h3>
+                    <h3>Your budget</h3>
                     <button type="button" onClick={() => go(4)}>
                       Edit stay & travel
                     </button>
                   </div>
                   <CostBreakdown trip={trip} />
                   <div className="creation-info">
-                    <h3>Draft outline · checks incomplete</h3>
+                    <h3>Room for what comes next</h3>
                     <p>
-                      Days remain open for activities in the workspace. Travel
-                      schedules, accommodation availability, opening hours and
-                      weather are unconnected. No itinerary has been generated
-                      or accepted, and nothing is booked.
+                      Activities are still open. Stays and transport are
+                      preferences, not bookings.
                     </p>
                     <p>
-                      Use Save draft to keep a copy in this browser. Account
-                      saving is not available yet.
+                      {accountSavingAvailable
+                        ? "Your changes are saved automatically. Nothing has been reserved."
+                        : "This sample stays in this browser."}
                     </p>
                   </div>
                 </>
@@ -1140,11 +1301,11 @@ export default function TripCreation({
                   <span aria-hidden="true">↗</span>
                 </button>
               </footer>
-              <p className="creation-save-note">
-                Draft stays on this screen as you move between steps. Save
-                explicitly to keep it after leaving; browser storage can be
-                cleared and does not sync across devices.
-              </p>
+              {!accountSavingAvailable && (
+                <p className="creation-save-note">
+                  Sample edits stay here. Use Save sample to keep them.
+                </p>
+              )}
             </div>
           </form>
           {step !== 5 &&
@@ -1169,8 +1330,8 @@ function CostBreakdown({ trip }: { trip: Trip }) {
   const money = (n: number) =>
     `${trip.currency} ${n.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
   return (
-    <details className="creation-disclosure creation-costs" open>
-      <summary>Cost breakdown · user-entered allowances</summary>
+    <details className="creation-disclosure creation-costs">
+      <summary>Your cost breakdown</summary>
       <dl>
         {[...c.stays, ...c.travel].map((r, i) => (
           <div key={i}>
@@ -1209,9 +1370,8 @@ function CostBreakdown({ trip }: { trip: Trip }) {
         </p>
       )}
       <p className="creation-note">
-        Meals, activities, taxes/fees and local travel are unpriced. These are
-        planning allowances, not live quotes, paid amounts or a complete trip
-        total. No currency conversion or reservation is made.
+        Your estimates, not live prices. Meals, activities, taxes and local
+        travel are extra.
       </p>
     </details>
   );

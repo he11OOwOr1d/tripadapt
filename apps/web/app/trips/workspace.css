@@ -499,3 +499,9 @@
     font-size: 12px;
   }
 }
+.trip-account-bar {display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:0 0 28px;padding:16px 0;border-bottom:1px solid #b6c3aa;}
+.trip-account-bar > button,.trip-account-bar > a {min-height:44px;padding:10px 16px;border:1px solid #9aae91;border-radius:6px;background:#f8f3e5;color:#294d3d;font:inherit;font-size:14px;cursor:pointer;}
+.trip-account-bar > button:nth-child(2){background:#294d3d;color:#fff7df;}
+.trip-account-list {flex-basis:100%;display:flex;flex-wrap:wrap;gap:12px;padding:20px;background:#e6ebd9;border-radius:8px;}
+.trip-account-list h2 {flex-basis:100%;font-size:20px;}
+.trip-account-list button{min-height:44px;padding:10px 14px;}
