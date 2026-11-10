@@ -163,3 +163,139 @@ def test_database_guards(context):
     with db.begin():
         assert db.scalar(select(Trip.title).where(Trip.id == trip["id"])) == "Guarded"
         assert db.scalar(select(AppUser.id)) is not None
+
+
+def test_full_draft_roundtrip_commands_and_idempotency(context):
+    client, _, identity = context
+    stop_a, stop_b, activity = str(uuid4()), str(uuid4()), str(uuid4())
+    plan = {
+        "date_mode": "duration",
+        "desired_days": 45,
+        "origin": {"label": "Delhi"},
+        "return_location": {"label": "Mumbai"},
+        "preferences": {
+            "return_to_origin": False,
+            "stay_preferences": {
+                stop_a: {"style": "small", "rate": "4200.50", "basis": "room"}
+            },
+            "travel_preferences": {
+                "leg": {
+                    "mode": "rail",
+                    "rate": "200",
+                    "hours": "5.5",
+                    "overnight": 0,
+                    "basis": "person",
+                }
+            },
+        },
+        "stops": [
+            {
+                "client_id": stop_a,
+                "name": "Jaipur",
+                "timezone": "Asia/Kolkata",
+                "desired_nights": 8,
+            },
+            {
+                "client_id": stop_b,
+                "name": "Udaipur",
+                "timezone": "Asia/Kolkata",
+                "desired_nights": 10,
+            },
+        ],
+        "activities": [
+            {
+                "logical_id": activity,
+                "stop_logical_id": stop_a,
+                "user_label": "A quiet morning",
+                "kind": "rest",
+                "local_day_offset": 2,
+                "local_start_time": "09:00",
+                "duration_minutes": 60,
+                "fixed": True,
+            }
+        ],
+    }
+    key = {"Idempotency-Key": str(uuid4())}
+    body = {"title": "My own journey", "plan": plan}
+    created = client.post("/api/v1/trips", json=body, headers=key)
+    assert created.status_code == 201, created.text
+    trip = created.json()["data"]
+    assert (
+        client.post("/api/v1/trips", json=body, headers=key).json()["data"]["id"]
+        == trip["id"]
+    )
+    assert (
+        client.post(
+            "/api/v1/trips", json={**body, "title": "Different"}, headers=key
+        ).status_code
+        == 409
+    )
+    path = f"/api/v1/trips/{trip['id']}"
+    vpath = f"{path}/versions/{trip['draft_version_id']}"
+    version = client.get(vpath)
+    assert version.json()["data"]["origin"]["label"] == "Delhi"
+    assert version.json()["data"]["activities"][0]["fixed"] is True
+    assert version.json()["data"]["activities"][0]["kind"] == "rest"
+    assert (
+        version.json()["data"]["preferences"]["stay_preferences"][stop_a]["rate"]
+        == "4200.50"
+    )
+    reordered = [plan["stops"][1], plan["stops"][0]]
+    batch = {
+        "commands": [
+            {"type": "stop.reorder", "stops": reordered},
+            {
+                "type": "activity.replace_user_schedule",
+                "activities": [{**plan["activities"][0], "completed": True}],
+            },
+        ]
+    }
+    assert client.post(path + "/draft/commands", json=batch).status_code == 428
+    headers = {"If-Match": version.headers["etag"]}
+    changed = client.post(path + "/draft/commands", json=batch, headers=headers)
+    assert changed.status_code == 200, changed.text
+    assert changed.json()["data"]["activities"][0]["completed"] is True
+    assert [
+        s["logical_item_id"] for s in client.get(vpath + "/stops").json()["data"]
+    ] == [stop_b, stop_a]
+    assert (
+        client.post(path + "/draft/commands", json=batch, headers=headers).status_code
+        == 412
+    )
+    # Removing a destination with scheduled dependents requires explicit cascade.
+    remove = {"commands": [{"type": "stop.reorder", "stops": [plan["stops"][1]]}]}
+    assert client.post(
+        path + "/draft/commands",
+        json=remove,
+        headers={"If-Match": changed.headers["etag"]},
+    ).status_code in (409, 422)
+    assert len(client.get(vpath + "/stops").json()["data"]) == 2
+    # A late invalid command rolls the whole batch back, including route edits.
+    invalid = {
+        "commands": [
+            {"type": "stop.reorder", "stops": plan["stops"]},
+            {"type": "plan.update_settings", "changes": {"stops": plan["stops"]}},
+        ]
+    }
+    assert (
+        client.post(
+            path + "/draft/commands",
+            json=invalid,
+            headers={"If-Match": changed.headers["etag"]},
+        ).status_code
+        == 422
+    )
+    assert [
+        s["logical_item_id"] for s in client.get(vpath + "/stops").json()["data"]
+    ] == [stop_b, stop_a]
+    app.dependency_overrides[verified_identity] = lambda: TrustedIdentity(
+        identity.issuer, str(uuid4()), "other@example.org", "other@example.org"
+    )
+    assert (
+        client.post(
+            path + "/draft/commands",
+            json=batch,
+            headers={"If-Match": changed.headers["etag"]},
+        ).status_code
+        == 404
+    )

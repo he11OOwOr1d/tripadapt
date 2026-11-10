@@ -1,6 +1,7 @@
-from datetime import date
+from datetime import date, time
 from decimal import Decimal
-from typing import Literal
+from typing import Annotated, Literal
+from uuid import UUID
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -10,16 +11,56 @@ class StrictModel(BaseModel):
     model_config = ConfigDict(extra="forbid", from_attributes=True)
 
 
+class StayPreference(StrictModel):
+    style: str = Field(max_length=100)
+    rate: str = Field(pattern=r"^$|^\d+(\.\d{1,2})?$")
+    basis: Literal["room", "bed"]
+
+
+class TravelPreference(StrictModel):
+    mode: str = Field(max_length=100)
+    hours: str = Field(pattern=r"^$|^\d+(\.\d{1,2})?$")
+    overnight: int = Field(ge=0)
+    rate: str = Field(pattern=r"^$|^\d+(\.\d{1,2})?$")
+    basis: Literal["person", "vehicle"]
+
+
 class Preferences(StrictModel):
     pace: Literal["relaxed", "balanced", "fast"] = "balanced"
     interests: list[str] = Field(default_factory=list, max_length=100)
     preferred_modes: list[str] = Field(default_factory=list, max_length=20)
+    return_to_origin: bool = True
+    stay_preferences: dict[str, StayPreference] = Field(
+        default_factory=dict, max_length=500
+    )
+    travel_preferences: dict[str, TravelPreference] = Field(
+        default_factory=dict, max_length=501
+    )
+
+
+class ActivityInput(StrictModel):
+    kind: Literal["custom", "meal", "rest", "free_time"] = "custom"
+    logical_id: UUID
+    stop_logical_id: UUID
+    user_label: str = Field(min_length=1, max_length=300)
+    local_day_offset: int = Field(ge=0)
+    local_start_time: time
+    duration_minutes: int = Field(gt=0)
+    fixed: bool = False
+    completed: bool = False
+    booked: bool = False
 
 
 class Location(StrictModel):
     label: str = Field(min_length=1, max_length=300)
-    latitude: Decimal = Field(ge=-90, le=90)
-    longitude: Decimal = Field(ge=-180, le=180)
+    latitude: Decimal | None = Field(default=None, ge=-90, le=90)
+    longitude: Decimal | None = Field(default=None, ge=-180, le=180)
+
+    @model_validator(mode="after")
+    def paired_coordinates(self):
+        if (self.latitude is None) != (self.longitude is None):
+            raise ValueError("Provide both coordinates or neither")
+        return self
 
 
 class Budget(StrictModel):
@@ -69,6 +110,7 @@ class PlanInput(StrictModel):
     preferences: Preferences = Field(default_factory=Preferences)
     origin: Location | None = None
     return_location: Location | None = None
+    activities: list[ActivityInput] = Field(default_factory=list, max_length=5000)
     stops: list[StopInput] = Field(default_factory=list, max_length=500)
 
     @model_validator(mode="after")
@@ -104,4 +146,37 @@ class TripPatch(StrictModel):
     def nonnull(self):
         if any(getattr(self, key) is None for key in self.model_fields_set):
             raise ValueError("Metadata fields cannot be null")
+        return self
+
+
+class SettingsCommand(StrictModel):
+    type: Literal["plan.update_settings"]
+    changes: PlanInput
+
+
+class StopSyncCommand(StrictModel):
+    # Explicit ordered route replacement; logical IDs remain stable.
+    type: Literal["stop.reorder"]
+    stops: list[StopInput] = Field(max_length=500)
+    cascade: bool = False
+
+
+class ActivitySyncCommand(StrictModel):
+    type: Literal["activity.replace_user_schedule"]
+    activities: list[ActivityInput] = Field(max_length=5000)
+
+
+class CommandBatch(StrictModel):
+    commands: list[
+        Annotated[
+            SettingsCommand | StopSyncCommand | ActivitySyncCommand,
+            Field(discriminator="type"),
+        ]
+    ] = Field(min_length=1, max_length=3)
+
+    @model_validator(mode="after")
+    def unique_commands(self):
+        types = [c.type for c in self.commands]
+        if len(set(types)) != len(types):
+            raise ValueError("Duplicate command type")
         return self

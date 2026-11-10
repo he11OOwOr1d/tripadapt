@@ -289,3 +289,19 @@ The normalized version-snapshot approach and draft-edit behavior are approved. S
 ## 17. Observability integration
 
 Use LangSmith for agent-run traces and evaluations, Sentry for web/API/worker errors and sampled performance telemetry, and structured hosting logs for operational diagnosis. Add trace_id/run_id correlation to job/event context where useful; observability vendors do not become sources of truth for jobs or plans. Redact emails, booking references, secrets, and restricted provider content before exporting telemetry. Store only small correlation references in application records, not duplicate trace payloads. Sampling, bounded retention, and export limits preserve the free-tier cost posture. Vendor outages must not fail planning.
+
+### Implementation addendum — 10 November 2026
+
+Migration `0013_plan_proposals` introduces the manual frozen-proposal lifecycle. `plan_proposal` references its trip, candidate version, exact base draft/edit sequence and nullable accepted base, with scoped submit idempotency and acceptance replay fields. Composite foreign keys prevent cross-trip version references. Acceptance advances `trip.current_version_id`; it retains the existing editable draft and assigns its accepted parent. Candidate schedule rows are cloned with stable logical IDs and distinct physical IDs. Browser API roles receive no direct table privileges. This is the initial implementation subset; job orchestration, history restoration and provider revalidation remain future migrations/services.
+
+### Implementation addendum — durable jobs, 10 November 2026
+
+Migration `0014_planning_jobs` adds a private job table containing owner/trip, scoped idempotency fingerprint, frozen validated input/base snapshot, status/stage, attempt counter, lease token/expiry, heartbeat, retry availability, cancellation request and proposal reference. A claim index supports queued/expired work. Worker publication is fenced by lease token/expiry and rechecks trip/draft freshness. Application and worker share PostgreSQL; no Redis service was introduced. See `docs/durable-planning-jobs.md` for the bounded initial fixture runner and remaining production orchestration work.
+
+### Implementation addendum — AI result metadata, 10 November 2026
+
+Migration `0015_ai_job_results` adds non-null JSONB `planning_job.result_metadata` with an empty-object default. It stores bounded generation reasons, model/catalog provenance and call/token counts separately from immutable job input. Existing table ownership/access controls remain in effect. It is not a raw prompt, conversation, credential or private reasoning store.
+
+### Implementation addendum — trip messages, 10 November 2026
+
+Migration `0016_trip_conversation` adds private `conversation_turn` rows linked to a trip and a unique durable planning job, with bounded user/assistant text, reply kind, clarification choices and creation time. An index supports chronological trip history and cursor reads. Message/job creation and completed reply/proposal publication use short atomic transactions. No additional database or external chat-history service is introduced.
