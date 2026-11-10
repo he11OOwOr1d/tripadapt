@@ -1,5 +1,7 @@
 # Design decisions and rationale
 
+This document preserves the 9 November baseline. For subsequent finalized decisions, implementation lessons and tradeoffs, see the [development journal](../development/journal.md) and [current status](../development/status.md).
+
 9 November 2026. Current decisions for Elsewhere (repository: TripAdapt). “Approved” describes product/design direction, not a claim that the feature or vendor is operational.
 
 | Decision | Status | Why / consequence |
@@ -39,3 +41,31 @@ Next implementation priorities: verified identity → real adapter and draft com
 The four root specifications are the product/technical baseline; the API design refines older architecture endpoint sketches. Later dated approval notes supersede exploratory wording. `docs/landing-direction-layouts.md`, `docs/mobile-responsive.md` and the Unfolding implementation note in `docs/trip-creation-journey.md` record the accepted UI progression. Older 3D/Stillwater/photo/ticket/postcard alternatives and the six planner studies preserve exploration, not additional approved directions.
 
 No original reference image or old prototype should be treated as approved production art solely because it exists in the repository. The current landscape is drawn in frontend code. Local fonts retain their licenses; third-party asset provenance remains relevant before broader release.
+
+## 10 November 2026 — Supabase identity, API-owned account drafts
+
+Use the approved Little lookout form with Supabase’s Next.js framework SDK/SSR integration. Keep Python/FastAPI as the domain authority and use SQLAlchemy/psycopg against Supabase-hosted PostgreSQL. This preserves transactional edits, immutable snapshots and ownership checks without reimplementing passwords or exposing application tables through the browser Data API. Store structured planning preferences as typed JSONB metadata and actual activities as relational version-owned rows. Browser-local saves remain explicit; account saves use a separate adapter, owner-scoped create receipts and optimistic draft ETags. The landing stays locked. Email confirmation remains enabled; SMTP/rate-limit failures are surfaced, not bypassed. See `docs/authentication-and-account-saving.md` for the incomplete live email verification step.
+
+## 10 November 2026 — Simplify planning and save automatically
+
+Replace the manual-save toolbar with debounced device/account autosave and explicit sync status. Serialize writes and coalesce edits so newly returned draft ETags are used before the next write. Keep stale-version conflicts paused, preserve a local copy and provide recovery instead of overwriting another tab. Give time allocation and travel preferences different responsibilities: the former divides accommodation nights visually, the latter owns transport and its optional overnight timing. Move the library into a native dialog and secondary account actions into a compact menu. See `docs/planner-ux-refinement.md` for the design rationale and browser verification; this refinement is local and awaiting user review.
+
+## 10 November 2026 — manual itinerary slice
+
+The next implemented workflow step is a day-by-day manual workspace, documented in `docs/itinerary-workspace.md`. A quiet paper timeline carries the landing's color and type treatment while keeping route navigation separate from activity editing. Native dialogs provide focused editing with keyboard support. Overlap warnings permit an unfinished draft; invalid day assignments and midnight-crossing entries require correction. Explicit meals, breaks and free time share the existing user-activity record with a backward-compatible kind field. Real account autosave continues through the backend into the same Supabase PostgreSQL database. AI generation and verified schedules remain future integrations.
+
+## 10 November 2026 — proposal foundation
+
+Manual draft review now exercises the same frozen-candidate acceptance boundary planned for AI output. Accepted versions remain separate from the editable draft; acceptance checks both the draft edit sequence and accepted base under a trip-row lock. Unknown external information remains provisional and requires an explicit acknowledgment. Hard conflicts cannot be acknowledged away. This step introduces no model/provider dependency. See `docs/planning-foundation.md` for scope and remaining generation safeguards.
+
+## 10 November 2026 — durable one-day planning rehearsal
+
+A PostgreSQL-backed worker now processes an explicitly gated fixture planning mode. The queue captures the exact draft and selected day, uses leased claims with fenced publication, and persists progress/cancellation/result references. It reuses the proposal boundary and preserves all pre-existing activities. This validates durability and user review before introducing model behavior. LangGraph and provider integration are intentionally still pending; fixture results are labeled and require a separate acknowledgment. See `docs/durable-planning-jobs.md`.
+
+## 10 November 2026 — Groq and LangGraph
+
+The user chose Groq. The existing Python worker now runs LangGraph with read-only scoped day/catalog tools and a separate strict structured-output request. It permits one repair, enforces provider/tool/time limits, and reuses the durable proposal lifecycle. This first live-model slice uses sample activity evidence, clearly labeled in review, rather than fabricating provider-backed recommendations. Catalog IDs and derived item details are checked again at publication and acceptance. Node checkpoint persistence and live travel evidence remain pending. See `docs/groq-agent.md`.
+
+## 10 November 2026 — trip conversation foundation
+
+Conversation is an additional interface to the existing job/proposal boundary, not a separate agent with database authority. Persisted messages use exact saved-draft context; typed routing distinguishes factual answers, clarification, supported additions and unsupported edits. Read-only answers are assembled from saved records. Canonical quick choices avoid unnecessary intent-model calls, and rest requests narrow the generator to rest candidates. Stage-driven progress replaces arbitrary thinking-word animations. A paper conversation panel shares the itinerary's typography/colors; phones switch to a focused chat view. See `docs/trip-conversation.md` for verification and limits.

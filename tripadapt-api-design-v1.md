@@ -270,3 +270,33 @@ Unselected details: identity provider and transport, review-summary permissions,
 This document refines earlier endpoint sketches: use `/versions` for all snapshots and `/revisions` for accepted history; direct edits operate on drafts and pass through proposals before becoming current. It also makes revalidation asynchronous when external calls are necessary. Supporting generic asynchronous review summaries may require broadening the database job type/schema or introducing a separate task table; do not force a non-trip task into a required trip foreign key. Final migration/OpenAPI work must reconcile these details explicitly.
 
 References: [System architecture](tripadapt-system-architecture-v1.md), [Database design](tripadapt-database-design-v1.md), [PRD](tripadapt-prd-v2.md).
+
+## Local implementation addendum — 10 November 2026
+
+The generated `services/backend/openapi.json` now publishes the initial account-save slice. Supabase bearer tokens are verified by FastAPI against the configured project issuer/JWKS and authenticated audience. Application tables remain inaccessible to browser Data API roles.
+
+Refinements needed to round-trip the approved form: location coordinates may both be null for an explicit manual label; Preferences includes `return_to_origin`, typed `stay_preferences` and typed `travel_preferences` (user-entered allowances, not supplier offers). `PlanInput.activities` contains relative user-entered schedules. These are additive inputs; accepted versions remain immutable.
+
+The currently implemented command batch supports `plan.update_settings` (complete settings input), `stop.reorder` (an explicit ordered route replacement retaining client/logical UUIDs, with `cascade` required to remove scheduled dependents), and `activity.replace_user_schedule` (explicit replacement of manually edited relative schedule items). This bounded replacement command is a refinement of the activity command family for the initial UI adapter, not an agent privilege. Commands reject unknown types/fields and duplicate command types; the entire batch rolls back on failure. Draft `If-Match` is required. Conflicted/unvalidated scheduling can remain a draft and is never promoted to a feasible accepted plan by these endpoints.
+
+Initial `POST /trips` accepts a UUID `Idempotency-Key`; matching owner/key/payload replays the original trip reference and conflicting payloads return 409. Account metadata/title edits retain the separate trip-ETag PATCH contract. Saved trip listing uses the existing owner-bound cursors.
+
+### Implementation addendum — 10 November 2026
+
+Manual draft activities accept and return an optional `kind` field (`custom`, `meal`, `rest`, `free_time`), defaulting to `custom` for older clients. This is a presentation category on the existing activity record, not a reservation or a provider-backed suggestion. The generated backend OpenAPI contract is updated accordingly. See `docs/itinerary-workspace.md` for the implemented slice and verification scope.
+
+### Implementation addendum — proposal foundation, 10 November 2026
+
+Manual `draft/submit`, proposal GET, accept and discard endpoints are implemented. Submission snapshots the draft into a distinct proposed version while retaining the editable draft; it requires a draft ETag and UUID idempotency key. Acceptance requires the documented expected-current reference and explicit advisory acknowledgments, and rejects stale draft edit sequences as well as stale accepted bases. The response has typed plan/validation/base fields. Strict-budget feasibility and external evidence are not implemented; manual reviews remain provisional and strict-budget candidates are blocked. Agent candidates are not accepted through this manual submission endpoint. See `docs/planning-foundation.md` for the exact implemented boundary and outstanding proposal/history APIs.
+
+### Implementation addendum — durable fixture jobs, 10 November 2026
+
+The initial planning-job subset accepts only draft-based `operation: generate`, `engine: fixture`, and a `selected_day` scope containing `stop_logical_id` and zero-based `local_day_offset`. This additive relative-day scope supports undated trips. Creation requires both draft If-Match and UUID Idempotency-Key; HTTP 202 returns the job, Location and Retry-After. Owned GET and cooperative cancel endpoints are implemented. Job polling returns durable current stage, not an event stream. Limits are one active job/trip, two/owner and twenty globally. Fixture mode is disabled by default. Results use the existing proposal endpoints, explicitly identify fixture provenance, and require acknowledgment before acceptance. Other operations/scopes and event history remain unimplemented.
+
+### Implementation addendum — Groq one-day generation, 10 November 2026
+
+Planning jobs now accept `engine: groq` behind backend configuration while retaining the same explicit selected-day draft scope, ETag and idempotency contract. Job views report the actual engine. Proposal views add optional `generation` metadata (summary, bounded per-item reasons, model and sample-evidence provenance) and distinguish AI proposals from deterministic fixtures. AI proposals require an acknowledgeable sample-evidence issue alongside unknown travel evidence. Candidate IDs/details and protected scope are revalidated at publication and acceptance. No live places/weather/routes or supplier prices are claimed. See `docs/groq-agent.md` for bounds and remaining integration gaps.
+
+### Implementation addendum — conversation foundation, 10 November 2026
+
+Owned GET/POST `/trips/{id}/messages` are implemented. GET supports bounded `limit` and a trip-scoped `before` cursor; it returns chronological turns and `next_cursor`. POST requires UUID Idempotency-Key, current draft If-Match, text, explicit base_version_id and selected-day scope, and returns HTTP 202 with a durable turn/job. Message and job admission are atomic and reuse existing concurrency limits. Read-only replies do not change the draft; supported additions return a proposal for explicit review/acceptance. Other conversational mutations are not implemented. Public planning jobs remain `operation: generate`; internal conversational work is created only by the message endpoint. See `docs/trip-conversation.md`.

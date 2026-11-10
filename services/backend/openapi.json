@@ -135,14 +135,65 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/api/v1/trips": {
       "post": {
         "summary": "Create",
         "operationId": "create_api_v1_trips_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "idempotency-key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -240,12 +291,39 @@
               }
             },
             "description": "Structured problem response"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
           }
         }
       },
       "get": {
         "summary": "Listing",
         "operationId": "listing_api_v1_trips_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "limit",
@@ -363,6 +441,28 @@
               }
             },
             "description": "Structured problem response"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
           }
         }
       }
@@ -371,6 +471,11 @@
       "get": {
         "summary": "Get Trip",
         "operationId": "get_trip_api_v1_trips__trip_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "trip_id",
@@ -470,12 +575,39 @@
               }
             },
             "description": "Structured problem response"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
           }
         }
       },
       "patch": {
         "summary": "Patch",
         "operationId": "patch_api_v1_trips__trip_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "trip_id",
@@ -601,6 +733,28 @@
               }
             },
             "description": "Structured problem response"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
           }
         }
       }
@@ -609,6 +763,11 @@
       "get": {
         "summary": "Version",
         "operationId": "version_api_v1_trips__trip_id__versions__version_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "trip_id",
@@ -718,6 +877,28 @@
               }
             },
             "description": "Structured problem response"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
           }
         }
       }
@@ -726,6 +907,11 @@
       "get": {
         "summary": "Stops",
         "operationId": "stops_api_v1_trips__trip_id__versions__version_id__stops_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "trip_id",
@@ -835,6 +1021,28 @@
               }
             },
             "description": "Structured problem response"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
           }
         }
       }
@@ -843,6 +1051,11 @@
       "post": {
         "summary": "Draft",
         "operationId": "draft_api_v1_trips__trip_id__draft_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "trip_id",
@@ -942,6 +1155,1597 @@
               }
             },
             "description": "Structured problem response"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          }
+        }
+      }
+    },
+    "/api/v1/trips/{trip_id}/draft/commands": {
+      "post": {
+        "summary": "Commands",
+        "operationId": "commands_api_v1_trips__trip_id__draft_commands_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "trip_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Trip Id"
+            }
+          },
+          {
+            "name": "if-match",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "If-Match"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommandBatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_VersionView_"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          }
+        }
+      }
+    },
+    "/api/v1/trips/{trip_id}/draft/submit": {
+      "post": {
+        "summary": "Submit",
+        "operationId": "submit_api_v1_trips__trip_id__draft_submit_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "trip_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Trip Id"
+            }
+          },
+          {
+            "name": "if-match",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "If-Match"
+            }
+          },
+          {
+            "name": "idempotency-key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_ProposalView_"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          }
+        }
+      }
+    },
+    "/api/v1/trips/{trip_id}/proposals/{proposal_id}": {
+      "get": {
+        "summary": "Get Proposal",
+        "operationId": "get_proposal_api_v1_trips__trip_id__proposals__proposal_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "trip_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Trip Id"
+            }
+          },
+          {
+            "name": "proposal_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Proposal Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_ProposalView_"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          }
+        }
+      }
+    },
+    "/api/v1/trips/{trip_id}/proposals/{proposal_id}/accept": {
+      "post": {
+        "summary": "Accept",
+        "operationId": "accept_api_v1_trips__trip_id__proposals__proposal_id__accept_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "trip_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Trip Id"
+            }
+          },
+          {
+            "name": "proposal_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Proposal Id"
+            }
+          },
+          {
+            "name": "idempotency-key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptProposal"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_ProposalView_"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          }
+        }
+      }
+    },
+    "/api/v1/trips/{trip_id}/proposals/{proposal_id}/discard": {
+      "post": {
+        "summary": "Discard",
+        "operationId": "discard_api_v1_trips__trip_id__proposals__proposal_id__discard_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "trip_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Trip Id"
+            }
+          },
+          {
+            "name": "proposal_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Proposal Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_ProposalView_"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          }
+        }
+      }
+    },
+    "/api/v1/trips/{trip_id}/planning-jobs": {
+      "post": {
+        "summary": "Create Job",
+        "operationId": "create_job_api_v1_trips__trip_id__planning_jobs_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "trip_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Trip Id"
+            }
+          },
+          {
+            "name": "if-match",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "If-Match"
+            }
+          },
+          {
+            "name": "idempotency-key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlanningRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_JobView_"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          }
+        }
+      }
+    },
+    "/api/v1/jobs/{job_id}": {
+      "get": {
+        "summary": "Get Job",
+        "operationId": "get_job_api_v1_jobs__job_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_JobView_"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          }
+        }
+      }
+    },
+    "/api/v1/jobs/{job_id}/cancel": {
+      "post": {
+        "summary": "Cancel Job",
+        "operationId": "cancel_job_api_v1_jobs__job_id__cancel_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_JobView_"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          }
+        }
+      }
+    },
+    "/api/v1/trips/{trip_id}/messages": {
+      "get": {
+        "summary": "Messages",
+        "operationId": "messages_api_v1_trips__trip_id__messages_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "trip_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Trip Id"
+            }
+          },
+          {
+            "name": "before",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Before"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_ConversationPage_"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          }
+        }
+      },
+      "post": {
+        "summary": "Send",
+        "operationId": "send_api_v1_trips__trip_id__messages_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "trip_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Trip Id"
+            }
+          },
+          {
+            "name": "if-match",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "If-Match"
+            }
+          },
+          {
+            "name": "idempotency-key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MessageInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_TurnView_"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
           }
         }
       }
@@ -949,6 +2753,132 @@
   },
   "components": {
     "schemas": {
+      "AcceptProposal": {
+        "properties": {
+          "expected_current_version_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Current Version Id"
+          },
+          "acknowledged_issue_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Acknowledged Issue Ids",
+            "default": []
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "expected_current_version_id"
+        ],
+        "title": "AcceptProposal"
+      },
+      "ActivityInput": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "custom",
+              "meal",
+              "rest",
+              "free_time"
+            ],
+            "title": "Kind",
+            "default": "custom"
+          },
+          "logical_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Logical Id"
+          },
+          "stop_logical_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Stop Logical Id"
+          },
+          "user_label": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "User Label"
+          },
+          "local_day_offset": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Local Day Offset"
+          },
+          "local_start_time": {
+            "type": "string",
+            "format": "time",
+            "title": "Local Start Time"
+          },
+          "duration_minutes": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Duration Minutes"
+          },
+          "fixed": {
+            "type": "boolean",
+            "title": "Fixed",
+            "default": false
+          },
+          "completed": {
+            "type": "boolean",
+            "title": "Completed",
+            "default": false
+          },
+          "booked": {
+            "type": "boolean",
+            "title": "Booked",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "logical_id",
+          "stop_logical_id",
+          "user_label",
+          "local_day_offset",
+          "local_start_time",
+          "duration_minutes"
+        ],
+        "title": "ActivityInput"
+      },
+      "ActivitySyncCommand": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "activity.replace_user_schedule",
+            "title": "Type"
+          },
+          "activities": {
+            "items": {
+              "$ref": "#/components/schemas/ActivityInput"
+            },
+            "type": "array",
+            "maxItems": 5000,
+            "title": "Activities"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "type",
+          "activities"
+        ],
+        "title": "ActivitySyncCommand"
+      },
       "Budget-Input": {
         "properties": {
           "amount": {
@@ -1003,6 +2933,132 @@
         ],
         "title": "Budget"
       },
+      "CommandBatch": {
+        "properties": {
+          "commands": {
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/SettingsCommand"
+                },
+                {
+                  "$ref": "#/components/schemas/StopSyncCommand"
+                },
+                {
+                  "$ref": "#/components/schemas/ActivitySyncCommand"
+                }
+              ],
+              "discriminator": {
+                "propertyName": "type",
+                "mapping": {
+                  "activity.replace_user_schedule": "#/components/schemas/ActivitySyncCommand",
+                  "plan.update_settings": "#/components/schemas/SettingsCommand",
+                  "stop.reorder": "#/components/schemas/StopSyncCommand"
+                }
+              }
+            },
+            "type": "array",
+            "maxItems": 3,
+            "minItems": 1,
+            "title": "Commands"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "commands"
+        ],
+        "title": "CommandBatch"
+      },
+      "ConversationPage": {
+        "properties": {
+          "turns": {
+            "items": {
+              "$ref": "#/components/schemas/TurnView"
+            },
+            "type": "array",
+            "title": "Turns"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "turns",
+          "next_cursor"
+        ],
+        "title": "ConversationPage"
+      },
+      "DayScope": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "selected_day",
+            "title": "Type"
+          },
+          "stop_logical_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Stop Logical Id"
+          },
+          "local_day_offset": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Local Day Offset"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "type",
+          "stop_logical_id",
+          "local_day_offset"
+        ],
+        "title": "DayScope"
+      },
+      "Envelope_ConversationPage_": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ConversationPage"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "Envelope[ConversationPage]"
+      },
+      "Envelope_JobView_": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/JobView"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "Envelope[JobView]"
+      },
       "Envelope_Me_": {
         "properties": {
           "data": {
@@ -1019,6 +3075,22 @@
         ],
         "title": "Envelope[Me]"
       },
+      "Envelope_ProposalView_": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ProposalView"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "Envelope[ProposalView]"
+      },
       "Envelope_TripView_": {
         "properties": {
           "data": {
@@ -1034,6 +3106,22 @@
           "meta"
         ],
         "title": "Envelope[TripView]"
+      },
+      "Envelope_TurnView_": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/TurnView"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "Envelope[TurnView]"
       },
       "Envelope_VersionView_": {
         "properties": {
@@ -1070,6 +3158,101 @@
           "meta"
         ],
         "title": "Envelope[list[StopView]]"
+      },
+      "JobView": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "scope": {
+            "$ref": "#/components/schemas/DayScope"
+          },
+          "destination_name": {
+            "type": "string",
+            "title": "Destination Name"
+          },
+          "trip_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Trip Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "stage": {
+            "type": "string",
+            "title": "Stage"
+          },
+          "attempts": {
+            "type": "integer",
+            "title": "Attempts"
+          },
+          "cancel_requested": {
+            "type": "boolean",
+            "title": "Cancel Requested"
+          },
+          "proposal_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Proposal Id"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "engine": {
+            "type": "string",
+            "enum": [
+              "fixture",
+              "groq"
+            ],
+            "title": "Engine",
+            "default": "fixture"
+          },
+          "poll_after_seconds": {
+            "type": "integer",
+            "title": "Poll After Seconds",
+            "default": 2
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "scope",
+          "destination_name",
+          "trip_id",
+          "status",
+          "stage",
+          "attempts",
+          "cancel_requested",
+          "proposal_id",
+          "error_code",
+          "updated_at"
+        ],
+        "title": "JobView"
       },
       "LiveData": {
         "properties": {
@@ -1122,6 +3305,9 @@
               },
               {
                 "type": "string"
+              },
+              {
+                "type": "null"
               }
             ],
             "title": "Latitude"
@@ -1135,6 +3321,9 @@
               },
               {
                 "type": "string"
+              },
+              {
+                "type": "null"
               }
             ],
             "title": "Longitude"
@@ -1143,9 +3332,7 @@
         "additionalProperties": false,
         "type": "object",
         "required": [
-          "label",
-          "latitude",
-          "longitude"
+          "label"
         ],
         "title": "Location"
       },
@@ -1158,20 +3345,32 @@
             "title": "Label"
           },
           "latitude": {
-            "type": "string",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Latitude"
           },
           "longitude": {
-            "type": "string",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Longitude"
           }
         },
         "additionalProperties": false,
         "type": "object",
         "required": [
-          "label",
-          "latitude",
-          "longitude"
+          "label"
         ],
         "title": "Location"
       },
@@ -1220,6 +3419,32 @@
         ],
         "title": "Me"
       },
+      "MessageInput": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Text"
+          },
+          "base_version_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Base Version Id"
+          },
+          "scope": {
+            "$ref": "#/components/schemas/DayScope"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "text",
+          "base_version_id",
+          "scope"
+        ],
+        "title": "MessageInput"
+      },
       "Meta": {
         "properties": {
           "request_id": {
@@ -1258,7 +3483,7 @@
         ],
         "title": "Page"
       },
-      "PlanInput": {
+      "PlanInput-Input": {
         "properties": {
           "date_mode": {
             "type": "string",
@@ -1382,6 +3607,14 @@
               }
             ]
           },
+          "activities": {
+            "items": {
+              "$ref": "#/components/schemas/ActivityInput"
+            },
+            "type": "array",
+            "maxItems": 5000,
+            "title": "Activities"
+          },
           "stops": {
             "items": {
               "$ref": "#/components/schemas/StopInput"
@@ -1394,6 +3627,191 @@
         "additionalProperties": false,
         "type": "object",
         "title": "PlanInput"
+      },
+      "PlanInput-Output": {
+        "properties": {
+          "date_mode": {
+            "type": "string",
+            "enum": [
+              "exact",
+              "window",
+              "duration",
+              "open_ended"
+            ],
+            "title": "Date Mode",
+            "default": "open_ended"
+          },
+          "start_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Date"
+          },
+          "end_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Date"
+          },
+          "window_start": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Window Start"
+          },
+          "window_end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Window End"
+          },
+          "desired_days": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Desired Days"
+          },
+          "traveler_count": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Traveler Count",
+            "default": 1
+          },
+          "room_count": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Room Count",
+            "default": 1
+          },
+          "display_currency": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$",
+            "title": "Display Currency",
+            "default": "INR"
+          },
+          "budget": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Budget-Output"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "preferences": {
+            "$ref": "#/components/schemas/Preferences"
+          },
+          "origin": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Location-Output"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "return_location": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Location-Output"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "activities": {
+            "items": {
+              "$ref": "#/components/schemas/ActivityInput"
+            },
+            "type": "array",
+            "maxItems": 5000,
+            "title": "Activities"
+          },
+          "stops": {
+            "items": {
+              "$ref": "#/components/schemas/StopInput"
+            },
+            "type": "array",
+            "maxItems": 500,
+            "title": "Stops"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "PlanInput"
+      },
+      "PlanningRequest": {
+        "properties": {
+          "operation": {
+            "type": "string",
+            "const": "generate",
+            "title": "Operation"
+          },
+          "instructions": {
+            "type": "string",
+            "maxLength": 2000,
+            "title": "Instructions",
+            "default": ""
+          },
+          "engine": {
+            "type": "string",
+            "enum": [
+              "fixture",
+              "groq"
+            ],
+            "title": "Engine"
+          },
+          "base_version_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Base Version Id"
+          },
+          "scope": {
+            "$ref": "#/components/schemas/DayScope"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "operation",
+          "engine",
+          "base_version_id",
+          "scope"
+        ],
+        "title": "PlanningRequest"
       },
       "Preferences": {
         "properties": {
@@ -1422,6 +3840,27 @@
             "type": "array",
             "maxItems": 20,
             "title": "Preferred Modes"
+          },
+          "return_to_origin": {
+            "type": "boolean",
+            "title": "Return To Origin",
+            "default": true
+          },
+          "stay_preferences": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/StayPreference"
+            },
+            "type": "object",
+            "maxProperties": 500,
+            "title": "Stay Preferences"
+          },
+          "travel_preferences": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/TravelPreference"
+            },
+            "type": "object",
+            "maxProperties": 501,
+            "title": "Travel Preferences"
           }
         },
         "additionalProperties": false,
@@ -1474,6 +3913,81 @@
           "issues"
         ],
         "title": "Problem"
+      },
+      "ProposalView": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "candidate_version_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Candidate Version Id"
+          },
+          "base_current_version_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Current Version Id"
+          },
+          "base_draft_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Base Draft Id"
+          },
+          "base_edit_sequence": {
+            "type": "integer",
+            "title": "Base Edit Sequence"
+          },
+          "validation": {
+            "$ref": "#/components/schemas/ValidationReport"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/PlanInput-Output"
+          },
+          "generation": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generation"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "source",
+          "candidate_version_id",
+          "base_current_version_id",
+          "base_draft_id",
+          "base_edit_sequence",
+          "validation",
+          "plan"
+        ],
+        "title": "ProposalView"
       },
       "ReadyData": {
         "properties": {
@@ -1536,6 +4050,55 @@
           "request_id"
         ],
         "title": "ResponseMeta"
+      },
+      "SettingsCommand": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "plan.update_settings",
+            "title": "Type"
+          },
+          "changes": {
+            "$ref": "#/components/schemas/PlanInput-Input"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "type",
+          "changes"
+        ],
+        "title": "SettingsCommand"
+      },
+      "StayPreference": {
+        "properties": {
+          "style": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Style"
+          },
+          "rate": {
+            "type": "string",
+            "pattern": "^$|^\\d+(\\.\\d{1,2})?$",
+            "title": "Rate"
+          },
+          "basis": {
+            "type": "string",
+            "enum": [
+              "room",
+              "bed"
+            ],
+            "title": "Basis"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "style",
+          "rate",
+          "basis"
+        ],
+        "title": "StayPreference"
       },
       "StopInput": {
         "properties": {
@@ -1605,6 +4168,35 @@
           "timezone"
         ],
         "title": "StopInput"
+      },
+      "StopSyncCommand": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "stop.reorder",
+            "title": "Type"
+          },
+          "stops": {
+            "items": {
+              "$ref": "#/components/schemas/StopInput"
+            },
+            "type": "array",
+            "maxItems": 500,
+            "title": "Stops"
+          },
+          "cascade": {
+            "type": "boolean",
+            "title": "Cascade",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "type",
+          "stops"
+        ],
+        "title": "StopSyncCommand"
       },
       "StopView": {
         "properties": {
@@ -1678,6 +4270,48 @@
         ],
         "title": "StopView"
       },
+      "TravelPreference": {
+        "properties": {
+          "mode": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Mode"
+          },
+          "hours": {
+            "type": "string",
+            "pattern": "^$|^\\d+(\\.\\d{1,2})?$",
+            "title": "Hours"
+          },
+          "overnight": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Overnight"
+          },
+          "rate": {
+            "type": "string",
+            "pattern": "^$|^\\d+(\\.\\d{1,2})?$",
+            "title": "Rate"
+          },
+          "basis": {
+            "type": "string",
+            "enum": [
+              "person",
+              "vehicle"
+            ],
+            "title": "Basis"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "mode",
+          "hours",
+          "overnight",
+          "rate",
+          "basis"
+        ],
+        "title": "TravelPreference"
+      },
       "TripCreate": {
         "properties": {
           "title": {
@@ -1687,7 +4321,7 @@
             "title": "Title"
           },
           "plan": {
-            "$ref": "#/components/schemas/PlanInput"
+            "$ref": "#/components/schemas/PlanInput-Input"
           }
         },
         "additionalProperties": false,
@@ -1826,6 +4460,136 @@
         ],
         "title": "TripView"
       },
+      "TurnView": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "user_text": {
+            "type": "string",
+            "title": "User Text"
+          },
+          "assistant_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assistant Text"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kind"
+          },
+          "choices": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Choices"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "job": {
+            "$ref": "#/components/schemas/JobView"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "user_text",
+          "assistant_text",
+          "kind",
+          "choices",
+          "created_at",
+          "job"
+        ],
+        "title": "TurnView"
+      },
+      "ValidationIssue": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          },
+          "activity_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activity Id"
+          },
+          "blocking": {
+            "type": "boolean",
+            "title": "Blocking"
+          },
+          "acknowledgeable": {
+            "type": "boolean",
+            "title": "Acknowledgeable"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "code",
+          "detail",
+          "activity_id",
+          "blocking",
+          "acknowledgeable"
+        ],
+        "title": "ValidationIssue"
+      },
+      "ValidationReport": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationIssue"
+            },
+            "type": "array",
+            "title": "Issues"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "issues"
+        ],
+        "title": "ValidationReport"
+      },
       "VersionView": {
         "properties": {
           "date_mode": {
@@ -1950,6 +4714,14 @@
               }
             ]
           },
+          "activities": {
+            "items": {
+              "$ref": "#/components/schemas/ActivityInput"
+            },
+            "type": "array",
+            "maxItems": 5000,
+            "title": "Activities"
+          },
           "stops": {
             "items": {
               "$ref": "#/components/schemas/StopInput"
@@ -2007,6 +4779,12 @@
           "validation_report"
         ],
         "title": "VersionView"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
       }
     }
   }

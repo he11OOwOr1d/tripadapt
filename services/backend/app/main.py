@@ -10,6 +10,7 @@ from sqlalchemy import select, text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from starlette.exceptions import HTTPException
 
+from app.api import conversation, planning_jobs, proposals  # noqa: F401 - register proposal routes
 from app.api.trips import router
 from app.config import settings
 from app.persistence.database import engine
@@ -27,7 +28,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
     allow_methods=["GET", "POST", "PATCH"],
-    allow_headers=["Content-Type", "Authorization", "If-Match"],
+    allow_headers=["Content-Type", "Authorization", "If-Match", "Idempotency-Key"],
     expose_headers=["ETag", "Location", "X-Request-ID"],
 )
 
@@ -37,6 +38,8 @@ async def request_context(request: Request, call_next):
     request.state.request_id = str(uuid4())
     response = await call_next(request)
     response.headers["X-Request-ID"] = request.state.request_id
+    if request.url.path.startswith(("/api/v1/trips", "/api/v1/jobs")) or request.url.path == "/api/v1/me":
+        response.headers["Cache-Control"] = "private, no-store"
     return response
 
 
@@ -89,7 +92,7 @@ def ready(request: Request):
             marker = connection.execute(
                 select(SystemProbe.initialized_at).where(SystemProbe.id == 1)
             ).scalar_one()
-            if revision != "4b1db6085c26":
+            if revision != "0016_trip_conversation":
                 raise ValueError("Schema revision mismatch")
         return {
             "data": {

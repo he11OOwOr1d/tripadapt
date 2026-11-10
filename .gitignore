@@ -15,3 +15,8 @@ __pycache__/
 .vercel*.json
 work/
 *.log
+
+# Local QA captures containing the traveler's own itinerary/library data
+/docs/references/saved-trips-fix/account-list.png
+/docs/references/planner-ux-refinement/library-desktop.png
+/docs/references/planner-ux-refinement/library-phone.png

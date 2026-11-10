@@ -6,6 +6,7 @@ export type Stop = {
   nights: number;
 };
 export type Activity = {
+  kind?: "custom" | "meal" | "rest" | "free_time";
   id: string;
   stopId: string;
   day: number;
@@ -199,7 +200,7 @@ const optionalAmount = (value: unknown) =>
   typeof value === "string" &&
   (value === "" ||
     (/^\d+(\.\d{1,2})?$/.test(value) && Number.isFinite(Number(value))));
-function isTrip(value: unknown): value is Trip {
+export function isTrip(value: unknown): value is Trip {
   if (!value || typeof value !== "object") return false;
   const t = value as Record<string, unknown>;
   const textFields = [
@@ -257,6 +258,7 @@ function isTrip(value: unknown): value is Trip {
         /^([01]\d|2[0-3]):[0-5]\d$/.test(a.start) &&
         positive(a.day) &&
         positive(a.minutes) &&
+        (a.kind === undefined || ["custom","meal","rest","free_time"].includes(a.kind)) &&
         [a.fixed, a.completed, a.booked].every((v) => typeof v === "boolean"),
     )
   );
@@ -281,3 +283,6 @@ function browserAdapter(key: string): TripAdapter {
 // Keep personal trips isolated from the editable demonstration.
 export const mockTripAdapter = browserAdapter("tripadapt.mock-draft.v1");
 export const mockSampleAdapter = browserAdapter("tripadapt.mock-sample.v1");
+
+// Automatic guest recovery never loads the editable sample or an account's local backup.
+export const guestTripAdapter = browserAdapter("elsewhere.guest-draft.v1");
