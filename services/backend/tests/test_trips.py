@@ -7,6 +7,7 @@ from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.orm import Session
 
 from app.api.identity import TrustedIdentity, session, verified_identity
+from app.config import settings
 from app.main import app
 from app.persistence.database import engine
 from app.persistence.models import AppUser, Trip
@@ -34,13 +35,24 @@ def context():
         transaction.rollback()
 
 
-def test_auth_is_closed():
+@pytest.mark.parametrize(
+    "provider_url,token,status,code",
+    [
+        ("https://test.supabase.co", "invented", 401, "AUTH_REQUIRED"),
+        ("https://test.supabase.co", None, 401, "AUTH_REQUIRED"),
+        ("", "invented", 503, "AUTH_NOT_CONFIGURED"),
+        ("", None, 401, "AUTH_REQUIRED"),
+    ],
+)
+def test_auth_is_closed(monkeypatch, provider_url, token, status, code):
+    # Explicit configuration keeps CI independent of a developer's ignored .env.
+    # The malformed token is rejected before any provider network request.
+    monkeypatch.setattr(settings, "supabase_url", provider_url)
+    headers = {"Authorization": f"Bearer {token}"} if token else {}
     with TestClient(app) as client:
-        response = client.get(
-            "/api/v1/trips", headers={"Authorization": "Bearer invented"}
-        )
-        assert response.status_code == 401
-        assert response.json()["code"] == "AUTH_REQUIRED"
+        response = client.get("/api/v1/trips", headers=headers)
+        assert response.status_code == status
+        assert response.json()["code"] == code
 
 
 def test_save_reopen_identity_and_concurrency(context):

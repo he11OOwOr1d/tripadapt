@@ -24,3 +24,7 @@ Tests use transactional rollback and mock providers for repeatable automated che
 ## Deployment status
 
 The previously approved frontend review is linked to GitHub/Vercel with production following `main`. These later local API/worker/auth/chat changes have not been released through this retrospective publication. The branch-specific Vercel rule prevents auto-deploying `codex/development-history`. No API, worker, supplier integration or production environment is provisioned by pushing these source commits.
+
+## CI correction after publication
+
+GitHub Actions exposed an environment-dependent assertion in `test_auth_is_closed`: a configured developer machine returned 401 for an invented token, whereas clean CI correctly returned 503 when Supabase was unconfigured. The test now explicitly covers configured/unconfigured authentication with and without credentials. Runtime authentication behavior is unchanged; CI needs no Supabase credentials. Rechecked fresh PostgreSQL 17 migrations, Alembic drift detection and all 58 backend tests with `SUPABASE_URL` empty, plus 13 frontend tests, TypeScript and the production build.
