@@ -1,12 +1,14 @@
 # TripAdapt · Elsewhere
 
+Development history: [section-by-section journal](docs/development/journal.md), [commit map](docs/development/commits.md), and [current status and integration gaps](docs/development/status.md). Earlier explorations are preserved and distinguished from finalized decisions.
+
 **An adaptive travel planner for places, stays and journeys that belong together.**
 
 TripAdapt is the repository and engineering name. **Elsewhere** is the product name. Travelers can build an ordered, multi-destination trip, allocate stay and travel time, keep costs visible, and eventually review proposed changes when circumstances change.
 
 [Live UI review](https://elsewhere-ui-review.vercel.app) · [Trip planner](https://elsewhere-ui-review.vercel.app/trips/new) · [Design decisions](docs/architecture/design-decisions.md) · [Repository structure](docs/architecture/repository-structure.md)
 
-> **Current stage — 9 November 2026:** working frontend journey and backend persistence foundation. The public review deployment is a frontend prototype. Its trip saves are browser-local; authentication, live travel providers, itinerary generation and accepted-plan revisions are not connected. Selecting stay or transport preferences makes no reservation.
+> **Current stage — 10 November 2026:** approved landing, Unfolding creation and Little lookout authentication. Local development includes Supabase account saving, an editable itinerary, reviewed proposals, durable Groq planning and conversational assistance. The public deployment remains the earlier prototype. Live travel providers and production API/worker hosting remain integration gaps. Selecting preferences makes no reservation. See [current status](docs/development/status.md).
 
 ## What works now
 
@@ -19,7 +21,7 @@ TripAdapt is the repository and engineering name. **Elsewhere** is the product n
 - Explicit browser-local draft save/reopen, error feedback and isolation between personal and demonstration storage.
 - Responsive layouts, visible keyboard focus, native controls and reduced-motion support.
 
-The FastAPI backend separately implements health/readiness checks, owned trip creation/listing/reopening and conditional metadata updates. Its authentication dependency deliberately returns 401 until a verified identity-provider adapter is implemented. The planner uses the explicit mock adapter rather than pretending those protected endpoints are connected.
+The FastAPI backend implements health/readiness, verified Supabase bearer identity, owned trip creation/listing/reopening, optimistic draft edits and conditional metadata updates. The local planner offers explicit browser saving and a separate account adapter. See [account setup and verification](docs/authentication-and-account-saving.md); a successful real-inbox end-to-end check is still pending email delivery.
 
 ## Quick start: frontend
 
@@ -87,7 +89,7 @@ Local development defaults are configured. For overrides, copy the appropriate `
 apps/web/                  Next.js / React / TypeScript frontend
   app/design/fieldtrip/    Approved landing and original code-drawn scenery
   app/trips/              Unfolding creation UI and itinerary workspace
-  lib/trips/              Frontend view model, mock adapter and calculations
+  lib/trips/              Frontend view model, browser/account adapters and calculations
   tests/                  Focused browser-draft logic tests
   public/                 Local fonts, artwork and historical exploration assets
 services/backend/         FastAPI modular-monolith foundation
@@ -111,7 +113,7 @@ tripadapt-*.md            Approved product and technical design baselines
 
 ## Architecture and design decisions
 
-The web app owns presentation and draft interaction; FastAPI owns the future authoritative domain operations. PostgreSQL stores normalized version-owned records. Accepted versions are immutable; changes must be reviewed as proposals. Deterministic logic owns arithmetic and constraints; AI will rank sourced candidates and propose changes, not silently accept them.
+The web app owns presentation and draft interaction; FastAPI owns authorized trip persistence, proposal acceptance and planning jobs. PostgreSQL stores normalized version-owned records. Accepted versions are immutable; changes must be reviewed as proposals. Deterministic logic owns arithmetic and constraints; The one-day Groq/LangGraph agent proposes additions using explicitly labeled sample evidence; live provider-backed recommendations remain pending. AI cannot accept its own changes.
 
 The approved landing combines an animated code-drawn meadow, beige paper and green typography, a postcard introduction and compact sample planner. The selected application direction is **Unfolding**, with readable expanding sections and a dedicated review. It preserves the landing’s brand while giving real planning tasks space to work.
 
@@ -133,8 +135,20 @@ The approved API design refines older architecture endpoint sketches. The genera
 
 [Latest release and verification record](docs/deployments/unfolding-planner.md).
 
-The web review is hosted on Vercel at [elsewhere-ui-review.vercel.app](https://elsewhere-ui-review.vercel.app). The FastAPI/PostgreSQL backend is not part of that frontend deployment. The existing Vercel project is connected to this GitHub repository: pushes to `main` create production deployments; other branches create previews. The framework is **Next.js**, root directory **`apps/web`**, using the committed npm lockfile. The current frontend requires no custom environment variables or API keys. Backend hosting and production identity/database provisioning remain separate decisions. Do not add secret-bearing CI deployment workflows merely to publish the frontend.
+The web review is hosted on Vercel at [elsewhere-ui-review.vercel.app](https://elsewhere-ui-review.vercel.app). The FastAPI/PostgreSQL backend is not part of that frontend deployment. The existing Vercel project is connected to this GitHub repository: pushes to `main` create production deployments; other branches create previews. The framework is **Next.js**, root directory **`apps/web`**, using the committed npm lockfile. The approved landing requires no keys. The new local account flow needs Supabase public configuration and an API base URL; see [authentication setup](docs/authentication-and-account-saving.md). Backend hosting and production auth configuration remain separate deployment steps. Do not add secret-bearing CI deployment workflows merely to publish the frontend.
 
-Next integration work: verified authentication, real trip adapter and draft command mapping, provider-backed place search, dated stay/transport information with provenance, timezone-aware scheduled transfers, activity generation and atomic proposal acceptance/history. Keep manual/provisional paths and unknown data visible throughout.
+Next integration work: complete the user-led real-inbox auth/save check after SMTP is available, then provider-backed place search, dated stay/transport information with provenance, timezone-aware scheduled transfers, activity generation and atomic proposal acceptance/history. Keep manual/provisional paths and unknown data visible throughout.
 
 No open-source license is selected for the application yet. Local font licenses and asset provenance remain with their respective files; repository publication does not grant new rights to third-party assets.
+
+Supabase local development is now verified. See [backend Supabase setup](services/backend/README.md#supabase-development-database) for the encrypted connection and atomic migration/access-grant helper. The existing deployed frontend still uses the explicit mock adapter. Local development now includes a separate authenticated API adapter; see [authentication and account saving](docs/authentication-and-account-saving.md) for setup and verification history.
+
+The Next.js Supabase framework SDK handles authentication; the Python API uses psycopg to connect to Supabase-hosted PostgreSQL. A local PostgreSQL server is optional. Use `make migrate-supabase` for the hosted database, then `make api` and `make web`.
+
+### Groq one-day planning (local)
+
+The local app now has **Plan this day with AI**, backed by a separate durable worker and Groq/LangGraph. It uses a sample activity catalog, not live places/weather/routes. User review and explicit acceptance remain required. See [Groq agent setup and verification](docs/groq-agent.md) for server-only key configuration, execution bounds, screenshots and remaining integrations. This does not imply the deployed preview has these local changes.
+
+### Trip conversation (local)
+
+**Chat with Elsewhere** now opens a persistent trip conversation beside the plan, or a focused chat view on phones. Ask about the saved itinerary, answer clarification choices, or request additions to the selected day. Changes still require proposal review and acceptance. Stage-driven progress supports reduced motion. See [conversation scope and verification](docs/trip-conversation.md); live travel evidence and broader conversational edits remain future work.

@@ -1,5 +1,7 @@
 # Authentication and account saving
 
+Historical implementation notes: later autosave behavior supersedes the manual-save flow below. Email confirmation was subsequently disabled by the project owner for the current testing flow; this is a Supabase project setting, not a second database. See the [journal](development/journal.md) and [current status](development/status.md) for the latest decisions.
+
 Implemented locally on 10 November 2026. Approved design: Little lookout. The landing is unchanged; the design-study route stays a no-network preview. Actual routes are `/sign-in`, `/sign-up`, `/auth/callback`, and `/reset-password`.
 
 ## Runtime and responsibilities

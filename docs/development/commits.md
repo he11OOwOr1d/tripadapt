@@ -12,4 +12,14 @@
 
 These group the subsequent local work by responsibility. Cross-cutting schema foundations are introduced before their API/worker/UI consumers. The application composition is integrated after its dependencies. Individual slices are review steps, not claimed historical standalone releases. The verified final snapshot and its limitations are documented in [status](status.md).
 
-The final commit index is added after the section commits have their actual hashes.
+| Commit | Section |
+| --- | --- |
+| `d22b6c7` | Development journal, privacy exclusions and deployment guard |
+| `f9cf8bb` | Shared backend, identity, persistence, reviewed proposals and agent orchestration |
+| `01ebbf7` | Authentication UI, visual studies and account adapters |
+| `45466c5` | Autosave, saved-trip library and UX refinement |
+| `f51b6b2` | Editable itinerary workspace |
+| `bfde0d9` | Conversational assistant, job progress and proposal review |
+| `8487140` | Integrated creation and planning workbench |
+
+The documentation publication commit follows these sections. Backend routes, migrations and shared schemas stay together because splitting their registration would produce incomplete imports. This is a retrospective review structure, not a reconstruction of exact implementation dates.
