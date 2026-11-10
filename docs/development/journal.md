@@ -161,3 +161,39 @@ Recorded retrospectively on 10 November 2026 from the repository, implementation
 ## What this history should prevent us from forgetting
 
 Protect the approved landing. Keep examples separate from personal data. Explain time/cost units. Treat unknown provider facts as unknown. Debug the full user story, not just one layer. Preserve local work when sync fails. Keep accepted plans immutable. Use one database service with clear interfaces and ownership boundaries. Keep agents bounded, proposals explicit and bookings separate. Record observed verification and remaining gaps without relabeling a prototype or local success as a production launch.
+
+## 14. Let conversation propose a precise time change
+
+**Work.** Added one-activity rescheduling on the selected day, typed extraction, deterministic candidate reconstruction, protected-item/conflict explanations and before/after review.
+
+**Decision and why.** Reuse the existing durable job and acceptance boundaries. A narrow time command needs no new agent framework, graph or database service. Keep all other fields unchanged and require explicit acceptance.
+
+**Lesson.** Browser testing exposed message/job polling across different READ COMMITTED statement snapshots; a joined read prevents a successful job appearing without its reply. Local unit tests alone did not reveal this timing issue.
+
+**Tradeoff.** Exact local times and one unprotected activity limit flexibility but make the proposal easy to inspect. Cross-day moves, removal and downstream feasibility remain future work. Travel times and opening hours stay unverified.
+
+**Evidence.** [Conversational edits](../conversational-edits.md), 70 backend tests, frontend checks and a live QA-trip move accepted and reloaded on phone.
+
+## 15. Extend reviewed moves across local days
+
+11 November 2026. **Work:** a one-activity move to another day within the same destination, with explicit before/after day and time. **Decision:** use destination-local day numbers and the current selected source day, keeping the same deterministic candidate/acceptance boundary. **Lesson:** a day number needs context; whole-trip days and days within a stay must not be silently interchanged. **Tradeoff:** no cross-destination moves or automatic reshuffling yet, but receiving-day conflicts and protected items remain enforced. **Evidence:** [conversational edits](../conversational-edits.md), 76 backend tests and frontend checks.
+
+## 16. Let travelers adjust time spent at an activity
+
+11 November 2026. **Work:** a typed duration-only chat proposal with explicit minutes and unchanged start time. **Decision:** preserve every other field and reconstruct the expected candidate at publication and acceptance. **Lesson:** shorter/longer must resolve to an exact total duration before review; longer activities must not silently push other items later. **Tradeoff:** one precise edit at a time, with ambiguity and conflicts returned as explanations, rather than automatic reshuffling. **Evidence:** [conversational edits](../conversational-edits.md), 87 backend tests and frontend checks.
+
+## 17. Make removals explicit and reviewable
+
+11 November 2026. **Work:** typed one-item removal through chat, an item-focused review and explicit acceptance. **Decision:** never treat itinerary removal as supplier cancellation, and refuse protected/bulk/ambiguous edits. **Lesson:** destructive intent needs a named object and visible consequences, even when previous immutable snapshots remain. **Tradeoff:** one activity on the selected day and no history/restore UI yet, with manual resolution of outstanding blocking conflicts. **Evidence:** [conversational edits](../conversational-edits.md), 96 backend tests and frontend checks.
+
+## 18. Recover through accepted-plan history
+
+11 November 2026. **Work:** accepted history, pagination, whole-plan restore proposals, conflict review and explicit acceptance. **Decision:** clone an immutable snapshot into a new version and preserve current protected records; restore settings and activities together. **Lesson:** activity-only recovery can combine old schedules with new dates/preferences and produce an inconsistent trip. **Tradeoff:** whole-plan review and manual conflict reconciliation instead of automatic merging; supplier facts and booking status remain unverified. **Evidence:** [plan history](../plan-history.md), 106 backend tests and frontend/build/drift checks.
+
+## 19. Begin live discovery with destination lookup
+
+11 November 2026. **Work:** explicit provider-backed destination search in the existing form, disambiguated labels, timezone fill, attribution and honest fallback. **Decision:** use the `/destinations/search` contract, keeping attraction discovery separate, and require user choice before adding to the route. **Lesson:** a matching label must still close the result list, and changing a place name must clear its old timezone. **Tradeoff:** a bounded non-commercial evaluation adapter and process-local cache; commercial licensing/shared quotas and persisted geocoded references remain ahead. This does not make sample AI activities or prices/weather live. **Evidence:** [destination search](../destination-search.md), provider documentation, 119 backend tests and 17 frontend tests/build checks.
+
+## 20. Publish recovery and discovery as reviewable sections
+
+11 November 2026. **Work:** refreshed README/setup instructions, corrected stale scaffold/auth/integration statuses, linked the current module boundaries and feature guides, and published backend/frontend/documentation sections from the merged main baseline. **Decision:** use a new review branch after PR #1 was merged and disable its Vercel Git deployment. **Lesson:** published source, a frontend release and operational API/worker/provider integrations are distinct states; documentation must not collapse them. **Tradeoff:** shared dependencies are grouped by backend/frontend responsibility rather than reconstructing imaginary per-feature original commits. Private environment files and the three personal-trip captures remain excluded. See the [commit map](commits.md).
