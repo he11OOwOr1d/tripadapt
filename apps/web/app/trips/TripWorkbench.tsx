@@ -22,6 +22,7 @@ import TripLibrary from "./TripLibrary";
 import ItineraryWorkspace from "./ItineraryWorkspace";
 import ActivityEditor from "./ActivityEditor";
 import ProposalReview from "./ProposalReview";
+import PlanHistory from "./PlanHistory";
 import DayPlanning from "./DayPlanning";
 import TripChat from "./TripChat";
 import "./chat.css";
@@ -73,6 +74,7 @@ export default function TripWorkbench({
     string | undefined
   >();
   const [reviewOpen, setReviewOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [removedActivity, setRemovedActivity] = useState<Activity | null>(null);
   const modalOpen = !!removing;
   useEffect(() => {
@@ -679,6 +681,7 @@ export default function TripWorkbench({
                 Review plan
               </button>
             )}
+            {account && <button disabled={dirty || autosave.saving || !!autosave.error} onClick={() => setHistoryOpen(true)}>Plan history</button>}
           </nav>
         )}
         {view === "setup" ? (
@@ -812,6 +815,7 @@ export default function TripWorkbench({
             }}
           />
         )}
+        {historyOpen && account && <PlanHistory account={account} onClose={() => setHistoryOpen(false)} onReview={id => { setHistoryOpen(false); setGeneratedProposalId(id); setReviewOpen(true); }} />}
         {reviewOpen && account && (
           <ProposalReview
             account={account}

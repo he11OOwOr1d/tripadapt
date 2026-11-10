@@ -2,6 +2,10 @@ import { accountRequest } from "./account-adapter";
 export type Proposal = {
   source: string;
   generation?: {
+    operation?: "move_activity" | "resize_activity" | "remove_activity" | "restore_plan";
+    restoration?: { version_number: number; added: number; removed: number; changed: number; settings_changed: boolean };
+    removal?: { label: string; day: number; destination: string; start: string; duration_minutes: number };
+    change?: { label: string; before: string; after: string; day: number; destination_day?: number; destination?: string; start?: string };
     engine?: string;
     model?: string;
     summary?: string;
@@ -21,7 +25,21 @@ export type Proposal = {
     }[];
   };
   plan: {
-    stops: { client_id: string; name: string; desired_nights: number | null }[];
+    date_mode?: string;
+    start_date?: string | null;
+    end_date?: string | null;
+    window_start?: string | null;
+    window_end?: string | null;
+    desired_days?: number | null;
+    traveler_count?: number;
+    room_count?: number;
+    display_currency?: string;
+    budget?: { amount: string; mode: string } | null;
+    origin?: { label: string } | null;
+    return_location?: { label: string } | null;
+    preferences?: { pace: string; interests: string[]; preferred_modes: string[]; return_to_origin: boolean; stay_preferences: Record<string, {style: string; rate: string; basis: string}>; travel_preferences: Record<string, {mode: string; hours: string; overnight: number; rate: string; basis: string}> };
+
+    stops: { client_id: string; name: string; desired_nights: number | null; timezone?: string }[];
     activities: {
       logical_id: string;
       stop_logical_id: string;
