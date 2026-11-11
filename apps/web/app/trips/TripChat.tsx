@@ -346,7 +346,7 @@ export default function TripChat({
           disabled={sending}
           maxLength={2000}
           rows={2}
-          placeholder="Explain this day, or suggest a break…"
+          placeholder="Ask about this day, suggest a break, or move an activity to 11:00 AM…"
         />
         <div>
           <small>

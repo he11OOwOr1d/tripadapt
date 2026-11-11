@@ -1,6 +1,6 @@
 # Repository structure and module boundaries
 
-9 November 2026. A scaffold guide for the current repository, not a claim that every planned module is implemented.
+The tables below preserve the 9 November 2026 scaffold baseline. Their “planned”/“not connected” statuses are historical. The 11 November module update at the end and [current status](../development/status.md) supersede them.
 
 ## Frontend — `apps/web`
 
@@ -51,3 +51,20 @@ These are modules of a modular monolith, not independently provisioned microserv
 - Root `tripadapt-*.md`: approved behavioral/technical baselines.
 
 Generated build output, dependencies, real environment files, local database clusters, deployment credentials and scratch exports are ignored. Keep future modules small and domain-owned; do not add another competing trip state or a generic snapshot server PUT.
+
+## 11 November module update
+
+| Module | Implemented responsibility |
+| --- | --- |
+| `app/trips/TripWorkbench.tsx` | Compose browser/account autosave, library, itinerary, chat, proposals and history |
+| `app/trips/PlaceLookup.tsx`, `lib/trips/place-search.ts` | Explicit credential-free destination discovery and manual fallback |
+| `app/trips/PlanHistory.tsx`, `lib/trips/revisions.ts` | Accepted-version listing and reviewed full-plan restore |
+| `app/trips/TripChat.tsx`, `ProposalReview.tsx` | Conversation and explicit review of additions, moves, durations and removals |
+| `app/api/identity.py` | Verified Supabase JWT identity and owner mapping |
+| `app/api/{trips,proposals,revisions}.py` | Owned persistence, frozen review, acceptance and immutable restoration |
+| `app/api/{planning_jobs,conversation}.py`, `app/jobs/worker.py` | Leased jobs, persistent messages, fencing/cancellation and atomic publication |
+| `app/agents/` | Bounded Groq/LangGraph generation and typed conversational routing |
+| `app/planning/` | Deterministic validation, scoped edits, recovery checks and explicit fixture generation |
+| `app/api/destinations.py`, `app/providers/geocoding.py` | Bounded Open-Meteo/GeoNames location lookup; no live activity/price/weather adapter yet |
+
+The frontend view model and typed API adapters remain separate. One Supabase-hosted PostgreSQL database backs identity/application responsibilities through their respective interfaces. History restores the complete supported PlanInput, not account credentials or supplier reservations. Current configuration and verification are linked in the feature guides; no table here implies production deployment.

@@ -300,3 +300,11 @@ Planning jobs now accept `engine: groq` behind backend configuration while retai
 ### Implementation addendum — conversation foundation, 10 November 2026
 
 Owned GET/POST `/trips/{id}/messages` are implemented. GET supports bounded `limit` and a trip-scoped `before` cursor; it returns chronological turns and `next_cursor`. POST requires UUID Idempotency-Key, current draft If-Match, text, explicit base_version_id and selected-day scope, and returns HTTP 202 with a durable turn/job. Message and job admission are atomic and reuse existing concurrency limits. Read-only replies do not change the draft; supported additions return a proposal for explicit review/acceptance. Other conversational mutations are not implemented. Public planning jobs remain `operation: generate`; internal conversational work is created only by the message endpoint. See `docs/trip-conversation.md`.
+
+## Implemented refinement: accepted history and restore (11 November 2026)
+
+Owned `GET /trips/{trip_id}/revisions` and `POST /trips/{trip_id}/revisions/{version_id}/restore` are implemented. History uses a `before` version-number cursor and returns `{revisions, next_before}`. Restore requires draft If-Match plus UUID Idempotency-Key and returns HTTP 202 with a ready locally validated ProposalView and Location. It clones the complete supported plan into a new restoration candidate. It does not run external revalidation or alter reservations. Acceptance retains the standard acknowledgment/staleness checks and rejects changes to current protected activity/date/stop context. See `docs/plan-history.md` for exact behavior and remaining limits.
+
+## Implemented refinement: destination lookup (11 November 2026)
+
+Public `GET /destinations/search?q=...` now implements explicit Open-Meteo/GeoNames-backed lookup for local evaluation. The initial subset accepts 2–100 characters, returns up to eight typed choices with name/region/country/timezone/coordinates and source/retrieval/cache metadata, and preserves manual entry when unavailable. Locale/country-bias/cursor options and persistent geocoded stop references remain unimplemented. This is not the attraction/category `/places/search` contract. See `docs/destination-search.md` for provider, limits, licensing and remaining integration boundaries.

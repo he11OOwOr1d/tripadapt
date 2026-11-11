@@ -127,3 +127,25 @@ def validate_plan(plan: PlanInput) -> dict:
         "status": "conflicted" if any(i["blocking"] for i in issues) else "provisional",
         "issues": issues,
     }
+
+
+def same_plan(left: PlanInput, right: PlanInput) -> bool:
+    """Activity identity is logical_id; only destination order encodes a route.
+
+    SQL result order is not a schedule edit. Keep every typed field and the
+    ordered stop list exact, but compare activities independently of row order.
+    Do not collapse duplicates into a dict: those are invalid candidates.
+    """
+
+    def canonical(plan):
+        data = plan.model_dump(mode="python")
+        ids = [a.logical_id for a in plan.activities]
+        if len(ids) != len(set(ids)):
+            return None
+        data["activities"] = sorted(
+            data["activities"], key=lambda a: str(a["logical_id"])
+        )
+        return data
+
+    before, after = canonical(left), canonical(right)
+    return before is not None and after is not None and before == after

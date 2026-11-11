@@ -69,3 +69,13 @@ The user chose Groq. The existing Python worker now runs LangGraph with read-onl
 ## 10 November 2026 — trip conversation foundation
 
 Conversation is an additional interface to the existing job/proposal boundary, not a separate agent with database authority. Persisted messages use exact saved-draft context; typed routing distinguishes factual answers, clarification, supported additions and unsupported edits. Read-only answers are assembled from saved records. Canonical quick choices avoid unnecessary intent-model calls, and rest requests narrow the generator to rest candidates. Stage-driven progress replaces arbitrary thinking-word animations. A paper conversation panel shares the itinerary's typography/colors; phones switch to a focused chat view. See `docs/trip-conversation.md` for verification and limits.
+
+## 11 November 2026 — reviewed edits, recovery and live discovery
+
+Extend the existing conversation/job/proposal architecture with narrow typed commands for a single activity’s local time/day, duration or removal. Deterministic code reconstructs allowed candidates at publication and acceptance; AI interprets intent and cannot accept a plan. Protected items and stale bases remain enforced.
+
+Whole-plan recovery clones an accepted snapshot into a new candidate, including dates, route, preferences and budget. Never combine an old schedule with silently retained new settings. Keep historical snapshots immutable, expose scope in review and block protected present-day/date/stop-context changes instead of guessing a merge. Supplier reservations are separate.
+
+Begin live discovery with explicit Open-Meteo/GeoNames destination search under `/destinations/search`, keeping attraction discovery separate. User selection fills label/timezone; manual entry remains available. Bound requests/cache, attribute the source and label cached data. This is a local non-commercial evaluation integration, not live AI activity evidence. Coordinate/reference persistence and commercial/production operational setup remain outstanding.
+
+Supabase email confirmation was disabled by the project owner for current testing; this supersedes the earlier enabled-confirmation note. Recovery-email delivery remains separate. See the [journal](../development/journal.md), [edits](../conversational-edits.md), [history](../plan-history.md) and [destination lookup](../destination-search.md).

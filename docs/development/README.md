@@ -17,3 +17,7 @@ Each new section commit records its purpose, lessons, decisions and tradeoffs in
 - `.env` files, keys, database passwords, local build/deployment state and dependency directories stay ignored.
 - Three local library/account captures containing a real trip are excluded. Public screenshots use empty forms, example inputs, prototype previews or the explicitly named QA trip. The historical connection-status screenshot has no connection credentials.
 - Historical notes about blockers remain as history. Later dated corrections and the current status page supersede them.
+
+## 11 November publication
+
+PR #1 was merged into main as `8d1f379`. Subsequent local work is grouped into backend, frontend and documentation commits on `codex/planning-recovery-discovery`, based on that merge. The branch has its own Vercel deployment-disable rule. These group related work retrospectively; they are not backdated historical releases. See the updated [commit map](commits.md).

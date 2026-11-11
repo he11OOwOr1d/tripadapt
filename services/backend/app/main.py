@@ -10,7 +10,7 @@ from sqlalchemy import select, text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from starlette.exceptions import HTTPException
 
-from app.api import conversation, planning_jobs, proposals  # noqa: F401 - register proposal routes
+from app.api import conversation, destinations, planning_jobs, proposals, revisions  # noqa: F401 - register proposal routes
 from app.api.trips import router
 from app.config import settings
 from app.persistence.database import engine
@@ -38,7 +38,9 @@ async def request_context(request: Request, call_next):
     request.state.request_id = str(uuid4())
     response = await call_next(request)
     response.headers["X-Request-ID"] = request.state.request_id
-    if request.url.path.startswith(("/api/v1/trips", "/api/v1/jobs")) or request.url.path == "/api/v1/me":
+    if request.url.path.startswith(
+        ("/api/v1/trips", "/api/v1/jobs")
+    ) or request.url.path in ("/api/v1/me", "/api/v1/destinations/search"):
         response.headers["Cache-Control"] = "private, no-store"
     return response
 
@@ -140,7 +142,9 @@ def problem(request, status, code, issues=None):
 
 @app.exception_handler(HTTPException)
 async def http_problem(request, exc):
-    return problem(request, exc.status_code, str(exc.detail))
+    response = problem(request, exc.status_code, str(exc.detail))
+    response.headers.update(exc.headers or {})
+    return response
 
 
 @app.exception_handler(RequestValidationError)

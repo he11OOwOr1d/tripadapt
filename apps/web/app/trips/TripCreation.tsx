@@ -1,5 +1,6 @@
 "use client";
 import { useRef, useState } from "react";
+import PlaceLookup from "./PlaceLookup";
 import type { Trip, Stop } from "../../lib/trips/adapter";
 import {
   planningCosts,
@@ -64,6 +65,7 @@ export default function TripCreation({
   const [errors, setErrors] = useState<string[]>([]);
   const [place, setPlace] = useState("");
   const [timezone, setTimezone] = useState("");
+  const timezoneInput = useRef<HTMLInputElement>(null);
   const [placeError, setPlaceError] = useState("");
   const title = useRef<HTMLHeadingElement>(null);
   const form = useRef<HTMLFormElement>(null);
@@ -142,6 +144,7 @@ export default function TripCreation({
       ],
     });
     setPlace("");
+    setTimezone("");
     setPlaceError("");
     setErrors([]);
   }
@@ -581,21 +584,11 @@ export default function TripCreation({
                 <>
                   <div className="creation-add-place">
                     <h3>Add a place</h3>
-                    <label>
-                      Destination
-                      <input
-                        value={place}
-                        aria-invalid={!!placeError}
-                        aria-describedby={
-                          placeError ? "place-error" : "place-help"
-                        }
-                        placeholder="e.g. Kyoto, Japan"
-                        onChange={(e) => setPlace(e.target.value)}
-                      />
-                    </label>
+                    <PlaceLookup value={place} error={!!placeError} onChange={value => { setPlace(value); setTimezone(""); setPlaceError(""); }} onSelect={choice => { setPlace(choice.label); setTimezone(choice.timezone); setPlaceError(""); timezoneInput.current?.focus(); }} />
                     <label>
                       Destination timezone
                       <input
+                        ref={timezoneInput}
                         list="trip-timezones"
                         placeholder="e.g. Asia/Tokyo"
                         value={timezone}
@@ -631,9 +624,7 @@ export default function TripCreation({
                       Add to route
                     </button>
                     <p id="place-help" className="creation-note">
-                      Destination search is not connected. These are
-                      user-entered places, not verified search results. Repeated
-                      visits are welcome.
+                      Search for a city and choose a match to fill its timezone, or enter both fields manually. Review the place before adding it. Repeated visits are welcome.
                     </p>
                   </div>
                   <div className="creation-section-heading">
@@ -655,7 +646,7 @@ export default function TripCreation({
                       <span className="route-dot">{i + 1}</span>
                       <div>
                         <h3>{s.name}</h3>
-                        <small>{s.timezone} · user-entered</small>
+                        <small>{s.timezone} · local time</small>
                       </div>
                       <div className="creation-stop-actions">
                         <button

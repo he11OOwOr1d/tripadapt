@@ -98,3 +98,11 @@ Configure server-only `GROQ_API_KEY`, `GROQ_MODEL` and `PLANNING_AI_ENABLED=true
 ### Trip conversation
 
 The existing Groq-enabled worker also processes private trip messages. No extra key is needed. Apply migration head and run API, worker and web as above. See `../../docs/trip-conversation.md` for the message contract, idempotency, bounded context, supported actions and verification.
+
+## 11 November — reviewed edits, history and destination lookup
+
+The existing API/worker supports single-activity moves across destination-local days, exact durations and reviewed removal. `GET /trips/{id}/revisions` lists accepted snapshots; `POST /trips/{id}/revisions/{version_id}/restore` creates a complete supported-plan restoration proposal. Acceptance rechecks ownership, staleness, immutable source equality and current protected activity/date/stop context. Historical versions remain unchanged. See [history](../../docs/plan-history.md) and [edits](../../docs/conversational-edits.md).
+
+Enable `PLACE_SEARCH_ENABLED=true` for explicit local prototype `GET /api/v1/destinations/search?q=...` requests. The feature defaults to false; it uses a bounded Open-Meteo/GeoNames adapter and no prototype key. This public endpoint sends no trip/account context to the provider. It is separate from model planning and does not make activity, routing, weather or prices live. See [provider limits, attribution and commercial-use boundary](../../docs/destination-search.md).
+
+Current checks: 119 backend tests, 17 frontend tests, Ruff, TypeScript and frontend build. The latest edit/recovery/discovery slice adds no migration; use the existing schema setup through `0016_trip_conversation`. No production API/worker deployment is performed by source publication.

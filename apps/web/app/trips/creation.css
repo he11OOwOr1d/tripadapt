@@ -861,3 +861,11 @@
     scroll-margin-top: 120px !important;
   }
 }
+
+.place-lookup { min-width: 0; grid-column: 1 / -1; }
+.place-lookup > button { margin-top: 12px; min-height: 44px; }
+.place-results { margin-top: 16px; padding: 16px; background: #edf0df; border-radius: 14px; overflow-wrap: anywhere; }
+.place-results ul { margin: 12px 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.place-results li button { width: 100%; min-height: 56px; text-align: left; white-space: normal; padding: 12px; display: grid; gap: 5px; }
+.place-results li span { font-size: .85em; }
+.place-results small { display: block; line-height: 1.6; }

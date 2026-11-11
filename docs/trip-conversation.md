@@ -1,5 +1,7 @@
 # Trip conversation — first slice
 
+Update: [conversational time changes](conversational-edits.md) now support one reviewed start-time change on the selected day. The first-slice limitations below are historical.
+
 10 November 2026. This continues the existing Elsewhere itinerary and Groq integration. The locked landing and personal trip form are unchanged.
 
 ## Delivered experience
