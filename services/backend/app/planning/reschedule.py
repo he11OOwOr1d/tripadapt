@@ -3,7 +3,7 @@
 import re
 from datetime import time
 
-from app.planning.validation import validate_plan
+from app.planning.validation import same_plan, validate_plan
 from app.trips.schemas import StrictModel
 
 MOVE_ISSUE = {
@@ -87,5 +87,5 @@ def validate_move(base, candidate, scope, metadata):
     expected, _ = move_activity(
         base, scope, MoveActivity.model_validate(metadata["command"])
     )
-    if candidate != expected:
+    if not same_plan(candidate, expected):
         raise ValueError("Candidate exceeds the single approved time change")

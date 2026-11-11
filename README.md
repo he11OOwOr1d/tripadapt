@@ -56,7 +56,7 @@ npm --prefix apps/web run build
 npm --prefix apps/web test
 ```
 
-The npm regression suite has 17 tests; the backend suite has 119 tests. Checks cover account mapping, autosave, schedule logic, scoped proposals/recovery and provider lookup boundaries. Browser reviews cover desktop and 390px/320px phone layouts. [Journey implementation and verification](docs/trip-creation-journey.md).
+The npm regression suite has 17 tests; the backend suite has 123 tests. Checks cover account mapping, autosave, schedule logic, scoped proposals/recovery and provider lookup boundaries. Browser reviews cover desktop and 390px/320px phone layouts. [Journey implementation and verification](docs/trip-creation-journey.md).
 
 ## Full-stack local development
 

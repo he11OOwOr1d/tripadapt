@@ -167,7 +167,11 @@ def test_chat_move_review_accept_reload_and_frozen_candidate(context, destinatio
     db.commit()
     assert client.get(version_url).headers["etag"] == tag
     assert (
-        client.get(version_url).json()["data"]["activities"][0]["local_start_time"]
+        next(
+            a
+            for a in client.get(version_url).json()["data"]["activities"]
+            if a["logical_id"] == str(plan.activities[0].logical_id)
+        )["local_start_time"]
         == "09:00:00"
     )
     proposal = client.get(base + f"/proposals/{job.proposal_id}").json()["data"]
@@ -175,7 +179,10 @@ def test_chat_move_review_accept_reload_and_frozen_candidate(context, destinatio
     assert test_proposals.accept(client, base, proposal, ack=False).status_code == 409
     response = test_proposals.accept(client, base, proposal)
     assert response.status_code == 200, response.text
-    activities = client.get(version_url).json()["data"]["activities"]
+    by_id = {
+        a["logical_id"]: a for a in client.get(version_url).json()["data"]["activities"]
+    }
+    activities = [by_id[str(a.logical_id)] for a in plan.activities]
     assert activities[0]["local_start_time"] == "11:00:00"
     assert activities[0]["local_day_offset"] == (15 if destination_day is None else 16)
     assert activities[1]["local_start_time"] == "12:00:00"

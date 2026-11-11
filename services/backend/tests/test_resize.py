@@ -130,7 +130,10 @@ def test_duration_proposal_acceptance_preserves_start_and_other_items(context):
     assert test_proposals.accept(client, base, proposal, ack=False).status_code == 409
     accepted = test_proposals.accept(client, base, proposal)
     assert accepted.status_code == 200, accepted.text
-    activities = client.get(version_url).json()["data"]["activities"]
+    by_id = {
+        a["logical_id"]: a for a in client.get(version_url).json()["data"]["activities"]
+    }
+    activities = [by_id[str(a.logical_id)] for a in plan.activities]
     assert activities[0]["duration_minutes"] == 45
     assert activities[0]["local_start_time"] == "09:00:00"
     assert activities[0]["local_day_offset"] == 15

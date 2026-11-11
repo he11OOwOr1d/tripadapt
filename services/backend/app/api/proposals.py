@@ -20,7 +20,7 @@ from app.api.trips import (
     wrap,
 )
 from app.persistence.models import AppUser, DestinationStop, PlanProposal, PlanVersion
-from app.planning.validation import validate_plan
+from app.planning.validation import same_plan, validate_plan
 from app.trips.schemas import PlanInput, StrictModel
 
 
@@ -321,7 +321,7 @@ def accept(
             historical is None
             or historical.trip_id != trip.id
             or historical.status != "accepted"
-            or plan_input(db, historical) != candidate_plan
+            or not same_plan(plan_input(db, historical), candidate_plan)
         ):
             raise HTTPException(409, "PLAN_CONFLICT")
         report = restoration_report(plan_input(db, draft), candidate_plan)

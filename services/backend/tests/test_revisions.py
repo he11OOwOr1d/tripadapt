@@ -8,6 +8,8 @@ import test_trips
 from app.api.identity import TrustedIdentity, verified_identity
 from app.main import app
 from app.planning.restoration import restoration_report
+from app.planning.validation import same_plan
+from app.trips.schemas import PlanInput
 
 
 @pytest.fixture
@@ -130,7 +132,10 @@ def test_full_snapshot_restoration_is_reviewed_and_history_is_immutable(
         )
         accepted = test_proposals.accept(client, base, proposal)
         assert accepted.status_code == 200, accepted.text
-        assert accepted.json()["data"]["plan"] == first["plan"]
+        assert same_plan(
+            PlanInput.model_validate(accepted.json()["data"]["plan"]),
+            PlanInput.model_validate(first["plan"]),
+        )
         assert (
             accepted.json()["data"]["candidate_version_id"]
             != first["candidate_version_id"]

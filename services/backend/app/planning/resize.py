@@ -1,6 +1,6 @@
 """Only an existing unprotected activity's duration may change."""
 
-from app.planning.validation import validate_plan
+from app.planning.validation import same_plan, validate_plan
 from app.trips.schemas import StrictModel
 
 
@@ -65,5 +65,5 @@ def validate_resize(base, candidate, scope, metadata):
     expected, _ = resize_activity(
         base, scope, ResizeActivity.model_validate(metadata["command"])
     )
-    if candidate != expected:
+    if not same_plan(candidate, expected):
         raise ValueError("Candidate exceeds the single requested duration change")

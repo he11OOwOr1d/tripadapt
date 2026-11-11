@@ -17,7 +17,7 @@ Snapshot: 11 November 2026. Local implementation status, not a production-readin
 
 ## Verification evidence
 
-The current local implementation was checked with 119 backend tests, 17 frontend regression tests, Ruff, TypeScript and a production frontend build. Browser checks covered desktop and phone layouts, account save/reload, proposal acceptance, live Groq generation, persistent conversation, clarification and one requested rest-break proposal. Historical notes retain the smaller test counts observed at those earlier milestones; they are not additional independent proof of today's state.
+The current local implementation was checked with 123 backend tests, 17 frontend regression tests, Ruff, TypeScript and a production frontend build. Browser checks covered desktop and phone layouts, account save/reload, proposal acceptance, live Groq generation, persistent conversation, clarification and one requested rest-break proposal. Historical notes retain the smaller test counts observed at those earlier milestones; they are not additional independent proof of today's state.
 
 Tests use transactional rollback and mock providers for repeatable automated checks. Separately observed live Groq calls and signed-in browser runs are documented in their implementation notes. The traveler's original trip was not used as disposable test data.
 
@@ -52,3 +52,9 @@ Accepted snapshots are now listed and can be restored through a reviewed new pro
 ## 11 November: first live discovery adapter
 
 Explicit destination lookup now uses Open-Meteo/GeoNames, with user selection, timezone fill, attribution/cache timestamps and manual fallback. Stop coordinate/provenance persistence and live AI activity evidence are not connected. 119 backend tests, 17 frontend tests, Ruff, TypeScript and build pass. See [destination search](../destination-search.md).
+
+## CI correction: activity identity versus SQL row order
+
+PR #2 failed two scoped-edit tests in GitHub Actions while local tests had passed. Publication validators compared complete PlanInput lists directly, although PostgreSQL does not promise activity row order without ORDER BY. Equivalent activity records could therefore be rejected as an unauthorized edit. Activity ordering is now normalized by stable logical ID only for comparison; destination order and every typed field remain exact, and duplicate activity IDs fail comparison. Move/resize/removal and restore-source verification share this rule. API assertions identify records by logical ID rather than array position.
+
+Four regression cases deliberately reverse record order and retain rejection of changed fields, duplicates and route reordering. All 123 backend tests pass on Python 3.12 and the CI-matching Python 3.14.4 against PostgreSQL 17. The 17 frontend tests, Ruff, TypeScript and build pass. The separate Supabase Preview check reports that per-PR database preview branches are disabled; it is skipped, not the failing test job. That integration setting was not changed.
