@@ -1,4 +1,6 @@
 "use client";
+import LiveAcceptanceCheck, { type LiveCheckChoice } from "./LiveAcceptanceCheck";
+import PlaceAttribution from "./PlaceAttribution";
 import { useEffect, useRef, useState } from "react";
 import { proposalAdapter, type Proposal } from "../../lib/trips/proposals";
 
@@ -7,17 +9,20 @@ export default function ProposalReview({
   proposalId,
   onClose,
   onAccepted,
+  onDiscarded,
 }: {
   account: { id: string; versionEtag: string };
   proposalId?: string;
   onClose: () => void;
   onAccepted: () => Promise<void>;
+  onDiscarded?: () => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const keys = useRef({
     submit: crypto.randomUUID(),
     accept: crypto.randomUUID(),
   });
+  const [liveChoice,setLiveChoice] = useState<LiveCheckChoice>({enabled:false,input:null});
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [acknowledged, setAcknowledged] = useState<string[]>([]);
   const [busy, setBusy] = useState(true);
@@ -34,6 +39,7 @@ export default function ProposalReview({
   }, []);
   useEffect(() => {
     let active = true;
+    setLiveChoice({enabled:false,input:null});
     setBusy(true);
     setError("");
     (proposalId
@@ -70,7 +76,7 @@ export default function ProposalReview({
       active = false;
     };
   }, [account.id, account.versionEtag, attempt, proposalId]);
-  const blocked = proposal?.validation.issues.some((i) => i.blocking);
+  const blocked = proposal?.stale || proposal?.validation.issues.some((i) => i.blocking);
   const advisories =
     proposal?.validation.issues.filter((i) => i.acknowledgeable) ?? [];
   async function act(accept: boolean) {
@@ -84,11 +90,13 @@ export default function ProposalReview({
           proposal,
           acknowledged,
           keys.current.accept,
+          liveChoice.enabled ? liveChoice.input : null,
         );
         setProposal(result);
         await onAccepted();
       } else {
         await proposalAdapter.discard(account.id, proposal);
+        onDiscarded?.();
         onClose();
       }
     } catch (failure) {
@@ -152,6 +160,7 @@ export default function ProposalReview({
       )}
       {proposal && (
         <>
+          {proposal.stale && proposal.status === "pending" && <p role="alert" className="editor-error">Your trip changed after this review was prepared. It can’t be accepted. Inspect or discard it, then prepare a fresh review from your current draft.</p>}
           <p className="proposal-state">
             {blocked
               ? "Needs a few adjustments"
@@ -162,8 +171,8 @@ export default function ProposalReview({
                   : proposal.source === "ai"
                     ? ["move_activity", "resize_activity", "remove_activity"].includes(proposal.generation?.operation ?? "")
                       ? "Requested schedule change · local time"
-                      : "AI-generated proposal · sample evidence"
-                    : proposal.source === "restore" ? "Restoration proposal · provisional" : "Provisional manual plan"}
+                      : proposal.generation?.evidence === "mapped_places" ? "AI proposal · mapped places, estimated timing" : "AI-generated proposal · sample evidence"
+                    : proposal.source === "restore" ? "Restoration proposal · provisional" : proposal.generation?.operation === "move_activity" ? "Requested time change · saved draft" : "Provisional manual plan"}
           </p>
           {proposal.generation?.restoration && <section className="proposal-time-change" aria-label="Restoration summary">
             <h3>Restore version {proposal.generation.restoration.version_number}?</h3>
@@ -223,6 +232,7 @@ export default function ProposalReview({
               <section key={stop.client_id}>
                 <h3>{stop.name}</h3>
                 <p>{stop.desired_nights ?? "Unallocated"} nights{proposal.source === "restore" && stop.timezone ? ` · ${stop.timezone}` : ""}</p>
+                {stop.place_reference_id && proposal.location_references?.[stop.place_reference_id] ? <small>Selected map location retained · {proposal.location_references[stop.place_reference_id].source}</small> : <small>Manually entered location</small>}
                 {proposal.plan.activities
                   .filter((a) => a.stop_logical_id === stop.client_id)
                   .sort(
@@ -239,6 +249,7 @@ export default function ProposalReview({
                         {a.completed ? ", completed" : ""}
                         {a.booked ? ", booked elsewhere" : ""})
                       </small>
+                      {a.place_id && proposal.place_details?.[a.place_id] && <PlaceAttribution place={proposal.place_details[a.place_id]} />}
                     </p>
                   ))}
               </section>
@@ -252,6 +263,7 @@ export default function ProposalReview({
                 {issue.detail}
               </p>
             ))}
+          {!proposal.stale && proposal.source === "user" && proposal.generation?.request && proposal.status === "pending" && <LiveAcceptanceCheck key={proposal.id} proposal={proposal} disabled={busy} onChange={setLiveChoice} />}
           {advisories.map((issue) => (
             <label className="proposal-ack" key={issue.id}>
               <input
@@ -286,11 +298,12 @@ export default function ProposalReview({
                 disabled={
                   busy ||
                   proposal.status !== "pending" ||
+                  (liveChoice.enabled && !liveChoice.input) ||
                   advisories.some((i) => !acknowledged.includes(i.id))
                 }
                 onClick={() => void act(true)}
               >
-                {proposal.source === "restore" ? "Accept restoration" : proposal.generation?.operation === "remove_activity" ? "Accept removal" : "Accept provisional plan"}
+                {proposal.source === "restore" ? "Accept restoration" : proposal.generation?.operation === "remove_activity" ? "Accept removal" : proposal.generation?.operation === "move_activity" ? "Accept time change" : "Accept provisional plan"}
               </button>
             )}
           </footer>

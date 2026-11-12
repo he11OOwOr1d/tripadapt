@@ -22,6 +22,7 @@ import TripLibrary from "./TripLibrary";
 import ItineraryWorkspace from "./ItineraryWorkspace";
 import ActivityEditor from "./ActivityEditor";
 import ProposalReview from "./ProposalReview";
+import PendingReviews from "./PendingReviews";
 import PlanHistory from "./PlanHistory";
 import DayPlanning from "./DayPlanning";
 import TripChat from "./TripChat";
@@ -74,6 +75,7 @@ export default function TripWorkbench({
     string | undefined
   >();
   const [reviewOpen, setReviewOpen] = useState(false);
+  const [pendingOpen,setPendingOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [removedActivity, setRemovedActivity] = useState<Activity | null>(null);
   const modalOpen = !!removing;
@@ -674,8 +676,7 @@ export default function TripWorkbench({
                   !account || dirty || autosave.saving || !!autosave.error
                 }
                 onClick={() => {
-                  setGeneratedProposalId(undefined);
-                  setReviewOpen(true);
+                  setPendingOpen(true);
                 }}
               >
                 Review plan
@@ -711,6 +712,7 @@ export default function TripWorkbench({
                 day={day}
                 onSelect={setSelected}
                 onDay={setDay}
+                timeChangeReview={account && !dirty && !autosave.saving && !autosave.error ? {account, onAccepted: async () => {const saved = await accountTripAdapter.load(account.id);setAccount(saved);setTrip(saved.trip);setDirty(false);setLoadGeneration(n=>n+1);setNotice("Time change accepted. Recheck hours and onward travel for the updated day.");}} : undefined}
                 onEdit={setEditing}
                 onAdd={setEditing}
                 planningMode={
@@ -815,6 +817,7 @@ export default function TripWorkbench({
             }}
           />
         )}
+        {pendingOpen && account && <PendingReviews tripId={account.id} onClose={()=>setPendingOpen(false)} onDraft={()=>{setPendingOpen(false);setGeneratedProposalId(undefined);setReviewOpen(true);}} onReview={id=>{setPendingOpen(false);setGeneratedProposalId(id);setReviewOpen(true);}} />}
         {historyOpen && account && <PlanHistory account={account} onClose={() => setHistoryOpen(false)} onReview={id => { setHistoryOpen(false); setGeneratedProposalId(id); setReviewOpen(true); }} />}
         {reviewOpen && account && (
           <ProposalReview

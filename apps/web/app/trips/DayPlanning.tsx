@@ -153,9 +153,10 @@ export default function DayPlanning({
       </p>
       <p>
         {isAI
-          ? "Groq AI will suggest a few additions using your pace, interests and open time. This version uses a sample activity catalog; places, prices and travel data are not live. Existing items stay in place."
+          ? "Groq AI will suggest a few additions using your pace, interests and open time. Place additions use retrieved map records; visit and break durations are estimates. Hours, prices and travel times are unverified. If discovery fails, no sample places are substituted. Existing items stay in place."
           : "This test planner adds up to two meal or break blocks into open time. It uses fixtures, not AI or live travel data. Your existing items stay in place."}
       </p>
+      {job?.engine === "groq" && job.evidence !== "places" && <p>This earlier job used sample evidence. A new request uses mapped places.</p>}
       {error && (
         <p role="alert" className="editor-error">
           {error}
@@ -175,7 +176,11 @@ export default function DayPlanning({
                     ? "Your trip changed. Start a new request from the latest saved draft."
                     : job.status === "cancelled"
                       ? "Your current itinerary is unchanged."
-                      : job.error_code === "AI_RATE_LIMITED"
+                      : job.error_code === "AI_LOCATION_REQUIRED"
+                ? "Choose a map location in Explore nearby places, then start a new request."
+                : job.error_code?.startsWith("ACTIVITY_") || job.error_code === "AI_NO_PLACE_EVIDENCE"
+                  ? "Place discovery could not provide usable evidence. Try nearby search later; no sample places were substituted."
+              : job.error_code === "AI_RATE_LIMITED"
                         ? "Groq is rate-limiting requests. Try again later; your itinerary is unchanged."
                         : job.error_code === "AI_AUTH_FAILED"
                           ? "Groq authentication failed. Check the backend key; your itinerary is unchanged."

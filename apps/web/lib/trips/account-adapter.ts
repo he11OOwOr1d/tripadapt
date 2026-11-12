@@ -1,6 +1,9 @@
+import type { ActivityPlace } from "./activity-search";
 import { authClient } from "../auth/client";
 import { authConfigured } from "../auth/config";
 import { emptyTrip, isTrip, type Trip } from "./adapter";
+
+import type { PlaceResult } from "./place-search";
 
 type ActivityKind = "custom" | "meal" | "rest" | "free_time";
 type TripRow = {
@@ -14,8 +17,10 @@ type StopRow = {
   name: string;
   timezone: string;
   desired_nights: number | null;
+  place_reference?: PlaceResult | null;
 };
 type Plan = {
+  place_details?: Record<string, ActivityPlace>;
   date_mode: string;
   start_date: string | null;
   end_date: string | null;
@@ -36,6 +41,8 @@ type Plan = {
     travel_preferences?: Trip["travelPreferences"];
   };
   activities: {
+    google_place_id?: string | null;
+    place_id?: string | null;
     kind?: ActivityKind;
     logical_id: string;
     stop_logical_id: string;
@@ -97,7 +104,38 @@ export async function accountRequest<T>(
       /* Preserve safe status feedback for non-JSON outages. */
     }
     throw new AccountError(
-      code === "AUTH_NOT_CONFIGURED"
+      code === "LIVE_CHECK_HOURS_NOT_CONFIRMED" ? "Live acceptance stopped: the proposed visit does not fit confirmed current hours, or hours/date coverage is unknown. Your proposal is still pending."
+        : code === "LIVE_CHECK_ROUTE_SHORTFALL" ? "Live acceptance stopped: an adjacent journey needs more time. Your proposal is still pending."
+        : code === "LIVE_CHECK_ROUTE_WARNING" ? "Live acceptance stopped: Google returned a route-access warning. Review the route; your proposal is still pending."
+        : code === "LIVE_CHECK_LOCATION_REQUIRED" ? "Live acceptance needs mapped locations for this activity and its adjacent journeys. Your proposal is still pending."
+        : code === "LIVE_CHECK_DATE_MISMATCH" ? "Use the date from the saved trip for live acceptance. Your proposal is still pending."
+        : code === "GOOGLE_ROUTES_ACCESS_DENIED"
+        ? "Google Maps rejected the route check. Enable Routes API and allow it on the backend key; also check billing and the allowed IP."
+        : code === "GOOGLE_ROUTES_NOT_CONFIGURED"
+          ? "Journey checks are not configured on this backend. Your schedule is unchanged."
+        : code === "GOOGLE_ROUTES_RATE_LIMITED" || code === "GOOGLE_ROUTES_BUSY"
+          ? "Google Maps checks have reached the local usage limit. Try later; your schedule is unchanged."
+        : code === "GOOGLE_ROUTES_UNAVAILABLE"
+          ? "No usable route estimate was returned. Try another mode or check again later; your schedule is unchanged."
+        : code === "JOURNEY_DIFFERENT_DESTINATIONS"
+          ? "This check supports two places within the same destination. Intercity journeys need a separate check."
+        : code === "GOOGLE_PLACES_UNAVAILABLE"
+        ? "Google Maps is temporarily unavailable. Your activity is kept; try again later."
+        : code === "GOOGLE_PLACE_NOT_FOUND"
+          ? "That Google listing is no longer available. Choose a different matching place."
+      : code === "GOOGLE_PLACES_ACCESS_DENIED"
+        ? "Google Maps rejected this backend key. Check Places API (New), billing and the allowed public IP in Google Cloud."
+        : code === "GOOGLE_PLACES_NOT_CONFIGURED"
+          ? "Google Maps checks are not configured on this backend. Your activity is kept."
+          : code === "GOOGLE_PLACES_RATE_LIMITED" || code === "GOOGLE_PLACES_BUSY"
+            ? "Google Maps checks are busy or have reached the local usage limit. Try later; your activity is kept."
+            : code === "GOOGLE_PLACE_LOCATION_MISMATCH"
+              ? "That Google listing is too far from the selected place. Choose another matching listing."
+      : code === "AI_LOCATION_REQUIRED"
+        ? "Choose a map location for this destination in Explore nearby places, then try again."
+        : code === "ACTIVITY_SEARCH_DISABLED"
+          ? "Real-place search is disabled on the backend. No sample places will be substituted."
+      : code === "AUTH_NOT_CONFIGURED"
         ? "Account saving is unavailable because the server sign-in configuration is missing. Your browser draft is kept."
         : code === "STALE_PROPOSAL"
           ? "Your trip changed after this review. Close it and review the latest saved draft."
@@ -154,8 +192,11 @@ function input(trip: Trip) {
       name: s.name,
       timezone: s.timezone,
       desired_nights: s.nights,
+      place_reference_id: s.location?.reference_id ?? null,
     })),
     activities: trip.activities.map((a) => ({
+      google_place_id: a.googlePlaceId ?? null,
+      place_id: a.place?.id ?? null,
       kind: a.kind ?? "custom",
       logical_id: a.id,
       stop_logical_id: a.stopId,
@@ -212,8 +253,11 @@ export const accountTripAdapter = {
         name: s.name,
         timezone: s.timezone,
         nights: s.desired_nights ?? 0,
+        location: s.place_reference ?? undefined,
       })),
       activities: p.activities.map((a) => ({
+        googlePlaceId: a.google_place_id ?? undefined,
+        place: a.place_id ? p.place_details?.[a.place_id] : undefined,
         kind: a.kind ?? "custom",
         id: a.logical_id,
         stopId: a.stop_logical_id,

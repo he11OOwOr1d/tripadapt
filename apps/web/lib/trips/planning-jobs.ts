@@ -1,5 +1,6 @@
 import { accountRequest } from "./account-adapter";
 export type PlanningJob = {
+  evidence?: "sample" | "places";
   engine: "fixture" | "groq";
   scope: { stop_logical_id: string; local_day_offset: number };
   destination_name: string;
@@ -32,6 +33,7 @@ export const planningJobAdapter = {
         headers: { "If-Match": account.versionEtag, "Idempotency-Key": key },
         body: JSON.stringify({
           operation: "generate",
+          evidence: engine === "groq" ? "places" : "sample",
           engine,
           base_version_id: match[1],
           scope: {

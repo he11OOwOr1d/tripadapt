@@ -303,6 +303,10 @@ export default function TripChat({
                   ? "Request cancelled. Your trip is unchanged."
                   : turn.job.status === "superseded"
                     ? "Your saved trip changed. Ask again using the latest plan."
+                    : turn.job.error_code === "AI_LOCATION_REQUIRED"
+                      ? "Choose a map location for this destination in Explore nearby places, then ask again."
+                      : turn.job.error_code?.startsWith("ACTIVITY_") || turn.job.error_code === "AI_NO_PLACE_EVIDENCE"
+                        ? "Place discovery is unavailable. Your trip is unchanged; no sample places were substituted."
                     : turn.job.error_code === "AI_RATE_LIMITED"
                       ? "Groq is rate-limiting requests. Please try again later."
                       : "This request could not finish. Your trip is unchanged."}
@@ -352,7 +356,7 @@ export default function TripChat({
           <small>
             {!canSend
               ? "Waiting for your trip edits to save…"
-              : "AI uses sample activity evidence. No live prices or bookings."}
+              : "AI place proposals use map records. Hours, travel times and prices are unverified."}
           </small>
           <button
             className="day-primary"

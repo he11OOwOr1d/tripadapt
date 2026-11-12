@@ -37,6 +37,7 @@ export const conversationAdapter = {
         headers: { "If-Match": account.versionEtag, "Idempotency-Key": key },
         body: JSON.stringify({
           text,
+          evidence: "places",
           base_version_id: match[1],
           scope: {
             type: "selected_day",
@@ -51,6 +52,7 @@ export const conversationAdapter = {
 export function progressWords(stage: string, seed: string) {
   const n = seed.charCodeAt(seed.length - 1) % 2;
   if (stage.includes("Waiting") || stage.includes("Retry")) return stage;
+  if (stage.includes("Looking up real places")) return "Finding mapped places…";
   if (stage.includes("Understanding"))
     return ["Getting the picture…", "Reading your note…"][n];
   if (/Reading|Gathering/.test(stage))

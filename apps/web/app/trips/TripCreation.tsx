@@ -1,6 +1,7 @@
 "use client";
 import { useRef, useState } from "react";
 import PlaceLookup from "./PlaceLookup";
+import type { PlaceResult } from "../../lib/trips/place-search";
 import type { Trip, Stop } from "../../lib/trips/adapter";
 import {
   planningCosts,
@@ -64,6 +65,7 @@ export default function TripCreation({
   );
   const [errors, setErrors] = useState<string[]>([]);
   const [place, setPlace] = useState("");
+  const [selectedPlace, setSelectedPlace] = useState<PlaceResult>();
   const [timezone, setTimezone] = useState("");
   const timezoneInput = useRef<HTMLInputElement>(null);
   const [placeError, setPlaceError] = useState("");
@@ -140,10 +142,11 @@ export default function TripCreation({
     update({
       stops: [
         ...trip.stops,
-        { id: crypto.randomUUID(), name: place.trim(), timezone, nights: 0 },
+        { id: crypto.randomUUID(), name: place.trim(), timezone, nights: 0, location: selectedPlace },
       ],
     });
     setPlace("");
+    setSelectedPlace(undefined);
     setTimezone("");
     setPlaceError("");
     setErrors([]);
@@ -584,7 +587,7 @@ export default function TripCreation({
                 <>
                   <div className="creation-add-place">
                     <h3>Add a place</h3>
-                    <PlaceLookup value={place} error={!!placeError} onChange={value => { setPlace(value); setTimezone(""); setPlaceError(""); }} onSelect={choice => { setPlace(choice.label); setTimezone(choice.timezone); setPlaceError(""); timezoneInput.current?.focus(); }} />
+                    <PlaceLookup value={place} error={!!placeError} onChange={value => { setSelectedPlace(undefined); setPlace(value); setTimezone(""); setPlaceError(""); }} onSelect={choice => { setSelectedPlace(choice); setPlace(choice.label); setTimezone(choice.timezone); setPlaceError(""); timezoneInput.current?.focus(); }} />
                     <label>
                       Destination timezone
                       <input
@@ -592,7 +595,7 @@ export default function TripCreation({
                         list="trip-timezones"
                         placeholder="e.g. Asia/Tokyo"
                         value={timezone}
-                        onChange={(e) => setTimezone(e.target.value)}
+                        onChange={(e) => { setSelectedPlace(undefined); setTimezone(e.target.value); }}
                       />
                     </label>
                     <datalist id="trip-timezones">
@@ -647,6 +650,7 @@ export default function TripCreation({
                       <div>
                         <h3>{s.name}</h3>
                         <small>{s.timezone} · local time</small>
+                        {s.location ? <details className="route-location-source"><summary>Location source</summary><small>{s.location.latitude.toFixed(4)}°, {s.location.longitude.toFixed(4)}° · {s.location.source}<br />Fetched {new Date(s.location.retrieved_at).toLocaleDateString()}. This does not confirm travel availability.</small></details> : <small className="route-location-note">Manually entered · no map location selected</small>}
                       </div>
                       <div className="creation-stop-actions">
                         <button

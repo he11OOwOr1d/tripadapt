@@ -1,0 +1,20 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const ts = require('typescript');
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
+test('journey checks send source references and local timing through the authenticated adapter only', async () => {
+  const calls = [], exports = {};
+  const code = ts.transpileModule(fs.readFileSync(path.resolve(__dirname, '../lib/trips/journeys.ts'), 'utf8'), {compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
+  vm.runInNewContext(code, {exports,AbortSignal,require:()=>({accountRequest:async(url,options)=>{calls.push({url,options});return {data:{status:'shortfall'}};}})});
+  const input = {origin_place_id:'origin',destination_place_id:'destination',mode:'WALK',origin_start:'09:00',origin_minutes:60,destination_start:'10:05',buffer_minutes:10};
+  const abort = new AbortController();
+  const result = await exports.journeyAdapter.check(input, abort.signal);
+  assert.equal(result.status,'shortfall');
+  assert.equal(calls[0].url,'/journeys/check');
+  assert.deepEqual(JSON.parse(calls[0].options.body),input);
+  assert.equal('apiKey' in JSON.parse(calls[0].options.body),false);
+  abort.abort();
+  assert.equal(calls[0].options.signal.aborted,true);
+});
