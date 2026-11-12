@@ -28,6 +28,7 @@ class DayScope(StrictModel):
 
 
 class PlanningRequest(StrictModel):
+    evidence: Literal["sample", "places"] = "sample"
     operation: Literal["generate"]
     instructions: str = Field(default="", max_length=2000)
     engine: Literal["fixture", "groq"]
@@ -51,6 +52,7 @@ class JobView(StrictModel):
     proposal_id: UUID | None
     error_code: str | None
     updated_at: datetime
+    evidence: Literal["sample", "places"] = "sample"
     engine: Literal["fixture", "groq"] = "fixture"
     poll_after_seconds: int = 2
 
@@ -63,6 +65,7 @@ def job_view(job):
     }
     scope = job.input["request"]["scope"]
     data["engine"] = job.input["request"]["engine"]
+    data["evidence"] = job.input["request"].get("evidence", "sample")
     data["scope"] = scope
     data["destination_name"] = next(
         s["name"]
@@ -93,9 +96,13 @@ def admit_job(
         raise HTTPException(503, "AI_NOT_CONFIGURED")
     if if_match is None or idempotency_key is None:
         raise HTTPException(428, "PRECONDITION_REQUIRED")
+    fingerprint_body = body.model_dump(mode="json")
+    # Preserve retry keys created before evidence mode was an explicit field.
+    if body.evidence == "sample":
+        fingerprint_body.pop("evidence")
     fingerprint = hashlib.sha256(
         json.dumps(
-            {"body": body.model_dump(mode="json"), "etag": if_match}, sort_keys=True
+            {"body": fingerprint_body, "etag": if_match}, sort_keys=True
         ).encode()
     ).hexdigest()
     previous = db.scalar(

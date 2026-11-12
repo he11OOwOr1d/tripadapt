@@ -274,3 +274,121 @@ def test_quick_action_uses_selected_day_even_if_model_would_choose_summary():
     )
     assert "day 3, local time" in answer["text"]
     assert "Your saved route" not in answer["text"]
+
+
+def relaxation_plan(mapped=True):
+    stop = str(uuid4())
+    plan = PlanInput.model_validate(
+        {
+            "stops": [
+                {
+                    "client_id": stop,
+                    "name": "Jaipur",
+                    "timezone": "Asia/Kolkata",
+                    "desired_nights": 20,
+                    "place_reference_id": str(uuid4()) if mapped else None,
+                }
+            ]
+        }
+    )
+    return plan, {"stop_logical_id": stop, "local_day_offset": 1}
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        "Can you find a good place to relax?",
+        "Where can I unwind?",
+        "Suggest somewhere peaceful",
+    ],
+)
+def test_relaxation_discovery_asks_a_focused_question_not_a_capability_dump(message):
+    plan, scope = relaxation_plan()
+    before = plan.model_dump()
+    reply = respond(plan, scope, message, [], FakeProvider("relax"), evidence="places")
+    assert reply["kind"] == "clarify"
+    assert "day 2 in Jaipur" in reply["text"]
+    assert reply["choices"] == ["Propose a nearby park visit", "Suggest a rest break"]
+    assert "I can also propose moving" not in reply["text"]
+    assert plan.model_dump() == before
+
+
+def test_relaxation_choice_requests_real_parks_not_an_invented_venue():
+    plan, scope = relaxation_plan()
+    reply = respond(
+        plan,
+        scope,
+        "Propose a nearby park visit",
+        [],
+        FakeProvider("unsupported"),
+        evidence="places",
+    )
+    assert reply["kind"] == "proposal" and reply["candidate_ids"] == ["walk"]
+    rest = respond(
+        plan,
+        scope,
+        "Suggest a rest break",
+        [],
+        FakeProvider("unsupported"),
+        evidence="places",
+    )
+    assert rest["candidate_ids"] == ["rest"]
+
+
+def test_relaxation_with_missing_location_or_sample_mode_is_honest():
+    plan, scope = relaxation_plan(mapped=False)
+    reply = respond(
+        plan,
+        scope,
+        "Find somewhere to relax",
+        [],
+        FakeProvider("relax"),
+        evidence="places",
+    )
+    assert "map location" in reply["text"] and reply["choices"] == [
+        "Suggest a rest break"
+    ]
+    reply = respond(
+        plan,
+        scope,
+        "Find somewhere to relax",
+        [],
+        FakeProvider("relax"),
+        evidence="sample",
+    )
+    assert "sample" in reply["text"] and "park visit" not in reply["choices"]
+
+
+def test_relaxation_in_another_destination_keeps_the_selected_scope():
+    plan, scope = relaxation_plan()
+    other = plan.stops[0].model_copy(
+        update={"client_id": str(uuid4()), "name": "Udaipur"}
+    )
+    plan.stops.append(other)
+
+    class OtherDestination(FakeProvider):
+        def complete(self, *args, **kwargs):
+            return {
+                "content": json.dumps(
+                    {
+                        "action": "relax",
+                        "topic": "day",
+                        "candidate_ids": [],
+                        "focus_stop_id": other.client_id,
+                    }
+                )
+            }
+
+    reply = respond(
+        plan,
+        scope,
+        "Find somewhere to relax in Udaipur",
+        [],
+        OtherDestination(),
+        evidence="places",
+    )
+    assert (
+        reply["kind"] == "clarify"
+        and "Select Udaipur" in reply["text"]
+        and reply["choices"] == []
+    )

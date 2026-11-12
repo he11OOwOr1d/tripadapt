@@ -1,6 +1,7 @@
 """Owner-scoped persistent conversation, using the existing durable job boundary."""
 
 from datetime import datetime
+from typing import Literal
 from uuid import UUID
 
 from fastapi import Depends, Header, HTTPException, Query, Request, Response
@@ -22,6 +23,7 @@ from app.trips.schemas import StrictModel
 
 
 class MessageInput(StrictModel):
+    evidence: Literal["sample", "places"] = "sample"
     text: str = Field(min_length=1, max_length=2000)
     base_version_id: UUID
     scope: DayScope
@@ -125,6 +127,7 @@ def send(
     if not body.text.strip():
         raise HTTPException(422, "MESSAGE_EMPTY")
     job_body = ConversationJobRequest(
+        evidence=body.evidence,
         operation="chat",
         engine="groq",
         base_version_id=body.base_version_id,

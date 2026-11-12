@@ -1341,6 +1341,169 @@
         }
       }
     },
+    "/api/v1/trips/{trip_id}/proposals": {
+      "get": {
+        "summary": "Pending Reviews",
+        "operationId": "pending_reviews_api_v1_trips__trip_id__proposals_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "trip_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Trip Id"
+            }
+          },
+          {
+            "name": "before",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "exclusiveMinimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Before"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_PendingReviewPage_"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          }
+        }
+      }
+    },
     "/api/v1/trips/{trip_id}/draft/submit": {
       "post": {
         "summary": "Submit",
@@ -1395,6 +1558,183 @@
             }
           }
         ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_ProposalView_"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          }
+        }
+      }
+    },
+    "/api/v1/trips/{trip_id}/proposals/time-change": {
+      "post": {
+        "summary": "Propose Time Change",
+        "operationId": "propose_time_change_api_v1_trips__trip_id__proposals_time_change_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "trip_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Trip Id"
+            }
+          },
+          {
+            "name": "if-match",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "If-Match"
+            }
+          },
+          {
+            "name": "idempotency-key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TimeChangeInput"
+              }
+            }
+          }
+        },
         "responses": {
           "201": {
             "description": "Successful Response",
@@ -2773,7 +3113,678 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Envelope_PlaceSearch_"
+                  "$ref": "#/components/schemas/Envelope_ReferencedSearch_"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          }
+        }
+      }
+    },
+    "/api/v1/google-places/matches": {
+      "post": {
+        "summary": "Google Matches",
+        "operationId": "google_matches_api_v1_google_places_matches_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MatchInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_list_GoogleMatch__"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/google-places/check": {
+      "post": {
+        "summary": "Google Check",
+        "operationId": "google_check_api_v1_google_places_check_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_GoogleCheck_"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/journeys/check": {
+      "post": {
+        "summary": "Check Journey",
+        "operationId": "check_journey_api_v1_journeys_check_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JourneyInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_JourneyCheck_"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/places/search": {
+      "get": {
+        "summary": "Search Places",
+        "operationId": "search_places_api_v1_places_search_get",
+        "parameters": [
+          {
+            "name": "destination_reference_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Destination Reference Id"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "museum",
+                "gallery",
+                "attraction",
+                "park",
+                "viewpoint"
+              ],
+              "type": "string",
+              "default": "museum",
+              "title": "Category"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_PlacePage_"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          }
+        }
+      }
+    },
+    "/api/v1/places/{place_id}": {
+      "get": {
+        "summary": "Place Detail",
+        "operationId": "place_detail_api_v1_places__place_id__get",
+        "parameters": [
+          {
+            "name": "place_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Place Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_PlaceDetail_"
                 }
               }
             }
@@ -3244,6 +4255,16 @@
             "type": "array",
             "title": "Acknowledged Issue Ids",
             "default": []
+          },
+          "live_check": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LiveAcceptance"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "additionalProperties": false,
@@ -3255,6 +4276,30 @@
       },
       "ActivityInput": {
         "properties": {
+          "google_place_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{1,200}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Google Place Id"
+          },
+          "place_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Place Id"
+          },
           "kind": {
             "type": "string",
             "enum": [
@@ -3403,6 +4448,52 @@
         ],
         "title": "Budget"
       },
+      "CheckInput": {
+        "properties": {
+          "source_place_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Source Place Id"
+          },
+          "google_place_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{1,200}$",
+            "title": "Google Place Id"
+          },
+          "visit_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Visit Date"
+          },
+          "start": {
+            "type": "string",
+            "format": "time",
+            "title": "Start"
+          },
+          "duration_minutes": {
+            "type": "integer",
+            "maximum": 1440.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Duration Minutes"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source_place_id",
+          "google_place_id",
+          "start",
+          "duration_minutes"
+        ],
+        "title": "CheckInput"
+      },
       "CommandBatch": {
         "properties": {
           "commands": {
@@ -3513,6 +4604,22 @@
         ],
         "title": "Envelope[ConversationPage]"
       },
+      "Envelope_GoogleCheck_": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/GoogleCheck"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "Envelope[GoogleCheck]"
+      },
       "Envelope_JobView_": {
         "properties": {
           "data": {
@@ -3528,6 +4635,22 @@
           "meta"
         ],
         "title": "Envelope[JobView]"
+      },
+      "Envelope_JourneyCheck_": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/JourneyCheck"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "Envelope[JourneyCheck]"
       },
       "Envelope_Me_": {
         "properties": {
@@ -3545,10 +4668,10 @@
         ],
         "title": "Envelope[Me]"
       },
-      "Envelope_PlaceSearch_": {
+      "Envelope_PendingReviewPage_": {
         "properties": {
           "data": {
-            "$ref": "#/components/schemas/PlaceSearch"
+            "$ref": "#/components/schemas/PendingReviewPage"
           },
           "meta": {
             "$ref": "#/components/schemas/Meta"
@@ -3559,7 +4682,39 @@
           "data",
           "meta"
         ],
-        "title": "Envelope[PlaceSearch]"
+        "title": "Envelope[PendingReviewPage]"
+      },
+      "Envelope_PlaceDetail_": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/PlaceDetail"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "Envelope[PlaceDetail]"
+      },
+      "Envelope_PlacePage_": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/PlacePage"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "Envelope[PlacePage]"
       },
       "Envelope_ProposalView_": {
         "properties": {
@@ -3576,6 +4731,22 @@
           "meta"
         ],
         "title": "Envelope[ProposalView]"
+      },
+      "Envelope_ReferencedSearch_": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ReferencedSearch"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "Envelope[ReferencedSearch]"
       },
       "Envelope_RevisionPage_": {
         "properties": {
@@ -3641,6 +4812,26 @@
         ],
         "title": "Envelope[VersionView]"
       },
+      "Envelope_list_GoogleMatch__": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/GoogleMatch"
+            },
+            "type": "array",
+            "title": "Data"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "Envelope[list[GoogleMatch]]"
+      },
       "Envelope_list_StopView__": {
         "properties": {
           "data": {
@@ -3660,6 +4851,121 @@
           "meta"
         ],
         "title": "Envelope[list[StopView]]"
+      },
+      "GoogleCheck": {
+        "properties": {
+          "place": {
+            "$ref": "#/components/schemas/GoogleMatch"
+          },
+          "retrieved_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Retrieved At"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "explanation": {
+            "type": "string",
+            "title": "Explanation"
+          },
+          "hours": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Hours"
+          },
+          "hours_basis": {
+            "type": "string",
+            "title": "Hours Basis"
+          },
+          "price_level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Level"
+          },
+          "price_range": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Range"
+          },
+          "attributions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Attributions"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "place",
+          "retrieved_at",
+          "status",
+          "explanation",
+          "hours",
+          "hours_basis",
+          "attributions"
+        ],
+        "title": "GoogleCheck"
+      },
+      "GoogleMatch": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{1,200}$",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "address": {
+            "type": "string",
+            "maxLength": 1000,
+            "title": "Address"
+          },
+          "latitude": {
+            "type": "number",
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Latitude"
+          },
+          "longitude": {
+            "type": "number",
+            "maximum": 180.0,
+            "minimum": -180.0,
+            "title": "Longitude"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "address",
+          "latitude",
+          "longitude"
+        ],
+        "title": "GoogleMatch"
       },
       "JobView": {
         "properties": {
@@ -3724,6 +5030,15 @@
             "format": "date-time",
             "title": "Updated At"
           },
+          "evidence": {
+            "type": "string",
+            "enum": [
+              "sample",
+              "places"
+            ],
+            "title": "Evidence",
+            "default": "sample"
+          },
           "engine": {
             "type": "string",
             "enum": [
@@ -3755,6 +5070,165 @@
           "updated_at"
         ],
         "title": "JobView"
+      },
+      "JourneyCheck": {
+        "properties": {
+          "retrieved_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Retrieved At"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "WALK",
+              "DRIVE"
+            ],
+            "title": "Mode"
+          },
+          "travel_minutes": {
+            "type": "integer",
+            "title": "Travel Minutes"
+          },
+          "distance_meters": {
+            "type": "integer",
+            "title": "Distance Meters"
+          },
+          "gap_minutes": {
+            "type": "number",
+            "title": "Gap Minutes"
+          },
+          "buffer_minutes": {
+            "type": "integer",
+            "title": "Buffer Minutes"
+          },
+          "spare_minutes": {
+            "type": "number",
+            "title": "Spare Minutes"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "fits_estimate",
+              "shortfall"
+            ],
+            "title": "Status"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "retrieved_at",
+          "mode",
+          "travel_minutes",
+          "distance_meters",
+          "gap_minutes",
+          "buffer_minutes",
+          "spare_minutes",
+          "status",
+          "warnings"
+        ],
+        "title": "JourneyCheck"
+      },
+      "JourneyInput": {
+        "properties": {
+          "origin_place_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Origin Place Id"
+          },
+          "destination_place_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Destination Place Id"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "WALK",
+              "DRIVE"
+            ],
+            "title": "Mode"
+          },
+          "origin_start": {
+            "type": "string",
+            "format": "time",
+            "title": "Origin Start"
+          },
+          "origin_minutes": {
+            "type": "integer",
+            "maximum": 1440.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Origin Minutes"
+          },
+          "destination_start": {
+            "type": "string",
+            "format": "time",
+            "title": "Destination Start"
+          },
+          "buffer_minutes": {
+            "type": "integer",
+            "maximum": 120.0,
+            "minimum": 0.0,
+            "title": "Buffer Minutes",
+            "default": 10
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "origin_place_id",
+          "destination_place_id",
+          "mode",
+          "origin_start",
+          "origin_minutes",
+          "destination_start"
+        ],
+        "title": "JourneyInput"
+      },
+      "LiveAcceptance": {
+        "properties": {
+          "google_place_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{1,200}$",
+            "title": "Google Place Id"
+          },
+          "visit_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Visit Date"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "WALK",
+              "DRIVE"
+            ],
+            "title": "Mode",
+            "default": "WALK"
+          },
+          "buffer_minutes": {
+            "type": "integer",
+            "maximum": 120.0,
+            "minimum": 0.0,
+            "title": "Buffer Minutes",
+            "default": 10
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "google_place_id",
+          "visit_date"
+        ],
+        "title": "LiveAcceptance"
       },
       "LiveData": {
         "properties": {
@@ -3876,6 +5350,21 @@
         ],
         "title": "Location"
       },
+      "MatchInput": {
+        "properties": {
+          "source_place_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Source Place Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source_place_id"
+        ],
+        "title": "MatchInput"
+      },
       "Me": {
         "properties": {
           "id": {
@@ -3923,6 +5412,15 @@
       },
       "MessageInput": {
         "properties": {
+          "evidence": {
+            "type": "string",
+            "enum": [
+              "sample",
+              "places"
+            ],
+            "title": "Evidence",
+            "default": "sample"
+          },
           "text": {
             "type": "string",
             "maxLength": 2000,
@@ -3985,18 +5483,82 @@
         ],
         "title": "Page"
       },
-      "Place": {
+      "PendingReview": {
         "properties": {
           "id": {
-            "type": "integer",
-            "exclusiveMinimum": 0.0,
+            "type": "string",
+            "format": "uuid",
             "title": "Id"
           },
-          "label": {
+          "version_number": {
+            "type": "integer",
+            "title": "Version Number"
+          },
+          "source": {
             "type": "string",
-            "maxLength": 300,
-            "minLength": 1,
-            "title": "Label"
+            "title": "Source"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "stale": {
+            "type": "boolean",
+            "title": "Stale"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "version_number",
+          "source",
+          "title",
+          "summary",
+          "stale"
+        ],
+        "title": "PendingReview"
+      },
+      "PendingReviewPage": {
+        "properties": {
+          "reviews": {
+            "items": {
+              "$ref": "#/components/schemas/PendingReview"
+            },
+            "type": "array",
+            "title": "Reviews"
+          },
+          "next_before": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Before"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "reviews",
+          "next_before"
+        ],
+        "title": "PendingReviewPage"
+      },
+      "PlaceDetail": {
+        "properties": {
+          "external_id": {
+            "type": "string",
+            "maxLength": 500,
+            "pattern": "^((node|way|relation)/[1-9][0-9]*|geoapify/[A-Za-z0-9_-]{1,400})$",
+            "title": "External Id"
           },
           "name": {
             "type": "string",
@@ -4004,21 +5566,16 @@
             "minLength": 1,
             "title": "Name"
           },
-          "region": {
+          "category": {
             "type": "string",
-            "maxLength": 300,
-            "title": "Region"
-          },
-          "country": {
-            "type": "string",
-            "maxLength": 300,
-            "title": "Country"
-          },
-          "timezone": {
-            "type": "string",
-            "maxLength": 100,
-            "minLength": 1,
-            "title": "Timezone"
+            "enum": [
+              "museum",
+              "gallery",
+              "attraction",
+              "park",
+              "viewpoint"
+            ],
+            "title": "Category"
           },
           "latitude": {
             "type": "number",
@@ -4031,35 +5588,50 @@
             "maximum": 180.0,
             "minimum": -180.0,
             "title": "Longitude"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "destination_reference_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Destination Reference Id"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "retrieved_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Retrieved At"
           }
         },
         "additionalProperties": false,
         "type": "object",
         "required": [
-          "id",
-          "label",
+          "external_id",
           "name",
-          "region",
-          "country",
-          "timezone",
+          "category",
           "latitude",
-          "longitude"
+          "longitude",
+          "id",
+          "destination_reference_id",
+          "source",
+          "retrieved_at"
         ],
-        "title": "Place"
+        "title": "PlaceDetail"
       },
-      "PlaceSearch": {
+      "PlacePage": {
         "properties": {
           "results": {
             "items": {
-              "$ref": "#/components/schemas/Place"
+              "$ref": "#/components/schemas/PlaceDetail"
             },
             "type": "array",
             "title": "Results"
-          },
-          "source": {
-            "type": "string",
-            "title": "Source",
-            "default": "Open-Meteo / GeoNames"
           },
           "retrieved_at": {
             "type": "string",
@@ -4070,6 +5642,32 @@
             "type": "boolean",
             "title": "Cached",
             "default": false
+          },
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "default": "OpenStreetMap contributors via Overpass"
+          },
+          "coverage": {
+            "type": "string",
+            "title": "Coverage",
+            "default": "partial"
+          },
+          "radius_meters": {
+            "type": "integer",
+            "title": "Radius Meters",
+            "default": 5000
+          },
+          "notice": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notice"
           }
         },
         "additionalProperties": false,
@@ -4078,7 +5676,7 @@
           "results",
           "retrieved_at"
         ],
-        "title": "PlaceSearch"
+        "title": "PlacePage"
       },
       "PlanInput-Input": {
         "properties": {
@@ -4372,6 +5970,15 @@
       },
       "PlanningRequest": {
         "properties": {
+          "evidence": {
+            "type": "string",
+            "enum": [
+              "sample",
+              "places"
+            ],
+            "title": "Evidence",
+            "default": "sample"
+          },
           "operation": {
             "type": "string",
             "const": "generate",
@@ -4513,6 +6120,11 @@
       },
       "ProposalView": {
         "properties": {
+          "stale": {
+            "type": "boolean",
+            "title": "Stale",
+            "default": false
+          },
           "id": {
             "type": "string",
             "format": "uuid",
@@ -4569,6 +6181,22 @@
               }
             ],
             "title": "Generation"
+          },
+          "place_details": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/PlaceDetail"
+            },
+            "type": "object",
+            "title": "Place Details",
+            "default": {}
+          },
+          "location_references": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ReferencedPlace"
+            },
+            "type": "object",
+            "title": "Location References",
+            "default": {}
           }
         },
         "additionalProperties": false,
@@ -4634,6 +6262,118 @@
           "meta"
         ],
         "title": "ReadyResponse"
+      },
+      "ReferencedPlace": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Id"
+          },
+          "label": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Label"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "region": {
+            "type": "string",
+            "maxLength": 300,
+            "title": "Region"
+          },
+          "country": {
+            "type": "string",
+            "maxLength": 300,
+            "title": "Country"
+          },
+          "timezone": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Timezone"
+          },
+          "latitude": {
+            "type": "number",
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Latitude"
+          },
+          "longitude": {
+            "type": "number",
+            "maximum": 180.0,
+            "minimum": -180.0,
+            "title": "Longitude"
+          },
+          "reference_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Reference Id"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "retrieved_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Retrieved At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "label",
+          "name",
+          "region",
+          "country",
+          "timezone",
+          "latitude",
+          "longitude",
+          "reference_id",
+          "source",
+          "retrieved_at"
+        ],
+        "title": "ReferencedPlace"
+      },
+      "ReferencedSearch": {
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/ReferencedPlace"
+            },
+            "type": "array",
+            "title": "Results"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "default": "Open-Meteo / GeoNames"
+          },
+          "retrieved_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Retrieved At"
+          },
+          "cached": {
+            "type": "boolean",
+            "title": "Cached",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "results",
+          "retrieved_at"
+        ],
+        "title": "ReferencedSearch"
       },
       "ResponseMeta": {
         "properties": {
@@ -4789,6 +6529,18 @@
       },
       "StopInput": {
         "properties": {
+          "place_reference_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Place Reference Id"
+          },
           "client_id": {
             "anyOf": [
               {
@@ -4887,6 +6639,16 @@
       },
       "StopView": {
         "properties": {
+          "place_reference": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReferencedPlace"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "id": {
             "type": "string",
             "format": "uuid",
@@ -4956,6 +6718,27 @@
           "desired_nights"
         ],
         "title": "StopView"
+      },
+      "TimeChangeInput": {
+        "properties": {
+          "activity_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Activity Id"
+          },
+          "local_start_time": {
+            "type": "string",
+            "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$",
+            "title": "Local Start Time"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "activity_id",
+          "local_start_time"
+        ],
+        "title": "TimeChangeInput"
       },
       "TravelPreference": {
         "properties": {
@@ -5416,6 +7199,14 @@
             "type": "array",
             "maxItems": 500,
             "title": "Stops"
+          },
+          "place_details": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/PlaceDetail"
+            },
+            "type": "object",
+            "title": "Place Details",
+            "default": {}
           },
           "id": {
             "type": "string",

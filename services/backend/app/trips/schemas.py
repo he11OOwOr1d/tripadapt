@@ -39,6 +39,8 @@ class Preferences(StrictModel):
 
 
 class ActivityInput(StrictModel):
+    google_place_id: str | None = Field(default=None, pattern=r"^[A-Za-z0-9_-]{1,200}$")
+    place_id: UUID | None = None
     kind: Literal["custom", "meal", "rest", "free_time"] = "custom"
     logical_id: UUID
     stop_logical_id: UUID
@@ -69,6 +71,7 @@ class Budget(StrictModel):
 
 
 class StopInput(StrictModel):
+    place_reference_id: UUID | None = None
     client_id: str | None = Field(default=None, max_length=100)
     name: str = Field(min_length=1, max_length=300)
     timezone: str

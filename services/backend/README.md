@@ -106,3 +106,23 @@ The existing API/worker supports single-activity moves across destination-local 
 Enable `PLACE_SEARCH_ENABLED=true` for explicit local prototype `GET /api/v1/destinations/search?q=...` requests. The feature defaults to false; it uses a bounded Open-Meteo/GeoNames adapter and no prototype key. This public endpoint sends no trip/account context to the provider. It is separate from model planning and does not make activity, routing, weather or prices live. See [provider limits, attribution and commercial-use boundary](../../docs/destination-search.md).
 
 Current checks: 119 backend tests, 17 frontend tests, Ruff, TypeScript and frontend build. The latest edit/recovery/discovery slice adds no migration; use the existing schema setup through `0016_trip_conversation`. No production API/worker deployment is performed by source publication.
+
+### Retained destination references — 11 November
+
+Apply `0017_place_references` with `make migrate-supabase` (or `make migrate` for disposable/local PostgreSQL). This supersedes the earlier no-new-migration note. Immutable server-created provider snapshots are referenced by nullable `StopInput.place_reference_id`; stop reads include their metadata and proposal reads include `location_references`. Label/timezone mismatches or unknown references return 422. Existing/manual stops stay null. Same Supabase-hosted database and credentials. 129 backend tests and 18 frontend tests pass; see [discovery contracts](../../docs/destination-search.md).
+
+### Activity research — 11 November
+
+Migration `0018_activity_places` adds immutable public place snapshots and nullable activity references. Enable `ACTIVITY_SEARCH_ENABLED=true` only for an explicit local Overpass trial. No key is needed; default is false. `/places/search` resolves a retained destination UUID and allowlisted category. `/places/{id}` reads the stored source snapshot. Public-instance failures do not become empty successful results. Apply with `make migrate-supabase`; browser-role grants remain revoked. Current suite: 144 backend / 23 frontend tests. [Limits, contracts, verification gap](../../docs/activity-discovery.md).
+
+### Hosted discovery and mapped AI evidence
+
+Public Overpass failed from the local network. Configure `GEOAPIFY_API_KEY` in the backend only and restart API/worker; `ACTIVITY_PLACES_PROVIDER=auto` uses it when present (or pin `geoapify`). It is never sent to the frontend/model or included in returned payloads. New web generation/chat requests send `evidence=places`; legacy defaults remain sample-compatible. Worker-fetched records supply bounded, destination-scoped candidate IDs. Publication/acceptance re-read immutable sources and reject stale/foreign/forged evidence. No silent sample fallback. 155 backend and 23 frontend tests pass; real search/save/reload/Groq review has been browser-verified. See [live evidence](../../docs/activity-discovery.md). No additional migration.
+
+### Google Places checks
+
+Add backend-only `GOOGLE_MAPS_API_KEY`, restricted to Places API (New) and the backend's public outbound IP. Apply `0019_google_place_ids` with the existing migration command and restart API/worker. Authenticated `/google-places/matches` and `/google-places/check` use bounded on-demand requests and explicit field masks. Only Google Place IDs persist; hours, addresses and prices stay transient and outside Groq. 179 backend and 27 frontend tests pass. [Contracts, quotas and verified behavior](../../docs/google-place-checks.md). Routes/ticket availability are not implemented.
+
+### Journey checks
+
+`POST /api/v1/journeys/check` compares a same-destination Google walking/driving estimate and arrival buffer with local activity times. Optional `ROUTES_API_KEY` takes precedence for Routes calls; Places continues using `GOOGLE_MAPS_API_KEY`. The APIs share bounded transport quotas. No Google route payload is retained or sent to Groq. See [contract and boundaries](../../docs/journey-checks.md).
