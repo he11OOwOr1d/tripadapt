@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -11,6 +13,11 @@ class Settings(BaseSettings):
     groq_api_key: SecretStr = SecretStr("")
     groq_model: str = "openai/gpt-oss-120b"
     planning_ai_enabled: bool = False
+    google_maps_api_key: SecretStr = SecretStr("")
+    routes_api_key: SecretStr = SecretStr("")
+    geoapify_api_key: SecretStr = SecretStr("")
+    activity_places_provider: Literal["auto", "overpass", "geoapify"] = "auto"
+    activity_search_enabled: bool = False
     place_search_enabled: bool = False
     supabase_url: str = ""
     auth_audience: str = "authenticated"

@@ -1,4 +1,7 @@
 "use client";
+import GooglePlaceCheck from "./GooglePlaceCheck";
+import { routeSchedule, provisionalDate } from "../../lib/trips/itinerary";
+import PlaceAttribution from "./PlaceAttribution";
 import { useEffect, useRef, useState } from "react";
 import type { Activity, Trip } from "../../lib/trips/adapter";
 import {
@@ -26,6 +29,8 @@ export default function ActivityEditor({
   const firstInput = useRef<HTMLInputElement>(null);
   const existing = trip.activities.some((a) => a.id === initial.id);
   const stop = trip.stops.find((s) => s.id === draft.stopId);
+  const arrival = routeSchedule(trip).find(s => s.stop.id === draft.stopId)?.arrivalDay;
+  const visitDate = arrival === undefined ? null : provisionalDate(trip, arrival + draft.day - 1);
   const conflicts =
     dayConflicts(
       {
@@ -49,7 +54,7 @@ export default function ActivityEditor({
     };
   }, []);
   const patch = (value: Partial<Activity>) => {
-    setDraft((a) => ({ ...a, ...value }));
+    setDraft((a) => ({ ...a, ...value, googlePlaceId: (value.title !== undefined && value.title !== a.title) || (value.stopId !== undefined && value.stopId !== a.stopId) ? undefined : a.googlePlaceId, place: (value.title !== undefined && value.title !== a.title) || (value.stopId !== undefined && value.stopId !== a.stopId) ? undefined : a.place }));
     setErrors([]);
   };
   return (
@@ -68,6 +73,8 @@ export default function ActivityEditor({
           const fields = new FormData(e.currentTarget);
           const submitted: Activity = {
             ...draft,
+            googlePlaceId: String(fields.get("title") ?? "").trim() === draft.title && String(fields.get("stopId") ?? "") === draft.stopId ? draft.googlePlaceId : undefined,
+            place: String(fields.get("title") ?? "").trim() === draft.title && String(fields.get("stopId") ?? "") === draft.stopId ? draft.place : undefined,
             title: String(fields.get("title") ?? "").trim(),
             kind: String(fields.get("kind") ?? "custom") as Activity["kind"],
             stopId: String(fields.get("stopId") ?? ""),
@@ -101,6 +108,7 @@ export default function ActivityEditor({
             ×
           </button>
         </header>
+        {draft.place && <div className="activity-picked-place"><PlaceAttribution place={draft.place} /><p>The 60-minute starting duration is an estimate. Choose your time before saving; this makes no reservation.</p></div>}
         <label>
           What would you like to do?
           <input
@@ -186,6 +194,7 @@ export default function ActivityEditor({
             ? `${clock(clockMinutes(draft.start) + draft.minutes - 1440)} next day`
             : clock(clockMinutes(draft.start) + draft.minutes)}
         </p>
+        {draft.place && <GooglePlaceCheck key={draft.place.id} sourceId={draft.place.id} googleId={draft.googlePlaceId} onSelect={id=>setDraft(value=>({...value,googlePlaceId:id}))} visitDate={visitDate} start={draft.start} minutes={draft.minutes} timezone={stop?.timezone ?? "UTC"} />}
         <details className="editor-options">
           <summary>Keep fixed, completed or booked</summary>
           <label>

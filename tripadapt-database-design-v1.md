@@ -305,3 +305,18 @@ Migration `0015_ai_job_results` adds non-null JSONB `planning_job.result_metadat
 ### Implementation addendum — trip messages, 10 November 2026
 
 Migration `0016_trip_conversation` adds private `conversation_turn` rows linked to a trip and a unique durable planning job, with bounded user/assistant text, reply kind, clarification choices and creation time. An index supports chronological trip history and cursor reads. Message/job creation and completed reply/proposal publication use short atomic transactions. No additional database or external chat-history service is introduced.
+
+
+## 11 November 2026: retained destination geography
+
+Implementation refinement: migration `0017_place_references` uses immutable `place_reference` snapshots (UUID, provider, provider place ID, JSONB payload including label/timezone/coordinates/source/retrieved_at) and nullable `destination_stop.place_reference_id` foreign keys rather than duplicating mutable provider columns per stop. Old/manual rows remain null. Database triggers prohibit snapshot UPDATE/DELETE; PUBLIC/anon/authenticated grants are revoked. Snapshots contain public geography, not account/search history. Production retention is pending.
+
+
+## 11 November 2026: explicit activity research
+
+Migration `0018_activity_places` creates immutable `discovered_place` geography snapshots (UUID PK, retained destination-reference FK, typed public name/category/external-id/coordinates/source/retrieval payload) and nullable `activity.place_id` FK. UPDATE/DELETE triggers and browser-role grant revocation protect snapshots. Stop association and labels are validated by API transactions before mutation. Manual/legacy rows stay null, and cloning/acceptance/restoration preserve source IDs. No provider hours/prices/reviews or personal search history are stored. Retention/deletion policy remains operational work.
+
+
+## 11 November 2026: on-demand Google Places checks
+
+Additive migration `0019_google_place_ids` introduces nullable `activity.google_place_id` varchar(200) with a format check. It stores only an exempt Google identifier, copied with version-owned activities. Existing source snapshots remain unchanged; Google names, addresses, hours, price ranges and check verdicts are never added to their JSON payloads or saved activity data. Existing/manual activities stay valid with null. Source/destination edits detach the ID in the editor; new explicit checks refresh details. This design intentionally differs from the permanent OSM-based geography snapshots. See docs/google-place-checks.md.

@@ -164,7 +164,7 @@ def publish(db, ident, token, candidate, metadata=None):
     original = job.input
     report = validate_plan(candidate)
     report["issues"].append(
-        validate_job_candidate(original, candidate, job.id, metadata or {})
+        validate_job_candidate(original, candidate, job.id, metadata or {}, db=db)
     )
     is_ai = original["request"]["engine"] == "groq"
     job.result_metadata = metadata or {}
@@ -259,12 +259,34 @@ def run_once():
                         payload["request"]["instructions"],
                         payload.get("conversation", []),
                         provider,
+                        evidence=payload["request"].get("evidence", "sample"),
                     )
                 if reply is not None and "candidate" in reply:
                     progress("Checking the requested time change")
                     candidate, metadata = reply.pop("candidate"), reply.pop("metadata")
                     metadata.update(model=settings.groq_model, calls=provider.calls)
                 elif reply is None or reply["kind"] == "proposal":
+                    place_catalog = None
+                    place_ids = []
+                    if payload["request"].get("evidence", "sample") == "places":
+                        from app.agents.place_evidence import gather_places
+
+                        stop = next(
+                            s
+                            for s in plan.stops
+                            if s.client_id == scope["stop_logical_id"]
+                        )
+                        with Session(engine) as evidence_db, evidence_db.begin():
+                            place_catalog, place_ids = gather_places(
+                                evidence_db,
+                                stop,
+                                reply.get("candidate_ids") if reply else None,
+                                progress,
+                            )
+                        if reply:
+                            reply["text"] = (
+                                "I’ve prepared a proposal using retrieved place records and estimated break durations. Check sources and timings before accepting; nothing has been booked."
+                            )
                     candidate, metadata = run_day_graph(
                         plan,
                         scope["stop_logical_id"],
@@ -274,6 +296,8 @@ def run_once():
                         progress,
                         instructions=payload["request"].get("instructions", ""),
                         candidate_ids=reply.get("candidate_ids") if reply else None,
+                        place_catalog=place_catalog,
+                        place_ids=place_ids,
                     )
                     metadata["model"] = settings.groq_model
             finally:

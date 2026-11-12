@@ -1,4 +1,8 @@
 "use client";
+import type { TimeChangeAccount } from "./TimeChangeReview";
+import JourneyCheck from "./JourneyCheck";
+import ActivityDiscovery from "./ActivityDiscovery";
+import PlaceAttribution from "./PlaceAttribution";
 import { useEffect, useRef, useState } from "react";
 import type { Activity, Trip } from "../../lib/trips/adapter";
 import {
@@ -30,7 +34,9 @@ export default function ItineraryWorkspace({
   planningMode,
   onUpdate,
   onSetup,
+  timeChangeReview,
 }: {
+  timeChangeReview?: TimeChangeAccount;
   trip: Trip;
   selected: string;
   day: number;
@@ -336,6 +342,7 @@ export default function ItineraryWorkspace({
                 </span>
               </div>
             )}
+            <ActivityDiscovery key={`${current.stop.id}:${current.stop.location?.reference_id ?? "manual"}`} stop={current.stop} day={localDay} onChoose={onAdd} onLocate={place => onUpdate({ stops: trip.stops.map(stop => stop.id === current.stop.id ? { ...stop, name: place.label, timezone: place.timezone, location: place } : stop) })} />
             <div className="day-plan-heading">
               <div>
                 <h2>
@@ -365,7 +372,7 @@ export default function ItineraryWorkspace({
                 </button>
                 <span>
                   {planningMode === "groq"
-                    ? "AI suggestions · sample activity evidence"
+                    ? "AI proposals · mapped places, estimated timing"
                     : "Meal and break fixtures · no AI or live data"}
                 </span>
               </p>
@@ -374,6 +381,7 @@ export default function ItineraryWorkspace({
               Local times · open gaps shown around an 08:00–22:00 planning day
               {transfers.length ? " · allow for untimed transfers" : ""}
             </p>
+            <JourneyCheck key={JSON.stringify(activities.map(a => [a.id, a.start, a.minutes, a.place?.id, a.googlePlaceId, a.kind, a.title]).concat([[date, current.stop.timezone]]))} activities={activities} onEdit={onEdit} timeChangeReview={timeChangeReview} visitDate={date} timezone={current.stop.timezone} />
             <div className="day-timeline">
               {entries.map((entry) =>
                 entry.type === "gap" ? (
@@ -429,6 +437,7 @@ export default function ItineraryWorkspace({
                       </div>
                       <h3>{entry.activity.title}</h3>
                       <p>{entry.activity.minutes} minutes</p>
+                      {entry.activity.place && <PlaceAttribution place={entry.activity.place} />}
                       {conflicts[entry.activity.id]?.map((issue) => (
                         <p className="day-item-conflict" key={issue}>
                           {issue}

@@ -35,7 +35,14 @@ The three-dot trail and text follow actual job status: reading the message, gath
 
 ## Current evidence limit
 
-AI additions still use the clearly labeled sample culture/walk/meal/rest/free-time catalog. This is real Groq execution with sample evidence, not live destination recommendations. Places, route times, hours, prices and weather remain unknown. Existing proposal acknowledgments make that distinction explicit. Selecting or accepting anything makes no reservation.
+New place-evidence requests use retained map records for museum/park proposals; legacy sample-mode jobs retain explicit sample labels. Rest, meal and free-time blocks remain estimates. Map records do not verify quietness, opening hours, admission, journey times or weather. Optional Google listing checks in the activity editor are separate, on demand, and are not sent to Groq. Nothing makes a reservation. See [activity discovery](activity-discovery.md) and [Google checks](google-place-checks.md).
+
+### Relaxation discovery routing correction · 11 November 2026
+
+The router previously allowed planning only for explicit “add” requests. “Can you find a good place to relax?” fell into the capability/unsupported branch and produced an irrelevant capability dump. A typed relaxation intent now asks whether the traveler wants a nearby park proposal or a rest block. The park choice deterministically requests mapped park evidence; it does not invent a quiet venue or change the trip automatically. Missing map locations, legacy sample mode and another selected destination receive scoped guidance.
+
+Verification: the exact question and a paraphrase passed real Groq checks. In the browser, the exact question produced the focused choice; choosing the park produced **Collectorate Circle Park**, with Geoapify/OSM attribution and estimated timing, retaining the existing 11:00 city activity. The QA proposal was discarded without acceptance. Six new regression cases cover paraphrases, choice routing, evidence limits and destination scope. All **185 backend tests** and Ruff pass. The 390px phone chat had no horizontal overflow. Screenshots: [focused response](references/relaxation-routing/desktop.png), [mapped proposal](references/relaxation-routing/park-proposal.png). No deployment.
+
 
 ## Verification
 

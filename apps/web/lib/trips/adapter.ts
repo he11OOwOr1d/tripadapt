@@ -1,11 +1,16 @@
+import { isActivityPlace, type ActivityPlace } from "./activity-search";
+import type { PlaceResult } from "./place-search";
 /** UI view models, NOT published API schemas. Replace the adapter after OpenAPI is available. */
 export type Stop = {
   id: string;
   name: string;
   timezone: string;
   nights: number;
+  location?: PlaceResult;
 };
 export type Activity = {
+  googlePlaceId?: string;
+  place?: ActivityPlace;
   kind?: "custom" | "meal" | "rest" | "free_time";
   id: string;
   stopId: string;
@@ -200,6 +205,14 @@ const optionalAmount = (value: unknown) =>
   typeof value === "string" &&
   (value === "" ||
     (/^\d+(\.\d{1,2})?$/.test(value) && Number.isFinite(Number(value))));
+function validLocation(value: unknown): value is PlaceResult {
+  if (!value || typeof value !== "object") return false;
+  const location = value as Record<string, unknown>;
+  return ["reference_id", "label", "name", "region", "country", "timezone", "source", "retrieved_at"].every(key => typeof location[key] === "string") &&
+    typeof location.latitude === "number" && Number.isFinite(location.latitude) && Math.abs(location.latitude) <= 90 &&
+    typeof location.longitude === "number" && Number.isFinite(location.longitude) && Math.abs(location.longitude) <= 180 &&
+    Number.isSafeInteger(location.id) && Number.isFinite(Date.parse(String(location.retrieved_at)));
+}
 export function isTrip(value: unknown): value is Trip {
   if (!value || typeof value !== "object") return false;
   const t = value as Record<string, unknown>;
@@ -247,7 +260,8 @@ export function isTrip(value: unknown): value is Trip {
         s &&
         [s.id, s.name, s.timezone].every((v) => typeof v === "string") &&
         Number.isSafeInteger(s.nights) &&
-        s.nights >= 0,
+        s.nights >= 0 &&
+        (s.location === undefined || (validLocation(s.location) && s.location.label === s.name && s.location.timezone === s.timezone)),
     ) &&
     Array.isArray(t.activities) &&
     t.activities.every(
@@ -258,6 +272,8 @@ export function isTrip(value: unknown): value is Trip {
         /^([01]\d|2[0-3]):[0-5]\d$/.test(a.start) &&
         positive(a.day) &&
         positive(a.minutes) &&
+        (a.googlePlaceId === undefined || (typeof a.googlePlaceId === "string" && /^[A-Za-z0-9_-]{1,200}$/.test(a.googlePlaceId))) &&
+        (a.place === undefined || (isActivityPlace(a.place) && a.place.name === a.title)) &&
         (a.kind === undefined || ["custom","meal","rest","free_time"].includes(a.kind)) &&
         [a.fixed, a.completed, a.booked].every((v) => typeof v === "boolean"),
     )

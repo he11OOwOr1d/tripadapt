@@ -4,6 +4,7 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qs, urlparse
 
 import pytest
+import test_trips
 from fastapi.testclient import TestClient
 
 from app.api import destinations
@@ -11,6 +12,11 @@ from app.config import settings
 from app.main import app
 from app.providers import geocoding
 from app.providers.geocoding import Geocoder, GeocodingFailure
+
+
+@pytest.fixture
+def context():
+    yield from test_trips.context.__wrapped__()
 
 
 def item(**overrides):
@@ -90,7 +96,7 @@ def test_bad_evidence_cannot_become_a_choice(data):
         Geocoder(lambda q: data).search("Kyoto")
 
 
-def test_public_lookup_and_manual_fallback_statuses(monkeypatch):
+def test_public_lookup_and_manual_fallback_statuses(monkeypatch, context):
     monkeypatch.setattr(settings, "place_search_enabled", True)
     queries = []
     monkeypatch.setattr(
@@ -98,8 +104,13 @@ def test_public_lookup_and_manual_fallback_statuses(monkeypatch):
         "geocoder",
         Geocoder(lambda q: queries.append(q) or {"results": [item()]}),
     )
+    from app.api.identity import verified_identity
+
+    app.dependency_overrides.pop(verified_identity)  # Public lookup needs no account.
     with TestClient(app) as client:
-        result = client.get("/api/v1/destinations/search", params={"q": " Kyoto,   Japan "})
+        result = client.get(
+            "/api/v1/destinations/search", params={"q": " Kyoto,   Japan "}
+        )
         assert result.status_code == 200, result.text
         assert result.json()["data"]["results"][0]["timezone"] == "Asia/Tokyo"
         assert result.headers["cache-control"] == "private, no-store"

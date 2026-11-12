@@ -1,4 +1,7 @@
 export type PlaceResult = {
+  reference_id: string;
+  source: string;
+  retrieved_at: string;
   id: number;
   label: string;
   name: string;

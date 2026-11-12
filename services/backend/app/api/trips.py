@@ -11,11 +11,15 @@ from sqlalchemy import and_, delete, or_, select
 from sqlalchemy.orm import Session
 
 from app.api.identity import current_user, session
+from app.discovery.activities import PlaceDetail, places_by_ids
+from app.discovery.references import ReferencedPlace, reference_view
 from app.persistence.models import (
     Activity,
     AppUser,
     CreateReceipt,
     DestinationStop,
+    DiscoveredPlace,
+    PlaceReference,
     PlanVersion,
     Trip,
 )
@@ -74,6 +78,7 @@ class TripView(StrictModel):
 
 
 class VersionView(PlanInput):
+    place_details: dict[str, PlaceDetail] = {}
     id: UUID
     trip_id: UUID
     version_number: int
@@ -85,6 +90,7 @@ class VersionView(PlanInput):
 
 
 class StopView(StrictModel):
+    place_reference: ReferencedPlace | None = None
     id: UUID
     logical_item_id: UUID
     position: int
@@ -304,6 +310,9 @@ def version(
     row = get_version(db, user, trip_id, version_id)
     data = {column.name: getattr(row, column.name) for column in row.__table__.columns}
     data["activities"] = activity_inputs(db, row)
+    data["place_details"] = places_by_ids(
+        db, {UUID(a["place_id"]) for a in data["activities"] if a["place_id"]}
+    )
     data["budget"] = (
         {"amount": row.budget_amount, "mode": row.budget_mode}
         if row.budget_amount is not None
@@ -342,6 +351,11 @@ def stops(
                 position=row.position,
                 name=row.name,
                 timezone=row.timezone,
+                place_reference=reference_view(
+                    db.get(PlaceReference, row.place_reference_id)
+                )
+                if row.place_reference_id
+                else None,
                 desired_nights=row.suggested_nights,
                 arrival_date=row.arrival_date,
                 departure_date=row.departure_date,
@@ -375,6 +389,8 @@ def activity_inputs(db, row):
     }
     return [
         ActivityInput(
+            google_place_id=a.google_place_id,
+            place_id=a.place_id,
             kind=a.kind,
             logical_id=a.logical_item_id,
             stop_logical_id=stop_ids[a.stop_id],
@@ -391,6 +407,40 @@ def activity_inputs(db, row):
 
 
 def sync_route(db, version, stops, activities, cascade=False):
+    reference_ids = {s.place_reference_id for s in stops if s.place_reference_id}
+    references = {
+        r.id: r
+        for r in db.scalars(
+            select(PlaceReference).where(PlaceReference.id.in_(reference_ids))
+        )
+    }
+    for stop in stops:
+        if stop.place_reference_id:
+            ref = references.get(stop.place_reference_id)
+            if (
+                ref is None
+                or ref.payload["label"] != stop.name
+                or ref.payload["timezone"] != stop.timezone
+            ):
+                raise HTTPException(422, "DESTINATION_REFERENCE_MISMATCH")
+    place_ids = {a.place_id for a in activities if a.place_id}
+    places = {
+        p.id: p
+        for p in db.scalars(
+            select(DiscoveredPlace).where(DiscoveredPlace.id.in_(place_ids))
+        )
+    }
+    stop_refs = {s.client_id: s.place_reference_id for s in stops}
+    for activity in activities:
+        if activity.place_id:
+            place = places.get(activity.place_id)
+            if (
+                place is None
+                or place.destination_reference_id
+                != stop_refs.get(str(activity.stop_logical_id))
+                or place.payload["name"] != activity.user_label
+            ):
+                raise HTTPException(422, "ACTIVITY_PLACE_MISMATCH")
     ids = []
     for stop in stops:
         try:
@@ -425,6 +475,7 @@ def sync_route(db, version, stops, activities, cascade=False):
             position=position,
             name=stop.name,
             timezone=stop.timezone,
+            place_reference_id=stop.place_reference_id,
             suggested_nights=stop.desired_nights,
             arrival_date=stop.arrival_date,
             departure_date=stop.departure_date,
@@ -435,6 +486,8 @@ def sync_route(db, version, stops, activities, cascade=False):
     for activity in activities:
         db.add(
             Activity(
+                google_place_id=activity.google_place_id,
+                place_id=activity.place_id,
                 kind=activity.kind,
                 version_id=version.id,
                 logical_item_id=activity.logical_id,
@@ -486,6 +539,7 @@ def commands(
                     client_id=str(s.logical_item_id),
                     name=s.name,
                     timezone=s.timezone,
+                    place_reference_id=s.place_reference_id,
                     desired_nights=s.suggested_nights,
                     arrival_date=s.arrival_date,
                     departure_date=s.departure_date,

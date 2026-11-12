@@ -10,7 +10,16 @@ from sqlalchemy import select, text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from starlette.exceptions import HTTPException
 
-from app.api import conversation, destinations, planning_jobs, proposals, revisions  # noqa: F401 - register proposal routes
+from app.api import (  # noqa: F401 - register proposal routes
+    conversation,
+    destinations,
+    google_places,
+    journeys,
+    places,
+    planning_jobs,
+    proposals,
+    revisions,
+)
 from app.api.trips import router
 from app.config import settings
 from app.persistence.database import engine
@@ -39,7 +48,13 @@ async def request_context(request: Request, call_next):
     response = await call_next(request)
     response.headers["X-Request-ID"] = request.state.request_id
     if request.url.path.startswith(
-        ("/api/v1/trips", "/api/v1/jobs")
+        (
+            "/api/v1/trips",
+            "/api/v1/jobs",
+            "/api/v1/places",
+            "/api/v1/google-places",
+            "/api/v1/journeys",
+        )
     ) or request.url.path in ("/api/v1/me", "/api/v1/destinations/search"):
         response.headers["Cache-Control"] = "private, no-store"
     return response
@@ -94,7 +109,7 @@ def ready(request: Request):
             marker = connection.execute(
                 select(SystemProbe.initialized_at).where(SystemProbe.id == 1)
             ).scalar_one()
-            if revision != "0016_trip_conversation":
+            if revision != "0019_google_place_ids":
                 raise ValueError("Schema revision mismatch")
         return {
             "data": {

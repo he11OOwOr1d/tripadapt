@@ -3,7 +3,7 @@
 from app.trips.schemas import PlanInput
 
 
-def validate_job_candidate(payload, candidate, job_id, metadata):
+def validate_job_candidate(payload, candidate, job_id, metadata, db=None):
     from app.agents.day_graph import AI_ISSUE, validate_ai_candidate
     from app.planning.fixture import FIXTURE_ISSUE, validate_scope
     from app.planning.removal import validate_removal
@@ -26,6 +26,18 @@ def validate_job_candidate(payload, candidate, job_id, metadata):
         return MOVE_ISSUE
     validate_scope(base, candidate, scope["stop_logical_id"], scope["local_day_offset"])
     if request["engine"] == "groq":
+        catalog = None
+        issue = AI_ISSUE
+        if request.get("evidence", "sample") == "places":
+            from app.agents.place_evidence import PLACE_ISSUE, catalog_from_ids
+
+            stop = next(
+                s for s in base.stops if s.client_id == scope["stop_logical_id"]
+            )
+            if db is None or metadata.get("evidence") != "mapped_places":
+                raise ValueError("Real place evidence is required")
+            catalog = catalog_from_ids(db, stop, metadata.get("place_ids", []))
+            issue = PLACE_ISSUE
         validate_ai_candidate(
             base,
             candidate,
@@ -33,6 +45,7 @@ def validate_job_candidate(payload, candidate, job_id, metadata):
             scope["local_day_offset"],
             job_id,
             metadata,
+            catalog=catalog,
         )
-        return AI_ISSUE
+        return issue
     return FIXTURE_ISSUE

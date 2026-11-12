@@ -167,6 +167,20 @@ class PlanVersion(Base):
     accepted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
+class PlaceReference(Base):
+    """Public provider geography, immutable once retained; not a reservation."""
+
+    __tablename__ = "place_reference"
+    __table_args__ = (
+        CheckConstraint("provider = 'open_meteo_geonames'"),
+        CheckConstraint("provider_place_id > 0"),
+    )
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True)
+    provider: Mapped[str] = mapped_column(String(40))
+    provider_place_id: Mapped[int] = mapped_column(BigInteger)
+    payload: Mapped[dict] = mapped_column(Json)
+
+
 class DestinationStop(Base):
     __tablename__ = "destination_stop"
     __table_args__ = (
@@ -187,9 +201,23 @@ class DestinationStop(Base):
     position: Mapped[int]
     name: Mapped[str] = mapped_column(String(300))
     timezone: Mapped[str]
+    place_reference_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("place_reference.id")
+    )
     suggested_nights: Mapped[int | None]
     arrival_date: Mapped[date | None] = mapped_column(Date)
     departure_date: Mapped[date | None] = mapped_column(Date)
+
+
+class DiscoveredPlace(Base):
+    """Immutable OSM geography; no prices, opening-hours or personal data."""
+
+    __tablename__ = "discovered_place"
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True)
+    destination_reference_id: Mapped[UUID] = mapped_column(
+        ForeignKey("place_reference.id")
+    )
+    payload: Mapped[dict] = mapped_column(Json)
 
 
 class Activity(Base):
@@ -197,6 +225,10 @@ class Activity(Base):
 
     __tablename__ = "activity"
     __table_args__ = (
+        CheckConstraint(
+            "google_place_id IS NULL OR google_place_id ~ '^[A-Za-z0-9_-]{1,200}$'",
+            name="valid_google_place_id",
+        ),
         UniqueConstraint("version_id", "logical_item_id"),
         ForeignKeyConstraint(
             ["version_id", "stop_id"],
@@ -216,6 +248,8 @@ class Activity(Base):
     kind: Mapped[str] = mapped_column(
         String(20), default="custom", server_default="custom"
     )
+    google_place_id: Mapped[str | None] = mapped_column(String(200))
+    place_id: Mapped[UUID | None] = mapped_column(ForeignKey("discovered_place.id"))
     user_label: Mapped[str] = mapped_column(String(300))
     local_day_offset: Mapped[int]
     local_start_time: Mapped[str] = mapped_column(String(8))
