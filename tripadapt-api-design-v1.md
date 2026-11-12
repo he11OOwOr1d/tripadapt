@@ -308,3 +308,39 @@ Owned `GET /trips/{trip_id}/revisions` and `POST /trips/{trip_id}/revisions/{ver
 ## Implemented refinement: destination lookup (11 November 2026)
 
 Public `GET /destinations/search?q=...` now implements explicit Open-Meteo/GeoNames-backed lookup for local evaluation. The initial subset accepts 2–100 characters, returns up to eight typed choices with name/region/country/timezone/coordinates and source/retrieval/cache metadata, and preserves manual entry when unavailable. Locale/country-bias/cursor options and persistent geocoded stop references remain unimplemented. This is not the attraction/category `/places/search` contract. See `docs/destination-search.md` for provider, limits, licensing and remaining integration boundaries.
+
+
+## 11 November 2026: retained destination geography
+
+Implementation refinement: destination-search result items now include `reference_id` (UUID), `source` and `retrieved_at`. Stop input accepts nullable `place_reference_id`; clients do not submit stop coordinates. The API resolves its snapshot, validates exact label/timezone agreement and returns 422 `DESTINATION_REFERENCE_MISMATCH` for unknown/mismatched IDs. Stop views include nullable `place_reference`; proposal views include `location_references` keyed by UUID. References survive plan copying and restoration; manual/legacy stops remain supported with null references. This implements geography persistence only, not live activity/availability/weather/routing.
+
+
+## 11 November 2026: explicit activity research
+
+Initial `GET /places/search` subset accepts `destination_reference_id` (retained UUID) and category enum museum/gallery/attraction/park/viewpoint. Public bounded OSM/Overpass research returns up to twelve attributed records with partial coverage and source/cache/retrieval metadata. `GET /places/{id}` reads a retained snapshot, not live availability. No arbitrary coordinates, query, cursor or field groups in this slice. Activity input has nullable `place_id`; label/destination-reference mismatches return 422 `ACTIVITY_PLACE_MISMATCH`. Version/proposal `place_details` maps retain authoritative source metadata. Manual activities remain supported. Live provider success is unverified after 502/timeouts; automatic Groq generation still uses sample evidence. See `docs/activity-discovery.md`.
+
+
+## 11 November 2026: hosted discovery and mapped AI evidence
+
+New web planning/chat requests send `evidence: places`; the compatible backend default is `sample` for older clients/jobs. Job views expose the mode. Mapped proposals include generation.evidence=`mapped_places`, retained `place_ids`, and the existing `place_details` map. The worker selects only scoped provider records; model IDs are dynamically enumerated, labels and estimated durations are server-derived. Publication and acceptance recheck destination and 24-hour evidence freshness without live acceptance-time supplier calls. Failure never silently substitutes sample places. Geoapify-backed search uses `geoapify/<opaque-id>` namespaces and explicit provider attribution; OSM object references remain valid. `ACTIVITY_PLACES_PROVIDER` and the key are server-only. No new migration.
+
+
+## 11 November 2026: on-demand Google Places checks
+
+Authenticated `POST /google-places/matches` accepts an existing `source_place_id` UUID and returns up to three transient candidates. `POST /google-places/check` accepts that source UUID, format-checked `google_place_id`, nullable `visit_date`, local `start`, and `duration_minutes` 1..1440. The server resolves source coordinates/timezone, rejects distant namesakes and returns transient reported hours/price fields plus a full-visit comparison. Results are private/no-store, quota-bounded and explicitly sourced. `ActivityInput.google_place_id` is optional; only this ID persists through snapshots. No Google details enter permanent discovery data or Groq. See docs/google-place-checks.md. Seven-day current-hours coverage is not a trip-duration limit. Routes/admission inventory remain pending.
+
+### Implemented extension · same-day journey check (11 November 2026)
+
+Authenticated `POST /api/v1/journeys/check` resolves two retained activity-place UUIDs at the same destination, accepts WALK/DRIVE plus origin start/duration, destination start and arrival buffer, and returns transient Google route minutes/distance/warnings, gap and spare/shortfall. No itinerary mutation or Google-content storage. See generated OpenAPI and [journey checks](docs/journey-checks.md) for limits.
+
+### Implemented extension · requested time-change proposal (11 November 2026)
+
+`POST /trips/{trip_id}/proposals/time-change` accepts an activity UUID and exact local start time with draft If-Match and idempotency headers, freezes a single saved-scope command and uses the existing explicit accept/discard boundary. Acceptance rebuilds and verifies the command against the saved draft. No Google payloads or provider-verification flags are stored. [Full contract](docs/saved-time-change-proposals.md).
+
+### Implemented extension · optional live acceptance guard (11 November 2026)
+
+The proposal accept body optionally includes `live_check` (Google listing ID, date, WALK/DRIVE mode and arrival buffer) for saved requested moves. Candidate-derived hours and adjacent route checks run before mutation and fail closed; provisional acceptance remains explicit. No provider payloads or verified flags persist. [Contract/limits](docs/live-time-change-acceptance.md).
+
+### Implemented extension · pending review recovery (12 November 2026)
+
+Owned `GET /trips/{trip_id}/proposals` lists pending reviews in descending candidate-version order with bounded limit/before pagination and stale status. ProposalView now recomputes `stale` on retrieval; acceptance retains its existing server fences. No provider calls or database migration. [Contract](docs/pending-reviews.md).

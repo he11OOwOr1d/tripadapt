@@ -56,7 +56,7 @@ npm --prefix apps/web run build
 npm --prefix apps/web test
 ```
 
-The npm regression suite has 17 tests; the backend suite has 123 tests. Checks cover account mapping, autosave, schedule logic, scoped proposals/recovery and provider lookup boundaries. Browser reviews cover desktop and 390px/320px phone layouts. [Journey implementation and verification](docs/trip-creation-journey.md).
+The npm regression suite has 53 tests; the backend suite has 230 tests. Checks cover account mapping, autosave, schedule logic, scoped proposals/recovery and provider lookup boundaries. Browser reviews cover desktop and 390px/320px phone layouts. [Journey implementation and verification](docs/trip-creation-journey.md).
 
 ## Full-stack local development
 
@@ -114,7 +114,7 @@ tripadapt-*.md            Approved product and technical design baselines
 
 ## Architecture and design decisions
 
-The web app owns presentation and draft interaction; FastAPI owns authorized trip persistence, proposal acceptance and planning jobs. PostgreSQL stores normalized version-owned records. Accepted versions are immutable; changes must be reviewed as proposals. Deterministic logic owns arithmetic and constraints; The one-day Groq/LangGraph agent proposes additions using explicitly labeled sample evidence; live provider-backed recommendations remain pending. AI cannot accept its own changes.
+The web app owns presentation and draft interaction; FastAPI owns authorized trip persistence, proposal acceptance and planning jobs. PostgreSQL stores normalized version-owned records. Accepted versions are immutable; changes must be reviewed as proposals. Deterministic logic owns arithmetic and constraints; The one-day Groq/LangGraph agent can propose additions from retained Geoapify/OSM map records, with estimated timings and explicit source review; legacy sample mode remains labeled. Hours, availability and travel feasibility remain unverified. AI cannot accept its own changes.
 
 The approved landing combines an animated code-drawn meadow, beige paper and green typography, a postcard introduction and compact sample planner. The selected application direction is **Unfolding**, with readable expanding sections and a dedicated review. It preserves the landing’s brand while giving real planning tasks space to work.
 
@@ -138,7 +138,7 @@ The approved API design refines older architecture endpoint sketches. The genera
 
 The web review is hosted on Vercel at [elsewhere-ui-review.vercel.app](https://elsewhere-ui-review.vercel.app). The FastAPI/PostgreSQL backend is not part of that frontend deployment. The existing Vercel project is connected to this GitHub repository: pushes to `main` create production deployments; other branches create previews unless their branch-specific deployment rule disables them. The framework is **Next.js**, root directory **`apps/web`**, using the committed npm lockfile. The approved landing requires no keys. The new local account flow needs Supabase public configuration and an API base URL; see [authentication setup](docs/authentication-and-account-saving.md). Backend hosting and production auth configuration remain separate deployment steps. Do not add secret-bearing CI deployment workflows merely to publish the frontend.
 
-Next integration work: persist geocoded destination references/provenance, connect real activity/weather/routing evidence, and provision production API/worker operations. Email recovery delivery remains a separate check. Reviewed edits and accepted-plan restoration are implemented locally. Keep provisional paths and unknown data visible.
+Selected geocoded destinations now retain immutable provider references and coordinates through account saving, proposals and restoration. Explicit activity research now has an attributed OSM/Overpass adapter and source-preserving editor handoff; Live search responses are now confirmed through Geoapify locally after public Overpass failures. New Groq requests use retained map records and never silently fall back to samples. See [activity discovery](docs/activity-discovery.md). Next integration work: connect weather/routing evidence, and provision production API/worker operations. Email recovery delivery remains a separate check. Reviewed edits and accepted-plan restoration are implemented locally. Keep provisional paths and unknown data visible.
 
 No open-source license is selected for the application yet. Local font licenses and asset provenance remain with their respective files; repository publication does not grant new rights to third-party assets.
 
@@ -163,3 +163,21 @@ The local app now has **Plan this day with AI**, backed by a separate durable wo
 For model planning, configure the server-only Groq key/model and existing planning feature flags as described in [Groq setup](docs/groq-agent.md). For prototype location lookup, set backend `PLACE_SEARCH_ENABLED=true`; the frontend reuses `NEXT_PUBLIC_API_BASE_URL`. No new prototype provider key or database migration is required. Commercial provider licensing and shared production traffic limits remain separate release work. Never commit real environment files.
 
 The `codex/planning-recovery-discovery` publication branch disables Vercel Git deployment explicitly. Publishing source does not deploy the API/worker or provision production credentials.
+
+Google Places (New) now provides an optional activity-editor match and reported-hours/price check. Only the selected Place ID is retained; details are refreshed explicitly and are not sent to Groq. The Google key is backend-only. See [Google checks and live verification](docs/google-place-checks.md). Migration `0019_google_place_ids` is applied locally to the existing Supabase database; no deployment or push was performed. Routes-based travel times and exact admission prices remain separate integrations.
+
+On-demand [journey estimates](docs/journey-checks.md) now compare walking/driving time and an arrival buffer with consecutive activities. Google content stays transient; schedules remain user-controlled.
+
+The [day timing review](docs/day-feasibility.md) brings overlaps, checked journeys, shortfalls and unknown locations together without automatically changing the itinerary.
+
+[Reported opening-hours coverage](docs/day-opening-hours.md) now joins journey gaps in the day review, with explicit dates and per-venue confirmation.
+
+[Reviewed timing adjustments](docs/timing-adjustments.md) offer one safe later-start suggestion after a journey shortfall, with explicit editor review and save.
+
+[Suggested-time checks](docs/adjustment-preview-checks.md) compare proposed venue hours and onward travel before an optional editor save, without changing the current itinerary.
+
+[Saved time-change proposals](docs/saved-time-change-proposals.md) validate a single command against the latest saved draft before explicit acceptance. Preview provider data is not stored or treated as durable verification.
+
+[Optional live acceptance checks](docs/live-time-change-acceptance.md) recheck a proposed venue visit and adjacent journeys, stopping on unknown/conflicting evidence without silent fallback.
+
+[Pending review recovery](docs/pending-reviews.md) now lives under Review plan, with resumable reviews and explicit out-of-date warnings.

@@ -313,3 +313,8 @@ No additional agent framework, vector database, Redis service, or microservice d
 - Google Maps cost controls: https://developers.google.com/maps/billing-and-pricing/manage-costs
 
 The user's later approval of opt-in monitoring supersedes the PRD sentence excluding scheduled background monitoring. The PRD has received that narrow synchronization update; its other agreed scope remains in place. API examples and table names are approved design contracts to refine during implementation, not claims that code already exists.
+
+
+## 11 November 2026: hosted discovery and mapped AI evidence
+
+The existing FastAPI/PostgreSQL-leased LangGraph worker now supports explicitly requested mapped-place evidence. Geoapify is the configured hosted discovery path after public Overpass failed locally. Provider I/O and immutable snapshot retention happen before model composition; the model receives a bounded read-only catalog, not provider credentials or arbitrary query tools. Dynamic schema candidate IDs, deterministic activity construction and database source/freshness verification constrain publication and acceptance. Old jobs retain labeled sample mode. New browser requests opt into mapped evidence and fail visibly when discovery is unavailable. No migration, new agent framework or deployment change is introduced. See docs/activity-discovery.md for live verification.
