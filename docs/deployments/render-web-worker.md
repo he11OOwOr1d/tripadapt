@@ -64,3 +64,25 @@ pings to prevent sleep. For dependable unattended jobs use a persistent paid hos
 Keep `PLANNING_WORKER_EMBEDDED=false` on Vercel/serverless deployments.
 
 References: https://render.com/docs/free and https://render.com/docs/deploy-fastapi
+
+## Verified deployment — 13 November 2026
+
+- Render service: `elsewhere-api-worker`, Free, Singapore; service ID
+  `srv-dbrh4boae00c73flh46g`.
+- Source branch: `codex/render-web-worker`; runtime change commit `6a20c30`.
+- API base: `https://elsewhere-api-worker.onrender.com/api/v1`.
+- Readiness returned HTTP 200 with Supabase connected at `0019_google_place_ids`;
+  readiness also checks that the embedded worker thread is alive.
+- Browser preflight for the production frontend returned HTTP 200.
+- Vercel production frontend redeployed as `dpl_B7c88tpTzdRfwuagxrjdf1qfZug8`
+  from the existing main commit `5dd2df3`, using the Render API URL and AI UI flag.
+- Verified in the signed-in production browser: saved trip opened, chat loaded,
+  an "Explain this day" request completed and displayed a reply. No local
+  planning worker was running. The traveler's unsent composer text was preserved.
+- 29 lifecycle/health/job/conversation tests and 11 identity tests passed; Ruff
+  passed for the changed Python files. Credentials were imported into Render
+  with the owner's explicit approval; the temporary local import file was removed.
+
+The former Vercel API remains available as a rollback option. It does not run
+an embedded worker. The local uncommitted itinerary/delay features were not part
+of this deployment, and no migrations or changes to existing trips were applied.
