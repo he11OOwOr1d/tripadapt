@@ -1,3 +1,4 @@
+import asyncio
 from contextlib import asynccontextmanager
 from uuid import uuid4
 
@@ -28,8 +29,19 @@ from app.persistence.models import SystemProbe
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    yield
-    engine.dispose()
+    worker = None
+    if settings.planning_worker_embedded:
+        from app.jobs.service import WebServiceWorker
+
+        worker = WebServiceWorker()
+        worker.start()
+    app.state.planning_worker = worker
+    try:
+        yield
+    finally:
+        if worker is not None:
+            await asyncio.to_thread(worker.stop)
+        engine.dispose()
 
 
 app = FastAPI(title="TripAdapt API", version="0.1.0", lifespan=lifespan)
@@ -101,6 +113,12 @@ def live(request: Request):
     responses={503: {"description": "Database or schema unavailable"}},
 )
 def ready(request: Request):
+    worker = getattr(request.app.state, "planning_worker", None)
+    if settings.planning_worker_embedded and (worker is None or not worker.alive):
+        return JSONResponse(
+            status_code=503,
+            content={"code": "PLANNING_WORKER_UNAVAILABLE"},
+        )
     try:
         with engine.connect() as connection:
             revision = connection.execute(

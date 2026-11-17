@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     groq_api_key: SecretStr = SecretStr("")
     groq_model: str = "openai/gpt-oss-120b"
     planning_ai_enabled: bool = False
+    planning_worker_embedded: bool = False
     google_maps_api_key: SecretStr = SecretStr("")
     routes_api_key: SecretStr = SecretStr("")
     geoapify_api_key: SecretStr = SecretStr("")
