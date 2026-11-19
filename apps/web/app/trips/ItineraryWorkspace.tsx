@@ -30,6 +30,7 @@ import { validCoordinates } from "../../lib/trips/day-map";
 import DayMapPanel from "./DayMapPanel";
 import LodgingPanel from "./LodgingPanel";
 import StayJourney from "./StayJourney";
+import IntercityEstimate from "./IntercityEstimate";
 import { withLodging } from "../../lib/trips/lodging";
 const kindName = {
   custom: "Activity",
@@ -154,10 +155,10 @@ export default function ItineraryWorkspace({
     conflicts = dayConflicts(trip, current.stop.id, localDay);
   const transfers = [
     ...(localDay === 1 && current.inbound
-      ? [{ leg: current.inbound, label: "Arriving" }]
+      ? [{ leg: current.inbound, label: "Arriving", from: trip.stops[current.index - 1], to: current.stop }]
       : []),
     ...(localDay === current.days && current.outbound
-      ? [{ leg: current.outbound, label: "Moving on" }]
+      ? [{ leg: current.outbound, label: "Moving on", from: current.stop, to: trip.stops[current.index + 1] }]
       : []),
   ];
   function add(
@@ -377,7 +378,7 @@ export default function ItineraryWorkspace({
             )}
             {!!transfers.length && (
               <div className="day-transfers">
-                {transfers.map(({ leg, label }) => {
+                {transfers.map(({ leg, label, from, to }) => {
                   const pref = trip.travelPreferences?.[leg.key];
                   return (
                     <section key={leg.key}>
@@ -397,6 +398,7 @@ export default function ItineraryWorkspace({
                         <p className="day-transfer-caveat">
                           Departure time and arrival buffer not set.
                         </p>
+                        <IntercityEstimate key={`${from?.id}:${from?.location?.reference_id}:${to?.id}:${to?.location?.reference_id}`} from={from} to={to} />
                       </div>
                       <button
                         aria-label={`Edit transfer from ${leg.from} to ${leg.to}`}

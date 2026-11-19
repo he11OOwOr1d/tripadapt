@@ -7,11 +7,13 @@ import pytest
 import test_activity_discovery
 import test_trips
 from pydantic import SecretStr
+from sqlalchemy import func, select
 
 from app.api import journeys
 from app.api.identity import verified_identity
 from app.config import settings
 from app.main import app
+from app.persistence.models import PlaceReference
 from app.providers import geoapify_checks as transport
 from app.providers.geoapify_checks import (
     CheckFailure,
@@ -276,6 +278,100 @@ def test_return_to_stay_needs_known_place_and_sign_in(context):
     assert client.post("/api/v1/journeys/to-stay", json=body).status_code == 404
     app.dependency_overrides.pop(verified_identity)
     assert client.post("/api/v1/journeys/to-stay", json=body).status_code == 401
+
+
+def reference(db, number, latitude, longitude):
+    from app.persistence.models import PlaceReference
+
+    ident = uuid4()
+    row = PlaceReference(
+        id=ident,
+        provider="open_meteo_geonames",
+        provider_place_id=number,
+        payload={"latitude": latitude, "longitude": longitude},
+    )
+    db.add(row)
+    db.commit()
+    return ident
+
+
+def test_intercity_drive_estimate_uses_the_two_references_and_stores_nothing(
+    context, monkeypatch
+):
+    client, db, _ = context
+    delhi = reference(db, 1273294, 28.61, 77.21)
+    jaipur = reference(db, 1269515, 26.91, 75.79)
+    calls = []
+
+    def route(*args):
+        calls.append(args)
+        return RouteEstimate(270, 281000, ["Check road conditions."])
+
+    monkeypatch.setattr(journeys, "geoapify_checks", SimpleNamespace(route=route))
+    body = {"from_reference_id": str(delhi), "to_reference_id": str(jaipur)}
+    before = db.scalar(select(func.count()).select_from(PlaceReference))
+    db.commit()
+    response = client.post("/api/v1/journeys/intercity", json=body)
+    assert response.status_code == 200, response.text
+    assert response.headers["cache-control"] == "private, no-store"
+    result = response.json()["data"]
+    assert result["mode"] == "DRIVE"
+    assert (result["travel_minutes"], result["distance_meters"]) == (270, 281000)
+    assert result["warnings"] == ["Check road conditions."]
+    _, mode, origin, destination = calls[0]
+    assert (
+        mode == "DRIVE" and origin == (28.61, 77.21) and destination == (26.91, 75.79)
+    )
+    db.commit()
+    assert db.scalar(select(func.count()).select_from(PlaceReference)) == before
+
+
+def test_intercity_rejects_the_same_place_unknown_ids_extra_fields_and_anonymous(
+    context, monkeypatch
+):
+    client, db, _ = context
+    one = reference(db, 111, 10.0, 10.0)
+    two = reference(db, 222, 11.0, 11.0)
+    monkeypatch.setattr(
+        journeys,
+        "geoapify_checks",
+        SimpleNamespace(route=lambda *a: RouteEstimate(1, 1, [])),
+    )
+    url = "/api/v1/journeys/intercity"
+    ids = {"from_reference_id": str(one), "to_reference_id": str(two)}
+    assert (
+        client.post(url, json={**ids, "to_reference_id": str(one)}).status_code == 422
+    )
+    assert client.post(url, json={**ids, "mode": "WALK"}).status_code == 422
+    assert (
+        client.post(url, json={**ids, "to_reference_id": str(uuid4())}).status_code
+        == 404
+    )
+    assert (
+        client.post(
+            url, json={"from_reference_id": "x", "to_reference_id": "y"}
+        ).status_code
+        == 422
+    )
+    app.dependency_overrides.pop(verified_identity)
+    assert client.post(url, json=ids).status_code == 401
+
+
+def test_intercity_provider_failure_is_reported_not_zero(context, monkeypatch):
+    client, db, _ = context
+    one = reference(db, 333, 10.0, 10.0)
+    two = reference(db, 444, 11.0, 11.0)
+
+    def failing(*args):
+        raise CheckFailure("ROUTES_UNAVAILABLE", 503)
+
+    monkeypatch.setattr(journeys, "geoapify_checks", SimpleNamespace(route=failing))
+    response = client.post(
+        "/api/v1/journeys/intercity",
+        json={"from_reference_id": str(one), "to_reference_id": str(two)},
+    )
+    assert response.status_code == 503
+    assert "ROUTES_UNAVAILABLE" in response.text
 
 
 class Response:

@@ -4675,6 +4675,139 @@
         ]
       }
     },
+    "/api/v1/journeys/intercity": {
+      "post": {
+        "summary": "Check Intercity",
+        "description": "A driving estimate between two destinations. No schedule, mode choice or booking.",
+        "operationId": "check_intercity_api_v1_journeys_intercity_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntercityInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_IntercityCheck_"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/trips/{trip_id}/replanning/context": {
       "get": {
         "summary": "Replan Context",
@@ -7000,6 +7133,22 @@
         ],
         "title": "Envelope[HoursCheck]"
       },
+      "Envelope_IntercityCheck_": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/IntercityCheck"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "Envelope[IntercityCheck]"
+      },
       "Envelope_JobView_": {
         "properties": {
           "data": {
@@ -7415,6 +7564,67 @@
           "duration_minutes"
         ],
         "title": "HoursInput"
+      },
+      "IntercityCheck": {
+        "properties": {
+          "retrieved_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Retrieved At"
+          },
+          "mode": {
+            "type": "string",
+            "const": "DRIVE",
+            "title": "Mode"
+          },
+          "travel_minutes": {
+            "type": "integer",
+            "title": "Travel Minutes"
+          },
+          "distance_meters": {
+            "type": "integer",
+            "title": "Distance Meters"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "retrieved_at",
+          "mode",
+          "travel_minutes",
+          "distance_meters",
+          "warnings"
+        ],
+        "title": "IntercityCheck"
+      },
+      "IntercityInput": {
+        "properties": {
+          "from_reference_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "From Reference Id"
+          },
+          "to_reference_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "To Reference Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "from_reference_id",
+          "to_reference_id"
+        ],
+        "title": "IntercityInput",
+        "description": "Between two retained destination references; the server reads their coordinates."
       },
       "JobView": {
         "properties": {

@@ -46,3 +46,16 @@ export const stayReturnAdapter = {
     return (await accountRequest<StayReturnCheck>("/journeys/to-stay", { method: "POST", signal: AbortSignal.any([signal, AbortSignal.timeout(12000)]), body: JSON.stringify(input) })).data;
   },
 };
+
+export type IntercityCheck = {
+  retrieved_at: string;
+  mode: "DRIVE";
+  travel_minutes: number;
+  distance_meters: number;
+  warnings: string[];
+};
+export const intercityAdapter = {
+  async check(input: { from_reference_id: string; to_reference_id: string }, signal: AbortSignal) {
+    return (await accountRequest<IntercityCheck>("/journeys/intercity", { method: "POST", signal: AbortSignal.any([signal, AbortSignal.timeout(15000)]), body: JSON.stringify(input) })).data;
+  },
+};

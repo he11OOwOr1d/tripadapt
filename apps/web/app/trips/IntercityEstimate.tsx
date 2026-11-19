@@ -1,0 +1,34 @@
+"use client";
+import { useEffect, useRef, useState } from "react";
+import type { Stop } from "../../lib/trips/adapter";
+import { intercityAdapter, type IntercityCheck } from "../../lib/trips/journeys";
+import { intercityEndpoints, intercityHeadline } from "../../lib/trips/intercity";
+
+/** A transient driving estimate between two mapped destinations. It is not a timetable, a mode choice or a booking. */
+export default function IntercityEstimate({ from, to }: { from?: Stop; to?: Stop }) {
+  const ends = intercityEndpoints(from, to);
+  const [result, setResult] = useState<IntercityCheck | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const abort = useRef<AbortController | null>(null);
+  const request = useRef(0);
+  useEffect(() => () => { request.current++; abort.current?.abort(); }, []);
+  if (!ends || !from || !to) return null;
+  async function run() {
+    if (!ends || busy) return;
+    request.current++; abort.current?.abort();
+    const current = request.current, controller = new AbortController(); abort.current = controller;
+    setBusy(true); setError(""); setResult(null);
+    try {
+      const value = await intercityAdapter.check({ from_reference_id: ends.from, to_reference_id: ends.to }, controller.signal);
+      if (current === request.current) setResult(value);
+    } catch (failure) {
+      if (current === request.current && !controller.signal.aborted) setError(failure instanceof Error && failure.name !== "TimeoutError" ? failure.message : "The estimate timed out. Your plan is unchanged; try again later.");
+    } finally { if (current === request.current) setBusy(false); }
+  }
+  return <div className="intercity-estimate">
+    <button type="button" disabled={busy} onClick={() => void run()}>{busy ? "Estimating the drive…" : `Estimate the drive from ${from.name} to ${to.name}`}</button>
+    {error && <p role="alert">{error}</p>}
+    {result && <div role="status"><p className="provider-attribution">Route data: Powered by Geoapify · © OpenStreetMap contributors</p><p><strong>{intercityHeadline(result)}</strong></p>{result.warnings.map((w, i) => <p key={i}>{w}</p>)}<small>Checked {new Date(result.retrieved_at).toLocaleString()}. A driving estimate between the two destination centres, without live traffic. It is not a train, bus or flight schedule, and it does not change your plan or set your travel time.</small></div>}
+  </div>;
+}

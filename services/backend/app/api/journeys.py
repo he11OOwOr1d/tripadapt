@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from app.api.identity import current_user, session
 from app.api.place_checks import fail, geoapify_checks, source_place
 from app.api.trips import Envelope, router, wrap
-from app.persistence.models import AppUser
+from app.persistence.models import AppUser, PlaceReference
 from app.providers.geoapify_checks import CheckFailure
 from app.trips.schemas import StrictModel
 
@@ -78,6 +78,21 @@ class StayReturnCheck(StrictModel):
     distance_meters: int
     arrive_by: str | None
     status: Literal["arrive_by", "after_midnight"]
+    warnings: list[str]
+
+
+class IntercityInput(StrictModel):
+    """Between two retained destination references; the server reads their coordinates."""
+
+    from_reference_id: UUID
+    to_reference_id: UUID
+
+
+class IntercityCheck(StrictModel):
+    retrieved_at: datetime
+    mode: Literal["DRIVE"]
+    travel_minutes: int
+    distance_meters: int
     warnings: list[str]
 
 
@@ -209,6 +224,40 @@ def check_journey_to_stay(
             if arrive < 1440
             else None,
             status="arrive_by" if arrive < 1440 else "after_midnight",
+            warnings=warnings,
+        ),
+    )
+
+
+@router.post("/journeys/intercity", response_model=Envelope[IntercityCheck])
+def check_intercity(
+    body: IntercityInput,
+    request: Request,
+    user: AppUser = Depends(current_user),
+    db: Session = Depends(session),
+):
+    """A driving estimate between two destinations. No schedule, mode choice or booking."""
+    if body.from_reference_id == body.to_reference_id:
+        raise HTTPException(422, "JOURNEY_SAME_PLACE")
+    places = []
+    for ident in (body.from_reference_id, body.to_reference_id):
+        reference = db.get(PlaceReference, ident)
+        if reference is None:
+            raise HTTPException(404, "RESOURCE_NOT_FOUND")
+        places.append((reference.payload["latitude"], reference.payload["longitude"]))
+    try:
+        minutes, meters, warnings = geoapify_checks.route(
+            str(user.id), "DRIVE", places[0], places[1]
+        )
+    except CheckFailure as error:
+        fail(error)
+    return wrap(
+        request,
+        IntercityCheck(
+            retrieved_at=datetime.now(timezone.utc),
+            mode="DRIVE",
+            travel_minutes=minutes,
+            distance_meters=meters,
             warnings=warnings,
         ),
     )

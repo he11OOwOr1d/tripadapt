@@ -844,3 +844,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026. Re-ran axe with the WCAG 2.0, 2.1 and 2.2 (A and AA) and best-practice tags, which include the target-size rule, on the stay panel, the stay-journey section (with a result showing) and the map panel at 1280 px and at 390 px, plus the whole page at 390 px: no violations, and no horizontal overflow at 390 px. QA trip restored to its baseline, session kept. No code changed. Axe covers only a subset of accessibility problems; a screen-reader pass and a look by eye are still open.
 
+## 181. Estimate the drive between destinations
+
+20 November 2026. With about 48 minutes of the goal used (the hook's complaint was right), I took the largest remaining product gap I had listed, intercity travel, and built a driving estimate between two mapped destinations: `POST /journeys/intercity` (server-read coordinates from retained references, drive only) and an explicit button on the arrival and departure cards. Start and finish legs have no button because the trip origin is only a name. 6 new tests (585 backend and 213 frontend pass); verified live and signed in with a temporary second destination (Jaipur to Agra: 3 h 23 min, 269 km), axe clean, 390 px clean, baseline restored. Committed locally; not pushed. See [the learning note](../intercity-estimate-learning.md).
+
