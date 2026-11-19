@@ -12,7 +12,7 @@ The Google Cloud project had no billing, so every Places and Routes call returne
 - **Hours.** One new endpoint, `POST /place-checks/hours`, reads Geoapify place details for the place already retained from discovery. There is no listing-match step and no saved provider ID. The response is the regular opening hours that OpenStreetMap contributors list, labeled unverified.
 - **Live acceptance and the remaining-day check** no longer take `google_place_id` or `listings`; each visit's place is derived from the plan. The client picks `live_check` or `day_live_check` with an explicit scope instead of inferring it from the body's shape.
 - **Removed.** The Google endpoints, adapter, settings and the listing-picker components.
-- **Kept for now.** The `google_place_id` field and column stay nullable and unused so the deployed frontend and saved plans keep working. A separate migration drops them last.
+- **Removed in two safe releases.** First the API stopped accepting and returning `google_place_id` while the nullable column stayed mapped and unused (so the code worked with or without the column). Then migration `0026_drop_google_place_id` dropped the column and its check; it is reversible and was applied to the hosted database after confirming that none of 679 activity rows held a value.
 
 ## Decisions and tradeoffs
 
@@ -37,4 +37,10 @@ The Google Cloud project had no billing, so every Places and Routes call returne
 
 ## Remaining
 
-Deployment (backend, then frontend) and a production smoke test, the `google_place_id` drop migration, and deleting the Google Cloud keys and project (the owner has removed the keys from the local, Render and Vercel settings).
+Nothing for this change. The owner deleted the Google Cloud project and removed the keys from local, Render and Vercel settings.
+
+## Hosted verification and the column drop (19 November, after deployment)
+
+- **Hosted click-through.** Once the Vercel site was reachable, the signed-in production app ran the new hours check on the existing QA trip (Asian Art Museum at 10:00 on a Wednesday was "outside the regular opening hours", matching the museum's real 11:00 opening) and the journey check between two mapped activities (25 minutes walking, 1.7 km), with Geoapify credits shown. A temporary third activity was added and removed; the trip is back to its two original activities.
+- **Column drop.** After the migration the hosted API reported schema `0026` and returned 200 on readiness, the QA trip loaded, a new activity was saved and removed (write and delete on the new schema) and a reload showed the original two. Because Render's readiness check requires an exact schema match, the migration was applied while the new build waited, so any window was seconds; no errors were observed.
+- **Still untested in the browser:** the remaining-day and day-delay live checks, drive routes, and the live-acceptance panel at phone width.
