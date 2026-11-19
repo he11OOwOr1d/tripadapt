@@ -900,3 +900,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026. PRD FR-04: booked stays are commitments and changes are flagged. Added an optional "nights you booked" on a booked stay, a plain note when the plan's nights differ, and check-in and check-out dates derived from the trip's exact dates. No migration. 622 backend and 237 frontend tests pass; verified live and signed in on the disposable trip (validation, derived dates, flag, clearing, axe). Not built: several stays in one destination. Committed locally; not pushed. See [the learning note](../lodging-learning.md).
 
+## 195. Make the stay-nights change tell you about a booked stay
+
+20 November 2026. "Change nights between stays" ignored a stay marked as booked. The preview now lists each booked stay whose nights change, as a warning (not a block), and the preview's headings no longer skip a level. 623 backend and 238 frontend tests pass; verified live and signed in (previewed, not applied). Committed locally; not pushed. See [the learning note](../lodging-learning.md).
+

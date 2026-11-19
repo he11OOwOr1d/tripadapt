@@ -8,7 +8,7 @@ from app.planning.stay_rebalance import (
     RebalanceInput,
     rebalance_stays,
 )
-from app.trips.schemas import PlanInput
+from app.trips.schemas import Lodging, PlanInput
 
 
 def plan(**changes):
@@ -82,6 +82,35 @@ def test_moving_a_night_between_stays_keeps_trip_length_and_updates_allowances()
         "1330.00",
     )
     assert summary["dropped"] == [] and len(candidate.activities) == 3
+
+
+def test_a_booked_stay_whose_nights_change_is_flagged_and_others_are_not():
+    p, one, two, _ = plan()
+    prefs = p.preferences.stay_preferences
+    prefs[one] = prefs[one].model_copy(
+        update=dict(lodging=Lodging(name="Haveli", booked=True, booked_nights=4))
+    )
+    prefs[two] = prefs[two].model_copy(
+        update=dict(lodging=Lodging(name="Lake view", booked=False))
+    )
+    _, summary = rebalance_stays(
+        p, RebalanceInput(stop_id=two, delta_nights=1, counterpart=one)
+    )
+    assert summary["booked_stays"] == [
+        dict(
+            stop_id=one,
+            name="Jaipur",
+            stay="Haveli",
+            booked_nights=4,
+            nights_before=4,
+            nights_after=3,
+        )
+    ]
+    # A stay that is not marked booked, or whose nights do not change, is never flagged.
+    _, quiet = rebalance_stays(
+        p, RebalanceInput(stop_id=two, delta_nights=1, counterpart="trip_length")
+    )
+    assert quiet["booked_stays"] == []
 
 
 def test_shrinking_a_stay_never_drops_activities_silently():

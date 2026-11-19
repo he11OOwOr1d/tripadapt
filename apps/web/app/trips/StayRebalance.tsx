@@ -150,7 +150,7 @@ export default function StayRebalance({ tripId, etag, currency, stops, onApplied
       {error && <p role="alert" className="editor-error">{error}</p>}
       {blocked && (
         <section aria-live="polite">
-          <h4 ref={resultHeading} tabIndex={-1}>This needs your decision</h4>
+          <h3 ref={resultHeading} tabIndex={-1}>This needs your decision</h3>
           <p>{blocked.message}</p>
           {blocked.activities.length > 0 && (
             <fieldset className="stay-rebalance-drop">
@@ -194,7 +194,7 @@ export default function StayRebalance({ tripId, etag, currency, stops, onApplied
       )}
       {preview && stop && (
         <section aria-live="polite">
-          <h4 ref={resultHeading} tabIndex={-1}>Preview</h4>
+          <h3 ref={resultHeading} tabIndex={-1}>Preview</h3>
           <ul>
             {preview.stays.filter((s) => s.nights_after !== s.nights_before).map((s) => (
               <li key={s.stop_id}>{s.name}: {s.nights_before} → {s.nights_after} nights</li>
@@ -210,6 +210,9 @@ export default function StayRebalance({ tripId, etag, currency, stops, onApplied
             ))}
             <li>Your estimates: {costMoney(preview.estimated_before, currency)} → {costMoney(preview.estimated_after, currency)}</li>
             {preview.kept_payments.length > 0 && <li>Kept as recorded payments: {preview.kept_payments.join(", ")}</li>}
+            {(preview.booked_stays ?? []).map((b) => (
+              <li key={`booked:${b.stop_id}`} className="rebalance-booked"><strong>Check your booking.</strong> You marked your stay “{b.stay}” in {b.name} as booked{b.booked_nights ? ` for ${b.booked_nights} ${b.booked_nights === 1 ? "night" : "nights"}` : ""}, and this change moves its nights from {b.nights_before} to {b.nights_after}. Your booking is not changed or checked by this; contact the stay or update it yourself.</li>
+            ))}
           </ul>
           <p>{preview.notice}</p>
           <button type="button" className="day-primary" disabled={busy} onClick={() => void run(true)}>Apply to my draft</button>

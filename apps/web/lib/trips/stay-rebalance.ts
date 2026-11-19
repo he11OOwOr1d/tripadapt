@@ -12,6 +12,8 @@ export type RebalanceSummary = {
   estimated_before: string;
   estimated_after: string;
   kept_payments: string[];
+  /** Stays the traveler marked as booked whose nights this change alters. Absent from an older server. */
+  booked_stays?: { stop_id: string; name: string; stay: string; booked_nights: number | null; nights_before: number; nights_after: number }[];
   notice: string;
   applied: boolean;
   etag: string;
@@ -50,6 +52,7 @@ export function isRebalanceSummary(v: unknown, req: RebalanceRequest, apply: boo
     Array.isArray(s.moved) && s.moved.length === req.relocate.length &&
     s.moved.every((m) => isActivity(m) && !m.protected && req.relocate.some((r) => r.activity_id === m.activity_id && r.day_offset + 1 === m.to_day && m.to_start === (r.local_start_time ?? m.start) && m.to_stop_id === (r.stop_id ?? m.stop_id) && typeof m.to_destination === "string" && typeof m.map_cleared === "boolean" && (!m.map_cleared || m.to_stop_id !== m.stop_id))) &&
     money(s.estimated_before) && money(s.estimated_after) && Array.isArray(s.kept_payments) && s.kept_payments.every((k) => typeof k === "string") &&
+    (s.booked_stays === undefined || (Array.isArray(s.booked_stays) && s.booked_stays.every((b) => typeof b.stop_id === "string" && typeof b.name === "string" && typeof b.stay === "string" && (b.booked_nights === null || Number.isInteger(b.booked_nights)) && Number.isInteger(b.nights_before) && Number.isInteger(b.nights_after) && b.nights_before !== b.nights_after))) &&
     typeof s.notice === "string" && s.applied === apply && typeof s.etag === "string"
   );
 }

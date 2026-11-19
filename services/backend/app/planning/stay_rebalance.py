@@ -299,6 +299,23 @@ def rebalance_stays(plan: PlanInput, body: RebalanceInput):
             if c.link_removed
             and not any(b.id == c.id and b.link_removed for b in plan.costs)
         ],
+        # Stays the traveler marked as booked whose nights this change alters: a
+        # commitment the app cannot change for them, so they are told to act on it.
+        booked_stays=[
+            dict(
+                stop_id=s.client_id,
+                name=s.name,
+                stay=preference.lodging.name,
+                booked_nights=preference.lodging.booked_nights,
+                nights_before=s.desired_nights,
+                nights_after=new_nights[s.client_id],
+            )
+            for s in plan.stops
+            if new_nights[s.client_id] != s.desired_nights
+            and (preference := plan.preferences.stay_preferences.get(s.client_id))
+            and preference.lodging
+            and preference.lodging.booked
+        ],
         notice="A draft change you chose. Stay allowances follow the new nights; "
         "nothing is booked, cancelled or refunded. Review and accept the draft to "
         "change your accepted plan.",

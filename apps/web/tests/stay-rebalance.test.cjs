@@ -23,3 +23,10 @@ test('the applied message names every activity whose map location was cleared',(
  const base={moved:[{label:'Palace',to_destination:'Jaipur',to_day:6,map_cleared:true},{label:'Walk',to_destination:'Udaipur',to_day:2,map_cleared:false}]};
  const m=out.appliedMessage(base);assert.match(m,/Choose a new place for Palace \(Jaipur, day 6\)/);assert.doesNotMatch(m,/Walk/);
  assert.doesNotMatch(out.appliedMessage({moved:[]}),/Choose a new place/);});
+test('booked stays in a reply are optional, and must be well formed when present',()=>{const h=harness();
+ const booked={stop_id:J,name:'Jaipur',stay:'Haveli',booked_nights:4,nights_before:4,nights_after:5};
+ assert.equal(h.isRebalanceSummary({...summary(),booked_stays:[booked]},req,false),true);
+ assert.equal(h.isRebalanceSummary({...summary(),booked_stays:[{...booked,booked_nights:null}]},req,false),true);
+ assert.equal(h.isRebalanceSummary({...summary(),booked_stays:[]},req,false),true);
+ for(const bad of [{booked_stays:'x'},{booked_stays:[{...booked,nights_after:4}]},{booked_stays:[{...booked,stay:5}]},{booked_stays:[{...booked,booked_nights:1.5}]}])assert.equal(h.isRebalanceSummary({...summary(),...bad},req,false),false,JSON.stringify(bad));
+});
