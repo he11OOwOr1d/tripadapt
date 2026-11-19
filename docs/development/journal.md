@@ -840,3 +840,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026. After the stay-form focus fix, I read `document.activeElement` after opening "Add activity", "Add a meal or other cost" and "Plan this day with AI" in the day view: each opens a native dialog and puts focus on its first control (the activity forms on "What would you like to do?", the planner on "Close day planner"), and closing the planner returned focus to its trigger button. "Running late" did not appear on the QA trip (it needs a started trip), so it was not checked, and I did not record where focus lands after closing the two activity dialogs. No code changed and no data was changed. This was a scripted check, not a screen-reader session.
 
+## 180. Run the strict axe rule set on the stay UI at desktop and phone width
+
+20 November 2026. Re-ran axe with the WCAG 2.0, 2.1 and 2.2 (A and AA) and best-practice tags, which include the target-size rule, on the stay panel, the stay-journey section (with a result showing) and the map panel at 1280 px and at 390 px, plus the whole page at 390 px: no violations, and no horizontal overflow at 390 px. QA trip restored to its baseline, session kept. No code changed. Axe covers only a subset of accessibility problems; a screen-reader pass and a look by eye are still open.
+
