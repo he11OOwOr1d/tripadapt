@@ -868,3 +868,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026. "See the whole trip" gets a panel that estimates every mapped journey on the route on request and totals only what was estimated ("about 20 h 39 min, 2033 km across 4 journeys" on the disposable trip). 4 frontend tests (223 total); verified live and signed in, axe and 390 px clean; an unaudited contrast failure in the existing overview was fixed on the way. Committed locally; not pushed. See [the intercity note](../intercity-estimate-learning.md).
 
+## 187. Fix what the review of the intercity work found
+
+20 November 2026. Fixed a floating-point rounding bug in the "Use X hours" value (an exhaustive test over 0 to 3000 minutes now guards it), made a malformed reference a handled 422 instead of a 500, hid the button for a place and itself, corrected the starting-location field's wording and Enter handling, and removed an unused import. 225 frontend and 592 backend tests pass; not re-run in the browser. Committed locally; not pushed.
+

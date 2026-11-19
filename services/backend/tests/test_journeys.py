@@ -398,6 +398,54 @@ def test_intercity_rejects_bad_places_unknown_ids_extra_fields_and_anonymous(
     assert client.post(url, json={"origin": a, "destination": b}).status_code == 401
 
 
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {},
+        {"latitude": 10.0},
+        {"latitude": None, "longitude": 10.0},
+        {"latitude": "north", "longitude": 10.0},
+        {"latitude": 91.0, "longitude": 10.0},
+        {"latitude": 10.0, "longitude": 1000.0},
+    ],
+)
+def test_intercity_malformed_reference_is_a_handled_422_not_a_500(
+    context, monkeypatch, payload
+):
+    from app.persistence.models import PlaceReference
+
+    client, db, _ = context
+    good = reference(db, 555, 10.0, 10.0)
+    bad_id = uuid4()
+    db.add(
+        PlaceReference(
+            id=bad_id,
+            provider="open_meteo_geonames",
+            provider_place_id=556,
+            payload=payload,
+        )
+    )
+    db.commit()
+    monkeypatch.setattr(
+        journeys,
+        "geoapify_checks",
+        SimpleNamespace(route=lambda *a: RouteEstimate(1, 1, [])),
+    )
+    for body in (
+        {
+            "origin": {"reference_id": str(bad_id)},
+            "destination": {"reference_id": str(good)},
+        },
+        {
+            "origin": {"reference_id": str(good)},
+            "destination": {"reference_id": str(bad_id)},
+        },
+    ):
+        response = client.post("/api/v1/journeys/intercity", json=body)
+        assert response.status_code == 422, response.text
+        assert "PLACE_LOCATION_UNAVAILABLE" in response.text
+
+
 def test_intercity_provider_failure_is_reported_not_zero(context, monkeypatch):
     client, db, _ = context
     one = reference(db, 333, 10.0, 10.0)

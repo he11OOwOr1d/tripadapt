@@ -1,4 +1,3 @@
-import { validCoordinates } from "./day-map";
 import { originPointFrom } from "./origin-point";
 import { parseDayCheck, type DayCheckDiagnostic } from "./day-check-feedback";
 import type { ActivityPlace } from "./activity-search";

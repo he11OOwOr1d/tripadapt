@@ -395,6 +395,7 @@ export default function TripCreation({
                   <PlaceLookup
                     label="Starting location"
                     placeholder="Town, airport or station"
+                    searchOnEnter={false}
                     describedBy="origin-help"
                     required
                     autoComplete="address-level2"

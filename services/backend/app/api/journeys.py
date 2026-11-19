@@ -259,7 +259,16 @@ def resolve_point(db, place):
     reference = db.get(PlaceReference, place.reference_id)
     if reference is None:
         raise HTTPException(404, "RESOURCE_NOT_FOUND")
-    return (reference.payload["latitude"], reference.payload["longitude"])
+    try:
+        latitude = float(reference.payload["latitude"])
+        longitude = float(reference.payload["longitude"])
+    except (KeyError, TypeError, ValueError):
+        raise HTTPException(422, "PLACE_LOCATION_UNAVAILABLE") from None
+    if not (math.isfinite(latitude) and math.isfinite(longitude)) or (
+        abs(latitude) > 90 or abs(longitude) > 180
+    ):
+        raise HTTPException(422, "PLACE_LOCATION_UNAVAILABLE")
+    return (latitude, longitude)
 
 
 @router.post("/journeys/intercity", response_model=Envelope[IntercityCheck])

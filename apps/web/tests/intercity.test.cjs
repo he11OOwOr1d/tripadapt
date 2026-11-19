@@ -2,7 +2,7 @@ const {test}=require('node:test');const assert=require('node:assert/strict');con
 function load(file,deps={}){const out={};vm.runInNewContext(ts.transpileModule(fs.readFileSync(path.resolve(__dirname,file),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports:out,require:n=>deps[n.replace(/^\.\//,'')]??{},Object,Array,String,Number,Math,JSON});return out;}
 const i=load('../lib/trips/intercity.ts');
 const J=v=>JSON.parse(JSON.stringify(v));
-const stop=(ref,name='X')=>({id:'s',name,nights:1,timezone:'UTC',...(ref?{location:{reference_id:ref}}:{})});
+const stop=(ref,name='X')=>({id:'s',name,nights:1,timezone:'UTC',...(ref?{location:{reference_id:ref,latitude:ref.charCodeAt(0)-90,longitude:ref.charCodeAt(0)-80}}:{})});
 test('travel time reads as hours and minutes without false precision',()=>{
   assert.equal(i.formatTravelTime(270),'4 h 30 min');
   assert.equal(i.formatTravelTime(60),'1 h');
@@ -12,12 +12,12 @@ test('travel time reads as hours and minutes without false precision',()=>{
   assert.equal(i.formatTravelTime(-5),'0 min');
 });
 test('a destination is mapped only with a retained reference',()=>{
-  assert.deepEqual(J(i.stopPlace(stop('a','Agra'))),{name:'Agra',end:{reference_id:'a'}});
+  assert.deepEqual(J(i.stopPlace(stop('a','Agra'))),{name:'Agra',end:{reference_id:'a'},point:{latitude:7,longitude:17}});
   assert.deepEqual(J(i.stopPlace(stop(undefined,'Agra'))),{name:'Agra',end:null});
   assert.equal(i.stopPlace(undefined),undefined);
 });
 test('the starting point is mapped only when it was chosen from a search',()=>{
-  assert.deepEqual(J(i.originPlace({origin:'Delhi',originPoint:{latitude:28.6,longitude:77.2}})),{name:'Delhi',end:{latitude:28.6,longitude:77.2}});
+  assert.deepEqual(J(i.originPlace({origin:'Delhi',originPoint:{latitude:28.6,longitude:77.2}})),{name:'Delhi',end:{latitude:28.6,longitude:77.2},point:{latitude:28.6,longitude:77.2}});
   assert.deepEqual(J(i.originPlace({origin:'Delhi'})),{name:'Delhi',end:null});
   assert.equal(i.originPlace({origin:''}).name,'Starting point');
 });
@@ -51,5 +51,25 @@ test('withTravelHours adds, replaces and leaves other journeys and fields alone'
   assert.deepEqual(J(i.withTravelHours(prefs,'a','3.12')),{a:{mode:'Rail',hours:'3.12',overnight:1,rate:'20',basis:'vehicle'},b:prefs.b});
   assert.deepEqual(J(i.withTravelHours(undefined,'k','2')),{k:{mode:'',hours:'2',overnight:0,rate:'',basis:'person'}});
   assert.equal(prefs.a.hours,'5');
+});
+test('hours match exact integer arithmetic for every whole minute, with no floating-point round-up',()=>{
+  for(let m=0;m<=3000;m++){
+    const hundredths=Math.floor((m*5+2)/3); // ceil(m*5/3) in integers
+    const want=String(hundredths/100);
+    assert.equal(i.hoursFromMinutes(m),want,String(m)+' min');
+  }
+  assert.equal(i.hoursFromMinutes(33),'0.55');
+  assert.equal(i.hoursFromMinutes(66),'1.1');
+});
+test('two places within about 100 m are the same place for a journey, even through different forms',()=>{
+  const s=(ref,lat,lng)=>({id:'s',name:'K',nights:1,timezone:'UTC',location:{reference_id:ref,latitude:lat,longitude:lng}});
+  const home=i.originPlace({origin:'Kyoto',originPoint:{latitude:35.0116,longitude:135.7681}});
+  const kyoto=i.stopPlace(s('a',35.0116,135.7681));
+  const osaka=i.stopPlace(s('b',34.6937,135.5023));
+  assert.equal(i.intercityEndpoints(home,kyoto),null);
+  assert.equal(i.intercityEndpoints(kyoto,home),null);
+  assert.notEqual(i.intercityEndpoints(home,osaka),null);
+  const twin=i.stopPlace(s('c',35.0116,135.7685));
+  assert.equal(i.intercityEndpoints(kyoto,twin),null);
 });
 
