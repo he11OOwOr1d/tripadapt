@@ -2,9 +2,9 @@
 
 Local implementation and verification status. The dated sections below preserve the evidence recorded at each stage.
 
-## Where you stay — 19 November 2026 (local, committed, not pushed or deployed)
+## Where you stay — 19 November 2026 (on main and deployed)
 
-Each destination with nights has a **Where you're staying** panel: name, address, check-in/out, "booked by me" and an optional place from a nearby-stays search (Geoapify/OpenStreetMap, 12 results within 5 km). A stay with a location is a blue pin on the day map. It is the traveler's own record; nothing is booked, priced or checked. No migration: it lives in `stay_preferences`. 549 backend tests (18 new) and 201 frontend tests pass, build passes, and a live search returned 12 Jaipur stays. Verified signed in on a new QA trip (search, save, reload, pin on the real basemap, removal restoring the baseline, 390 px). **Not verified:** a screenshot, the hosted app, and a stay next to numbered visits. Deploy order when approved: backend first (it must accept `lodging`), then frontend. See [the learning note](../lodging-learning.md).
+Each destination with nights has a **Where you're staying** panel: name, address, check-in/out, "booked by me" and an optional place from a nearby-stays search (Geoapify/OpenStreetMap, 12 results within 5 km). A stay with a location is a blue pin on the day map. It is the traveler's own record; nothing is booked, priced or checked. No migration: it lives in `stay_preferences`. 549 backend tests (18 new) and 201 frontend tests pass, build passes, and a live search returned 12 Jaipur stays. Verified signed in on a new QA trip (search, save, reload, pin on the real basemap, removal restoring the baseline, 390 px). **Not verified:** a screenshot, the hosted app, and a stay next to numbered visits. Deploy order when approved: backend first (it must accept `lodging`), then frontend. After the push (`afca645`): CI passed, both Vercel projects reported success, Render serves the new backend (a live lodging search returned results) and the production bundle contains the stay panel and search. A signed-in check on the hosted app has not been run yet. See [the learning note](../lodging-learning.md).
 
 ## Itinerary map — 19 November 2026 (live on the hosted app)
 
