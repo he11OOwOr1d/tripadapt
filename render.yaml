@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: elsewhere-api-worker
+    runtime: python
+    plan: free
+    rootDir: services/backend
+    buildCommand: uv sync --locked --no-dev
+    startCommand: uv run --no-sync uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1 --timeout-graceful-shutdown 25
+    healthCheckPath: /api/v1/health/ready
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.12
+      - key: PLANNING_WORKER_EMBEDDED
+        value: "true"
+      - key: PLANNING_AI_ENABLED
+        value: "true"
+      - key: PLANNING_FIXTURES_ENABLED
+        value: "false"
+      - key: GROQ_MODEL
+        value: openai/gpt-oss-120b
+      - key: CORS_ORIGINS
+        value: '["https://elsewhere-ui-review.vercel.app"]'
+      - key: ACTIVITY_SEARCH_ENABLED
+        value: "true"
+      - key: ACTIVITY_PLACES_PROVIDER
+        value: geoapify
+      - key: PLACE_SEARCH_ENABLED
+        value: "true"
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GEOAPIFY_API_KEY
+        sync: false
