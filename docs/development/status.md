@@ -1,6 +1,20 @@
 # Current implementation status
 
-Snapshot: 12 November 2026. Local implementation status, not a production-readiness certificate. This page supersedes earlier “pending” or “blocked” descriptions where the later work resolved them; the journal preserves the sequence.
+Local implementation and verification status. The dated sections below preserve the evidence recorded at each stage.
+
+## Current verification update
+
+19 November 2026. The latest `make check-local` run passed 488 backend tests and 185 frontend tests, plus lint, migration drift detection, type checking and the production build. The backend checks ran on disposable PostgreSQL.
+
+- **Remaining-day recovery.** Signed-in browser testing accepted a revised visit after a rest break and a fresh Google walking-route check between two mapped locations. The QA trip was in planning mode. Automated tests cover route timing drift, stale context and protected commitments.
+- **Optional venue hours.** Automated acceptance covers missing listings, mismatched dates or buffers, provider rejection, venue closure and successful verification using simulated provider results. The live browser reached listing selection, where Google Places returned HTTP 403. Live acceptance with venue hours enabled remains open.
+- **Cost migration.** A populated local upgrade preserved legacy costs on accepted plans, including paid zero and unknown estimates. Migration 0025 protects accepted cost rows; a local rollback preserved all cost fields and reapplying restored the guard.
+- **Restoration and payments.** The review requires consent before changing or removing recorded payments, including changes caused by inherited currency, saved conversion rates or per-person traveler counts. Signed-in desktop and phone checks covered the consent control. The newer conditions and stale review protection were verified in backend tests.
+- **Release state.** On 19 November, the verified work was organized into separate backend, frontend, verification-tooling, hosting-configuration and documentation commits on `codex/planning-recovery-discovery` for publication. The full local check was rerun successfully before committing. This publication does not certify the hosted app or apply database migrations; the browser evidence and QA itinerary restorations remain documented in the journal.
+
+See the [development journal](journal.md) and [remaining-day learning notes](../tired-traveler-learning.md) for details.
+
+## 12 November snapshot
 
 | Section | Working locally | Remaining boundary |
 | --- | --- | --- |

@@ -257,3 +257,439 @@ Protect the approved landing. Keep examples separate from personal data. Explain
 ## 35. Publish the completed integration and review work
 
 12 November 2026. **Work:** organize the changes into backend, frontend and documentation commits on `codex/planning-recovery-discovery`, based on merged PR #2. **Decision:** publish the tested branch while keeping its Vercel Git deployment disabled; keep real environment files and transient Google-content captures out of Git. **Lesson:** local credentials can hide clean-CI failures, so verification also ran on a fresh PostgreSQL database with provider credentials and optional features disabled. **Tradeoff:** source publication is reviewable independently of API/worker deployment and production configuration. **Evidence:** all migrations apply from empty, Alembic finds no schema drift, Ruff passes and 230 backend tests pass without credentials. Existing frontend verification passes 53 tests, TypeScript and production build. Configured-secret and credential-pattern scans found no matches in publishable files. Backend commit `3f19fe5`; frontend commit `97e24e2`; documentation records decisions, limitations and browser verification. No production deployment.
+
+## 36. Review a conservative same-day delay
+
+12 November 2026. **Work:** explicit readiness/location input, deterministic flexible-suffix adjustment and saved multi-item before/after review. **Decision:** preserve durations and gaps, protect commitments, reject midnight overflow and reconstruct the allowed candidate at acceptance. **Lesson:** explain the limits of a conservative algorithm without claiming every alternative is impossible. **Tradeoff:** no automatic gap compression, cross-day moves or provider revalidation. **Evidence:** 240 backend / 54 frontend tests, CI Python, Ruff and production build; desktop/phone acceptance and reload verified, temporary QA activities cleaned up. [Details and remaining scope](../day-delay-learning.md). Only learning documentation updated; no push or deployment.
+
+## 37. Guard day-delay acceptance with explicit provider checks
+
+13 November 2026. **Work:** optional affected-visit hours and unique connecting-route checks in saved day-delay reviews, with listing/date/mode/buffer selection. **Decision:** derive scope on the server; reject unknowns, conflicts and provider failures without applying changes or silently accepting provisionally. **Lesson:** validating only the first changed visit cannot cover a shifted schedule. **Tradeoff:** synchronous checks are bounded to six affected visits per action, with no trip-length limit; partial coverage is not approval. **Evidence:** 252 backend / 55 frontend tests, Ruff, TypeScript and production build; desktop/phone missing-location and explicit-opt-out checks. Successful all-mapped live browser acceptance remains unverified. [Details](../day-delay-live-checks-learning.md). Core design documents unchanged; no push or deployment.
+
+## 38. Name the visit or journey blocking acceptance
+
+13 November 2026. **Work:** typed transient failure context, named next-step feedback and a preflight list of missing map locations. **Decision:** resolve labels from the owned review and expose only safe reason enums; stop at the first failure and disclose unchecked remainder. **Lesson:** “hours not confirmed” is insufficient when several visits moved, and a preceding unmapped activity can block an incoming journey. **Tradeoff:** actionable first-failure feedback without retaining provider evidence or inventing automatic repairs. **Evidence:** 262 backend / 62 frontend tests, CI Python, Ruff and production build; desktop/phone named-coverage check, QA review discarded with timeline unchanged. [Details and limits](../day-check-feedback-learning.md). Learning docs only; no push or deployment.
+
+## 39. Attach a location to the activity the traveler already made
+
+13 November 2026. **Work:** existing-activity map attachment/change/removal inside the editor, with attributed discovery and explicit save/cancel. **Decision:** separate personal title from source identity; retain place/destination checks and clear outdated Google IDs when location changes. **Lesson:** requiring exact title/source-name equality turns a missing-location fix into destructive replacement work. **Tradeoff:** bounded nearby category search, without arbitrary-address coverage or automatic live verification. **Evidence:** 264 backend / 67 frontend tests, CI Python, Ruff, TypeScript and build; live 11-result discovery, desktop/phone cancel/save/reload/destination-change checks, temporary QA link removed. [Details](../activity-map-links-learning.md). Learning docs only; no push or deployment.
+
+## 40. Return from a review warning without losing the delay inputs
+
+13 November 2026. **Work:** direct missing-location actions from new and saved day-delay reviews, focused map editing and a scoped return reminder. **Decision:** edit current-draft records, preserve only the delay seed, wait for autosave and require fresh readiness/preview. **Lesson:** copying a candidate into the editor could accidentally apply proposed times while fixing a location. **Tradeoff:** in-session return state; frozen reviews remain independently pending/stale rather than being silently rewritten. **Evidence:** 72 frontend tests, TypeScript/build and desktop/phone cancel/save/continue flows; fresh review recognized the saved map link, QA data/reviews cleaned up. [Details](../delay-edit-handoff-learning.md). Backend/contracts unchanged; learning docs only; no push or deployment.
+
+## 41. Rehearse live day acceptance without manufacturing a passing result
+
+13 November 2026. **Work:** real Google venue/route checks on temporary mapped QA activities; fix the check-only date disappearing after form updates. **Decision:** keep access warnings and closed/unknown venues blocking; preserve explicit mode choice and pending candidates. **Lesson:** fitting hours and travel time do not establish route access, and a discovery record may have no current nearby Google match. **Tradeoff:** successful live acceptance remains unverified after bounded real-data attempts. **Evidence:** live 200 discovery/match responses, 201 proposals, structured 409 route/venue rejections; date persistence, 72 frontend tests, TypeScript/build and desktop/phone checks; QA day and prior pending list restored. [Full outcomes](../live-day-verification-learning.md). Learning docs only; no push or deployment.
+
+## 42. Refine venue identity before assuming no match exists
+
+13 November 2026. **Work:** destination-qualified Google queries, a ten-result bound, explicit alternate-name/address input, nearby distances and one shared picker across checks/reviews. **Decision:** retain the one-kilometre server identity guard and require explicit selection; keep queries/results out of saved plans. **Lesson:** filtering a three-result name-only search can discard the right nearby record; location bias itself is not a boundary. **Tradeoff:** better refinement within the existing map point, without silently moving venues or pretending discovery is exhaustive. **Evidence:** 273 backend / 73 frontend tests, CI Python, Ruff, TypeScript/build, live default/empty/refined matching and details handoff on desktop/phone; Cancel/reload preserved the QA activity. [Details](../place-matching-learning.md). Generated OpenAPI updated; core design docs unchanged; no push or deployment.
+
+## 43. Add weather evidence before proposing weather-driven changes
+
+14 November 2026. **Work:** bounded Open-Meteo adapter, public reference/date forecast endpoint and a read-only day-weather panel. **Decision:** use destination-local dates, keep distant/missing forecasts unknown, distinguish zero values, and expose source/retrieval/cache metadata. **Lesson:** a daily outlook is neither a forecast for an exact activity hour nor an itinerary feasibility verdict. **Tradeoff:** explicit checks and transient 15-minute caching before adding agent tools or automatic proposals. **Evidence:** 290 backend / 78 frontend tests, CI Python, Ruff, TypeScript/build; live and cached Jaipur forecasts, undated/out-of-window/unmapped states and desktop/phone navigation checks; itinerary unchanged. [Details and next scope](../day-weather-learning.md). Generated OpenAPI updated; main design docs untouched; no push or deployment.
+
+### 44. Weather check to an explicit change request — 2026-11-14
+
+Connected a usable day forecast to a traveler-selected removal request in chat. Preserved existing chat drafts and excluded protected, completed, unnamed and ambiguously named activities. No automatic sending or plan edits. This is the first UI bridge toward weather revisions; weather-aware proposal orchestration is still pending. Live forecast and desktop/phone handoff verified; 78 frontend tests, TypeScript and production build passed. No proposal was submitted during this QA. Decisions, limits and next checks: [weather change handoff learning](../weather-change-handoff-learning.md).
+
+## 45. Bind a requested weather change to server-retrieved evidence
+
+14 November 2026. **Work:** direct weather-related removal previews, typed server-retrieved forecast context, immutable review and acceptance-time validation. **Decision:** use an exact UUID command instead of a model for this explicit selection; preserve every other activity and trip setting; require planning lifecycle and a forecast younger than 15 minutes. **Lesson:** forecast evidence and the traveler's choice are distinct, and flexible check dates must not become schedule dates. **Trade-off:** opens time rather than inventing an indoor alternative; affected journeys remain provisional pending separate checks. **Evidence:** 309 backend tests on local/CI Python, Ruff, 79 frontend tests, TypeScript/build; live desktop/phone discard, acceptance, reload and history verified with temporary QA data. [Decisions, gaps and next slice](../weather-revision-learning.md). Supersedes entry 44's chat handoff. Generated OpenAPI updated; finalized design docs and landing untouched. No push or deployment.
+
+## 46. Choose a replacement without inventing indoor suitability
+
+14 November 2026. **Work:** museum/gallery discovery in the weather panel, typed single-place replacement proposals and optional Google hours/adjacent-journey guards. **Decision:** preserve the selected time slot, require a recent same-destination record, clear stale listing identity and keep indoor suitability unknown. **Lesson:** a category is not proof of shelter; explicit choices can use deterministic commands before conversational orchestration. **Trade-off:** provisional acceptance is explicit; complete remaining-day feasibility and successful real adjacent-route acceptance remain outstanding. **Evidence:** 320 backend tests on local/CI Python, Ruff, 80 frontend tests, TypeScript/build; live discovery, guarded single-visit acceptance, reload, desktop/phone checks and restoration of original QA snapshot. Also fixed retired-pool test connection cleanup and weather styles leaking into the review modal. [Details and next slice](../weather-replacement-learning.md). Learning docs/generated OpenAPI only; locked landing and finalized design docs unchanged. No push or deployment.
+
+## 47. Let chat open the existing replacement chooser
+
+14 November 2026. **Work:** structured replacement-intent/activity extraction, a persisted draft-bound chooser action, scope/staleness guards and focused handoff with explicit date/category. **Decision:** keep place choice and proposal acceptance in the existing validated flow; no second model-written edit path. **Lesson:** a useful conversational action can guide a traveler without inventing a venue or applying an edit. **Trade-off:** the chooser still handles forecast and place selection; duplicate labels and non-ISO dates need clarification. **Evidence:** 335 backend tests on local/CI Python, Ruff, 85 frontend tests, TypeScript/build; real Groq request, date/activity/category handoff, live discovery, preview/discard, reload recovery, wrong-day guard, unsent-note preservation and desktop/phone verification. [Details and remaining scope](../weather-chat-learning.md). Generated OpenAPI and learning docs updated; finalized design docs and locked landing untouched. No push or deployment.
+
+## 48. Keep real replacement research inside the conversation
+
+14 November 2026. **Work:** owned draft-bound research endpoint, forecast-first lookup, three-place proximity shortlist and inline chat selection using the shared weather proposal. **Decision:** show actual sources and distance basis; keep venue suitability unknown and preserve explicit review/acceptance. **Lesson:** chat can become more useful without asking a model to invent ranking facts or creating a second edit boundary. **Trade-off:** simple distance/name-diversity ordering; free-text “choose the first one”, richer preference evidence and active-trip scope remain future work. **Evidence:** 349 backend tests on local/CI Python, Ruff, 90 frontend tests, TypeScript/build; real gallery/museum results, forecast-window empty state, shared review recovery/discard, unchanged QA itinerary and desktop/phone/focus checks. [Details and next sequence](../chat-replacement-options-learning.md). Learning docs/generated OpenAPI updated; finalized design docs/locked landing untouched. No push or deployment.
+
+## 49. Verify both connecting journeys before accepting a replacement
+
+14 November 2026. **Work:** shared live-evidence checker, named single-change diagnostics, explicit visit/edge scope, missing-map feedback and bounded live-success confirmation. **Decision:** retain every provider warning/blocker and reuse the same preview/accept boundary. **Lesson:** scope-specific acceptance evidence is stronger than an enabled form; neighbor hours and complete-trip feasibility remain separate. **Trade-off:** live success covers one venue and two driving estimates, not walking or multi-visit day adjustment. **Evidence:** 352 backend tests on local/CI Python, Ruff, 93 frontend tests, TypeScript/build; real Amrapali replacement with both mapped adjacent journeys accepted as version 41, persisted on reload, then original snapshot 37 restored with exactly three temporary items removed. Also corrected a test's database row-order assumption without weakening field checks. [Full rehearsal, limits and next scope](../adjacent-journey-acceptance-learning.md). Learning docs only; locked landing/finalized design docs untouched; no push or deployment.
+
+## 50. Confirm the starting context for remaining-day replanning
+
+14 November 2026. **Work:** explicit accepted/draft readiness panel, owned read-only context/check endpoints, destination-local clock/offset and mapped current-location confirmation, preserved/protected/flexible/unresolved activity groups. **Decision:** do not infer completion, activate the trip or create a proposal from a readiness check; require fresh scoped context and base tokens. **Lesson:** native time-input changes needed input-event handling to keep submitted state aligned with the displayed value. **Trade-off:** bounded map discovery and conservative status/conflict gates; generation and current-location route checks are the next slice. **Evidence:** 362 backend tests on both Python environments, Ruff, 95 frontend tests, TypeScript/build; real accepted/draft browser reads, attributed Geoapify locations, stale-time rejection/recovery, unchanged QA itinerary and desktop/phone/keyboard checks. Positive readiness verified through API integration tests. [Details and limits](../remaining-day-readiness-learning.md). Learning docs/generated OpenAPI only; finalized design docs and locked landing untouched. No push or deployment.
+
+## 51. Preview the remaining day with its initial journey
+
+14 November 2026. **Work:** owned read-only timing endpoint, typed adapter and walk/drive preview from confirmed context. **Decision:** deterministic scheduling preserves order, durations and commitments; stop on warnings, stale bases, missing maps, midnight and clock-change dates. **Lesson:** provider lookup time must count by recalculating from the completion clock. **Trade-off:** six remaining visits per action, no hours/weather verification or proposal acceptance yet. **Evidence:** 371 backend tests on local/CI Python, 96 frontend tests, TypeScript/build, Ruff; live Google initial drive estimate of 9 minutes plus 10-minute buffer, desktop/phone preview and temporary QA draft cleanup verified after reload. [Details and next scope](../remaining-day-preview-learning.md). Learning docs/generated OpenAPI only; finalized documents/landing untouched. No push or deployment.
+
+## 52. Freeze and explicitly accept remaining-day timing changes
+
+14 November 2026. **Work:** idempotent save-proposal endpoint, existing review/history integration, frozen-candidate integrity validation and mandatory fresh-route acceptance including the first journey. **Decision:** no silent accepted/draft merge; pin both current pointers and draft sequence, retain reported context only on explicit save, acknowledge unverified hours/weather and current location. **Lesson:** rechecking routes is insufficient unless the resulting estimates fit the frozen candidate's actual gaps; never replace the proposal during acceptance. **Trade-off:** context and route timing can expire quickly; venue hours remain provisional. **Evidence:** 379 backend tests on local/CI Python, 97 frontend tests, TypeScript/build, Ruff; live 21:08→21:25 proposal accepted as version 43, reload/phone verified, then snapshot 42 restored with one temporary item removed and no route/settings changes. [Full decisions, limits and next slice](../remaining-day-proposal-learning.md). Learning docs/generated OpenAPI only; finalized documents/landing unchanged. No push or deployment.
+
+## 53. Check every remaining visit's reported hours while keeping routes mandatory
+
+14 November 2026. **Work:** optional all-remaining-visit Google hours checks, explicit starting-context display, scope-bound controls and named failure feedback. **Decision:** shared venue policy; check hours before mandatory initial/connecting routes, revalidate freshness and never fall back automatically. **Lesson:** a reopened acknowledgement needs the actual reported place/time, and near-midnight test conditions must be reported honestly. **Trade-off:** manual listing choice and transient provider facts; provisional hours remain an explicit choice. **Evidence:** 389 backend / 98 frontend tests, CI Python, Ruff, TypeScript/build; real Google match/hours/routes acceptance under a temporary fixed 13:30 clock, not a live midday traveler check. Normal clock restored and observed at 23:58; QA snapshot 44 restored as current 46, 11 accepted/draft activities verified. [Full verification and limits](../remaining-day-hours-learning.md). Learning docs/generated OpenAPI only; finalized documents/landing untouched. No push or deployment.
+
+## 54. Hand conversational remaining-day requests to explicit confirmation
+
+15 November 2026. **Work:** new typed intent, worker-persisted scope/token pointer, stale-message checks, guarded chat-to-planner action and one-time modal signal/focus return. **Decision:** chat never supplies a current time/location, infers completion or creates a proposal; the existing confirmation/preview/review path remains authoritative. **Lesson:** removing the originating chat button requires an explicit accessible focus destination, and old messages need both server and client scope checks. **Trade-off:** intent routing rather than autonomous replanning; existing conversation lifecycle/engine limits unchanged. **Evidence:** 394 backend / 100 frontend tests, CI Python, Ruff, TypeScript/build; real natural-language provider/worker handoff, reload/wrong-day/blank-input/phone/keyboard checks, accepted version 46 and both 11-activity plans unchanged, no proposal created. [Details and next sequence](../remaining-day-chat-learning.md). Learning docs/generated OpenAPI only; finalized documents/landing untouched. No push or deployment.
+
+## 55. Resolve unresolved readiness items without inferring completion
+
+15 November 2026. **Work:** guarded draft-only status/timing editor actions, status focus, autosave-aware return reminder and explicit accepted-to-draft switch. **Decision:** resolve only current matching draft records; preserve flags, never copy snapshot fields or retain an old clock/location report. **Lesson:** cancel/save needs a focused return path, and a short visible action still needs an activity-specific accessible name. **Trade-off:** explicit manual status/timing decisions rather than bulk completion or new progress states; accepted snapshots still change through review. **Evidence:** 105 frontend tests, TypeScript/build; live cancel/no-change, explicit completion/autosave/fresh check, accepted guard, phone/keyboard verification; QA cleanup confirmed accepted version 46 and both 11-activity plans unchanged. [Full evidence and next scope](../readiness-status-recovery-learning.md). Frontend and learning docs only; backend/contracts, finalized documents and landing unchanged. No push or deployment.
+
+## 56. Define active-trip conversation permissions explicitly
+
+15 November 2026. **Work:** read-only active chat/handoff, planning-only agent generation, closed-trip admission, lifecycle/revision fences and stale agent review guards. **Correction:** earlier learning notes incorrectly described a general planning-only chat gate as existing; inspection found it absent, and this slice adds the policy. **Decision:** preserve guarded user remaining-day proposals while active, with no broad model-generated edits. **Trade-off:** conservative revision invalidation and intentionally limited active chat. **Evidence:** 416 backend tests on local/CI Python, 22 new policy cases, 105 frontend tests, TypeScript/build; real model handoff, edit refusal and direct generation guard verified at desktop/phone widths. QA trip restored to planning with accepted version 46 and 11/11 activities unchanged. [Policy, lessons and next slice](../active-trip-chat-policy-learning.md). Finalized docs/locked landing unchanged; no push or deployment.
+
+## 57. Show the trip mode before offering planning actions
+
+15 November 2026. **Work:** server lifecycle carried through account load/autosave, workspace status strip, planning-only generation entry, active fresh-day emphasis and lifecycle-aware chat prompts/composer. **Decision:** derive capabilities from account metadata; unknown values fail closed; retain history and unsent messages. **Lesson:** server restrictions need visible navigation cues, and autosave must preserve non-editable account metadata. **Trade-off:** no automatic transition or cross-tab lifecycle push; manual editing remains outside this slice. **Evidence:** 108 frontend tests, TypeScript/build and real API desktop/390×844 checks for planning, active and completed states. QA restored to planning with 11/11 activities unchanged. [Details and next step](../lifecycle-workspace-learning.md). Backend/finalized docs/locked landing unchanged. No push or deployment.
+
+## 58. Start, finish and resume a trip deliberately
+
+15 November 2026. **Work:** explicit lifecycle confirmations, metadata-only conditional updates/refresh, accepted-plan start prerequisite and editor/saving safeguards. **Decision:** status changes never accept drafts or complete activities; require refresh after stale or uncertain requests. **Lesson:** metadata refresh can resolve cross-tab conflict without replacing a traveler’s local draft. **Trade-off:** limited start/finish/resume UI rather than archive management or a full transition state machine. **Evidence:** 419 backend tests on local/CI Python, 109 frontend tests, TypeScript/build, real two-tab conflict recovery and desktop/phone start/finish/resume/cancel/focus checks. QA restored to planning with accepted version 46 and 11/11 activities unchanged. [Details and next sequence](../trip-lifecycle-controls-learning.md). Finalized docs/locked landing untouched. No push or deployment.
+
+## 59. Guide missed and ongoing activities without false completion
+
+15 November 2026. **Work:** unresolved draft activity recovery choices, intent-specific editor focus/guidance and reuse of the fresh-check return flow. **Decision:** answers navigate to explicit edits, never persist invented skipped/ongoing states or silently mark completion. **Lesson:** ongoing duration is total time from the original start; a missed item needs deliberate rescheduling/removal. **Trade-off:** this is guided draft correction, not an execution-history model. **Evidence:** 109 frontend tests, TypeScript/build; real active-trip API/browser checks for all three focus paths, unchecked completion, keyboard radios, phone layout, cancellation and expired-context rejection. QA restored with all 22 accepted/draft activity rows exactly unchanged. [Details and next sequence](../activity-recovery-learning.md). Backend/finalized docs/locked landing unchanged. No push or deployment.
+
+## 60. Review saved recovery corrections and recheck the accepted day
+
+15 November 2026. **Work:** draft-versus-accepted reminder states, direct full-draft review, exact accepted-proposal recognition and fresh accepted-day confirmation. **Decision:** no inferred acceptance from closing/discarding or unrelated proposals; no old traveler report carries forward. **Lesson:** live testing exposed a stale autosave reference after lifecycle changes; load-generation refresh now rebuilds that queue with current metadata. **Trade-off:** the reminder remains session-local and full-draft review can include other saved edits. **Evidence:** 112 frontend tests, TypeScript/build; real active-trip save/review/discard/accept and desktop/phone checks. QA restored to planning and accepted version 49 with 11/11 baseline-matching activities; test review history retained. [Details and next sequence](../recovery-review-handoff-learning.md). Backend/finalized docs/locked landing unchanged. No push or deployment.
+
+## 61. Restore version-bound recovery navigation after reload
+
+15 November 2026. **Work:** tab-scoped allowlisted recovery pointers bound after autosave, verified-account restore, revision/scope/age guards and sign-out/new-trip cleanup. **Decision:** persist no time, location, report or activity content, and never auto-open a dialog. **Lesson:** a reload during acceptance must not infer success from a changed accepted pointer. **Trade-off:** interrupted acceptance can lose the reminder while the server plan/history remain available. **Evidence:** 118 frontend tests, TypeScript/build, real saved/accepted reminder reload and phone fresh-context/consumption checks. QA restored to planning and accepted version 52 with 11/11 baseline-matching activities. [Details and next sequence](../recovery-reload-learning.md). Backend/finalized docs/locked landing unchanged. No push or deployment.
+
+## 62. Reconcile interrupted reviews with server receipts
+
+15 November 2026. **Work:** capture exact draft-review IDs, resume pending proposals by GET, recognize accepted receipts after interrupted client handoff and bound trip-refresh reconciliation. **Decision:** reload never submits or accepts; mismatched or unavailable evidence cannot imply success. **Lesson:** an acceptance can commit between the trip and proposal reads, requiring one consistent trip refresh. **Trade-off:** an uncaptured creation response still needs pending-review history, and outages can fall back to normal navigation. **Evidence:** 124 frontend tests, TypeScript/build; live pending reload/resume with unchanged proposal count, immediate acceptance reload, phone fresh-context check and baseline restoration. QA remains planning with accepted version 55 and 11/11 baseline-matching activities. [Details and next sequence](../recovery-receipt-learning.md). Backend/finalized docs/locked landing unchanged. No push or deployment.
+
+## 63. Retry receipt reads and clear discarded navigation immediately
+
+15 November 2026. **Work:** explicit read-only review-status check/retry, cancellation timeouts, late-response guards and matching discard cleanup. **Decision:** never resubmit/accept through retry; preserve draft corrections when discarding their proposal. **Lesson:** disabling the loading button drops focus, so restore it only when the user has not moved elsewhere. **Trade-off:** unknown proposal IDs still need history; live outage/account-switch testing remains outside this QA. **Evidence:** 128 frontend tests, TypeScript/build; real pending-status check with unchanged proposal count, focus restoration, immediate phone discard cleanup and reload. QA accepted version 55 unchanged, 11/11 baseline-matching activities, test review discarded. [Details and next sequence](../recovery-status-retry-learning.md). Backend/finalized docs/locked landing unchanged. No push or deployment.
+
+## 64. Audit core gaps and preserve strict budget intent
+
+15 November 2026. **Work:** core-workflow gap audit, explicit target/strict budget UI and adapter round-trip preservation, honest estimate-versus-budget summaries. **Decision:** retain the backend's strict-cost blocker until complete cost evidence exists. **Lesson:** the previous adapter silently converted strict budgets to target during unrelated saves. **Trade-off:** strict drafts are saveable but currently not acceptable; this does not deliver a complete expense ledger. **Evidence:** 420 backend tests on local/CI Python, 131 frontend tests, TypeScript/build and real desktop/phone strict reload/blocker/explicit-target checks. Entire QA draft restored against baseline; accepted version 55 unchanged. [Budget learning](../budget-policy-learning.md), [workflow audit and next functional slice](../core-workflow-audit-learning.md). Finalized docs/locked landing unchanged. No push or deployment.
+
+## 65. Expose snapshot cost coverage without inventing a complete ledger
+
+15 November 2026. **Work:** owned version budget endpoint, exact allowance projection and shared creation/proposal coverage disclosure. **Decision:** unit-aware stay/leg estimates only; complete total and paid amounts remain unknown. **Lesson:** zero rates and absent quantities are different, and frozen review costs must not follow later draft edits. **Trade-off:** editable cost items and paid commitments remain future ledger work; strict acceptance stays blocked. **Evidence:** 427 backend tests on local/CI Python, 135 frontend tests, TypeScript/build, real saved/frozen allowance checks and desktop/phone layout verification. Entire QA draft restored to baseline; accepted version 55 unchanged. [Details and next slice](../cost-coverage-learning.md). Generated OpenAPI/learning notes updated; finalized docs/locked landing unchanged. No push or deployment.
+
+## 66. Record meals, other costs and payments without claiming a complete ledger
+
+15 November 2026. **Work:** typed version-owned meal/other cost records (unit amount, per-person/group basis, quantity, estimate/paid), creation-step editor, coverage records with a separate recorded-paid subtotal. **Decision:** store unlinked records in validated plan preferences so they freeze into reviews and copy across revisions through the existing plan path; defer the normalized `cost_item` table to linked costs. **Lesson:** a half-typed record must never reach autosave; commit only validated records from a separate form. **Trade-off:** no linked costs, taxes or conversion; complete total/paid remain unknown; strict acceptance stays blocked. **Evidence:** backend coverage tests (4 new) and Ruff; 141 frontend tests, TypeScript/build; on-device browser checks of validation, exact totals, paid-removal warning, focus return and desktop/phone layout (fixed a stacked-radio phone defect). The signed-in account path is covered by API/adapter tests rather than a browser session. Also fixed an import-order Ruff failure in `app/main.py`; regenerated OpenAPI paths reorder accordingly. [Details](../cost-records-learning.md). Finalized docs/locked landing untouched. No push or deployment.
+
+## 67. Link costs to activities and stays without losing payments
+
+15 November 2026. **Work:** `cost_item` table (migration 0020, applied to Supabase with browser-role grants revoked), top-level plan `costs`, explicit `cost.replace_records` command, activity/stay links, coverage link labels and an editor link picker. **Decision:** when a linked item leaves the plan, its estimate goes but a paid cost stays unlinked and flagged; one pure rule runs in plan validation and on every version write path. Links use logical IDs because schedule rows are rewritten on each sync. **Lesson:** a write path that omits costs must reuse and reconcile the existing ones, or a route edit silently drops payments. **Trade-off:** no leg-level links, per-item currency, conversion or taxes; strict acceptance stays blocked. **Evidence:** 13 cost tests on Supabase, 142 frontend tests, TypeScript/build, on-device link/removal browser check. [Details](../linked-costs-learning.md). The learning note records the deviation from the finalized design; finalized docs untouched. No push or deployment.
+
+## 68. Link costs to intercity journeys
+
+15 November 2026. **Work:** journey (leg) links on costs using the existing travel-budget keys, one shared server key builder, migration 0021 (applied to Supabase, no browser grants), a "Journeys" group in the editor and coverage labels. **Decision:** draft commands apply settings first and always resync, so a settings-only change of starting point or return reconciles journey-linked costs on the server. **Lesson:** keys built in two places must come from one function; the coverage refactor kept every existing key test green. **Trade-off:** renaming the starting point creates new journey keys, as travel budgets already do; currency, conversion and taxes remain. **Evidence:** 15 cost tests on Supabase including a settings-only origin change; 143 frontend tests, TypeScript/build. [Details](../linked-costs-learning.md). No push or deployment.
+
+## 69. Record costs in their own currency without guessing rates
+
+15 November 2026. **Work:** per-cost currency, traveler-entered rate with source/date, migration 0022 (applied to Supabase, no browser grants), exact half-up conversion on server and client, original/converted display in editor and coverage. **Decision:** no rate provider; a foreign amount without a rate stays unknown in display totals even when paid. **Lesson:** "paid" and "known in display currency" are separate facts, so coverage reports the entered status apart from the display status. **Trade-off:** rates are manual and can go stale; taxes/fees and strict feasibility remain. **Evidence:** 17 cost tests on Supabase, 145 frontend tests, TypeScript/build, on-device browser check. [Details](../linked-costs-learning.md). No push or deployment.
+
+## 70. Record taxes and fees without assuming zero
+
+15 November 2026. **Work:** per-cost tax status (included / not included / unknown) with an optional percentage, a Taxes & fees category, migration 0023 (applied to Supabase, no browser grants), exact half-up tax on server and client, editor and coverage disclosure of unknown tax. **Decision:** tax is added in the cost's own currency before conversion; unknown tax flags the entry instead of counting as zero. **Trade-off:** a single percentage per cost, not compound or per-unit fees; strict feasibility still blocked. **Evidence:** 19 cost tests on Supabase, 146 frontend tests, TypeScript/build. [Details](../linked-costs-learning.md). No push or deployment.
+
+## 71. Check strict budgets only against complete, confirmed entries
+
+15 November 2026. **Work:** coverage completeness with a plain-language missing list, a never-inferred "every cost entered" confirmation, a complete total, and strict validation outcomes (unverified / exceeded / within limit as an acknowledgeable advisory). **Decision:** a passing strict check must be acknowledged as based on the traveler's own entries and rates, not live prices. **Lesson:** completeness needs both detectable facts and an explicit statement; the statement cannot override a detectable gap. **Trade-off:** no live price evidence; paid total still unknown. **Evidence:** pure boundary tests, end-to-end acceptance and exceeded refusal on Supabase, 148 frontend tests, TypeScript/build. [Details](../strict-budget-check-learning.md). No migration, push or deployment.
+
+## 72. Lighten the remaining day for a tired traveler
+
+15 November 2026. **Work:** explicit "rest here first" and "skip for today" choices in the remaining-day flow, frozen in the proposal and re-checked at acceptance, with a fatigue acknowledgement naming skipped items and stating that nothing is cancelled or refunded. **Decision:** extend the guarded remaining-day pipeline rather than add a new edit path; the app never chooses what to drop. **Lesson:** linked costs exposed that candidate builders removing activities by bare model copy skipped reconciliation; `apply_remaining` and `remove_activity` now re-validate. **Trade-off:** single day, traveler-chosen skips only, no automatic suggestions. **Evidence:** end-to-end rest/skip acceptance with cost survival on Supabase, guard and regression tests, 149 frontend tests, TypeScript/build. [Details](../tired-traveler-learning.md). No migration, push or deployment.
+
+## 73. Move nights between stays without silent changes
+
+15 November 2026. **Work:** draft-only previewed endpoint and route-panel control to move nights between stays or the trip length, with explicit drops for displaced flexible activities and blocks for protected ones. **Decision:** reuse draft precondition and the existing review/accept boundary; costs follow the existing removal rule. **Lesson:** an apply path must not abort its own request controller or the busy state never clears. **Trade-off:** dated stops refused; activities are dropped, not relocated. **Evidence:** pure and Supabase endpoint tests, 153 frontend tests, signed-in browser preview/block/apply/undo on a real trip restored exactly to baseline. Built alongside a concurrent Codex QA session; production build currently blocked by that session's in-progress ProposalReview changes. [Details](../stay-rebalance-learning.md). No migration, push or deployment.
+
+## 74. Move displaced activities to a remaining day instead of dropping them
+
+15 November 2026. **Work:** per-activity drop-or-move choices when a shorter stay removes days; moves stay within the same stay at the same time, and overlaps on the new day are blocked with the exact clash. **Decision:** same-stay moves only, so map places and linked costs stay valid. **Trade-off:** no re-timing or cross-stay moves yet. **Evidence:** pure and Supabase tests, 154 frontend tests, signed-in browser move/overlap preview on a real trip verified unchanged. [Details](../stay-rebalance-learning.md). No migration, push or deployment.
+
+## 75. Let a moved activity take a new time
+
+15 November 2026. **Work:** optional new start time when moving a displaced activity; overlap and past-midnight results come back as plain-language decisions. **Lesson:** the real trip caught a second clash (Free time) that a single-activity mental check missed, so the exact clash list matters. **Evidence:** 7 rebalance tests, 155 frontend tests, signed-in browser clash/success/midnight previews on a trip verified unchanged. [Details](../stay-rebalance-learning.md). No migration, push or deployment.
+
+## 76. Move a displaced activity to another stay
+
+15 November 2026. **Work:** cross-stay moves for displaced activities with a chosen day and time; the old destination's map links are cleared and stated in the preview, while linked costs stay attached. **Decision:** never carry a mapped place to another city. **Lesson:** labels must not claim a consequence that only sometimes applies. **Evidence:** 8 rebalance tests, 156 frontend tests, signed-in browser cross-stay preview on a trip verified unchanged. [Details](../stay-rebalance-learning.md). No migration, push or deployment.
+
+## 77. Show and carry over journeys a route change removes
+
+15 November 2026. **Work:** route-step panel listing journeys a reorder or removal orphaned, with their mode, budget, estimates and payments, and an explicit carry-over to a new journey that moves details and linked costs once. **Decision:** client-side and pure; the server's removal rule remains the fallback for anything left. **Lesson:** endpoint-keyed journeys make reorders silently orphan entered data; surfacing it at the moment of change is cheaper than inferring intent later. **Evidence:** 159 frontend tests and an incognito on-device browser swap/carry check; no account data touched. [Details](../journey-impact-learning.md). No backend change, migration, push or deployment.
+
+## Independent review follow-up: concurrent T3 work
+
+16 November 2026. Fixed four independently reproduced integration gaps: protected calendar dates after stay rebalancing (including overnight travel), skipped records in client remaining-day guards, free-time availability around skipped historical cards, and hours/overnight-only journey carry-over disclosure. Added regressions covering refusal without draft mutation and valid unchanged-date changes. See [review and fix details](../claude-t3-review-2026-11-16.md). No migrations, environment changes, push or deployment.
+
+## 78. Reconcile parallel work and connect persistent missed outcomes to recovery
+
+16 November 2026. **Audit:** current source includes cost ledger/currency/tax/strict-entry checks, fatigue/rest choices, stay rebalancing and cross-stay moves, journey carry-over, skipped outcomes and the independent integration fixes. Most work remains uncommitted; per-line authorship is not inferred. **Work:** missed recovery now focuses the explicit unchecked skipped outcome; guard rejects already skipped/mismatched outcomes. Also preserved trip URLs after failed loads and clarified signing-key-provider failures. **Decision:** reuse the editor and persistence boundary; no automatic outcome, cancellation or refund. **Evidence:** 477 backend tests on a separate migrated disposable DB, 167 frontend tests, TypeScript/build, Ruff, schema drift/whitespace checks. Isolated browser component checks passed at phone width; real account verification is blocked by Supabase JWKS TLS EOF, with no auth/TLS bypass. Temporary harness removed; no account writes. [Combined inventory, evidence and remaining steps](../parallel-work-reconciliation-2026-11-16.md). Finalized docs/locked landing unchanged. No push or deployment.
+
+## 79. Choose a map location after a cross-stay move
+
+16 November 2026. **Work:** structured rebalance callback and a multi-activity navigation panel opening the current editor at the new destination's map controls. **Decision:** no replacement place inference or snapshot copying; preview alone creates no handoff. **Lesson:** a long apply message needs a direct activity/day action, and actions must resolve current records after saving. **Trade-off:** reminder is session-local; saved links themselves persist normally. **Evidence:** 171 frontend tests, TypeScript/build and signed-in apply/cancel/relink at desktop/phone widths. Supabase signing-key access was available again. Entire dedicated QA draft restored exactly; accepted pointer unchanged. [Details and limits](../cross-stay-map-handoff-learning.md). Backend/finalized docs/locked landing unchanged. No push or deployment.
+
+## 80. Show recorded activity outcomes after a trip
+
+16 November 2026. Added a completed-trip recap counting completed, skipped and still-planned activities from the editable draft, explicitly labeled as draft data. Finishing does not infer outcomes or cancel reservations. Frontend tests, TypeScript and production build passed; a later signed-in browser check verified autosave, reload and distinction from the accepted plan. No backend or finalized-document changes, push or deployment.
+
+## 81. Keep location reminders through later stay changes
+
+16 November 2026. Verified the outcome recap and cross-stay reminder reload in a real signed-in browser. Preserved unresolved map reminders when a subsequent stay adjustment has no moved activities, and merged additional or repeatedly moved activities by ID. Corrected the displacement instruction to describe moves to any remaining route day. 174 frontend tests, typecheck/build, 14 stay-rebalance tests and Ruff passed. Browser checks covered an applied move, reload and editor handoff, then a second stay adjustment followed by reload; the dedicated QA draft was restored exactly. Reminders remain temporary and tab-scoped. [Details](../map-reminder-reload-learning.md). No push or deployment.
+
+## 82. Preserve the chosen time in stay-change previews
+
+16 November 2026. Reproduced a browser input mismatch where a displayed 12:00 move previewed the original 09:00. Synchronized the time field's input event and prevented empty values from silently falling back. Signed-in browser verification covered blank validation, a 12:00 preview and saved move, followed by exact QA baseline restoration. 174 frontend tests and typecheck passed; [details](../stay-move-time-learning.md). No backend or finalized-document changes, push or deployment.
+
+## 83. Verify missed-activity recovery and clarify counts
+
+16 November 2026. Signed-in saved-draft readiness → missed outcome → autosave → fresh readiness succeeded; a fictitious paid cost stayed linked. Found day, destination and trip summaries counted missed items as planned, so they now distinguish planned, completed and missed records. Browser verified mixed counts and the QA trip was restored exactly. The readiness walkthrough used a planning trip, not an active lifecycle. 175 frontend tests and typecheck passed; [details](../recovery-outcome-counts-learning.md). No push or deployment.
+
+## 84. Verify active recovery and follow later same-stay moves
+
+16 November 2026. Verified the missed-outcome recovery flow in a signed-in active QA trip with an accepted plan. Fresh readiness recognized the saved missed outcome; the accepted plan stayed unchanged. Removed test records and restored both plan baselines and completed status; lifecycle transitions can stale earlier agent work. Then updated map reminders to follow matching applied moves within a stay and clear explicitly dropped items. Automated checks cover the handoff; the full successive-move browser case remains unverified. [Recovery evidence](../recovery-outcome-counts-learning.md), [reminder details](../map-reminder-reload-learning.md). No push or deployment.
+
+## 85. Keep map reminders aligned with saved manual edits
+
+16 November 2026. Signed-in browser verification confirmed a cross-stay move followed by a same-stay move and reload kept the reminder on the new day. Added reconciliation after successful account autosave so later manual editor moves follow current activity records; deleted or resolved records clear their reminders. A second signed-in walkthrough verified editor move, save, reload and removal. QA records matched their original values by activity ID; returned ordering changed. The QA booking flag was temporarily cleared and restored to permit the first walkthrough; no reservation was cancelled. 177 frontend tests and typecheck passed. [Details](../map-reminder-reload-learning.md). No push or deployment.
+
+## 86. Recover an interrupted draft review
+
+16 November 2026. Added a 15-second bound covering session lookup and review submission, preventing a late request after session timeout. An interrupted review now offers same-request retry and a direct read-only pending-review list. Signed-in browser testing used a brief local backend shutdown and confirmed the connection message and pending-list recovery without changing the QA trip. 180 frontend tests, typecheck and production build passed. [Details and limits](../review-submission-recovery-learning.md). No push or deployment.
+
+## 87. Reopen an interrupted review without a new request identity
+
+16 November 2026. Kept the pending draft-review idempotency key in tab storage for the same trip and saved-draft version, with expiry and matching-response cleanup. This allows a reopened review to recover the original server result after an uncertain response. Also labeled missed activities in the review. Signed-in browser testing covered service interruption, reload, successful review and discard; the QA draft matched baseline by activity ID. 182 frontend tests and typecheck passed; [details and limitations](../review-retry-reopen-learning.md). No push or deployment.
+
+## 88. Exercise a response lost after review saving
+
+17 November 2026. Added an automated client integration scenario combining the submission adapter and retry-storage helper with simulated idempotent server receipts. Saving succeeds before the response fails; reopening recovers the same pending review with one receipt, then clears the matching retry key. All 183 frontend tests pass. This is simulated failure coverage, not a live browser/backend reproduction. No production code, trip data, push or deployment changed. [Details](../review-retry-reopen-learning.md).
+
+## 89. Focus the timeline on remaining activities
+
+17 November 2026. Added a presentation-only control to hide completed and missed cards while preserving calculated free-time gaps and all saved records. 184 frontend tests and production build pass. Browser and phone checks remain outstanding. [Details](../recorded-outcome-visibility-learning.md). No push or deployment.
+
+## 90. Verify timeline outcome visibility on phones
+
+17 November 2026. Verified hiding/restoring missed records in the signed-in workspace, preserving planned cards and gaps. Phone QA found inherited column layout on the checkbox; corrected to a 44px inline row, confirmed in the browser, and fixed singular record wording. No horizontal overflow or account writes. Production build passed; final adjustment was CSS-only. [Details](../recorded-outcome-visibility-learning.md). No push or deployment.
+
+## 91. Verify rest and skip workflow in the live browser
+
+17 November 2026. Recorded the user's standing browser/workflow verification preference in root AGENTS.md. Signed-in fatigue walkthrough covered fresh readiness, explicit rest, timing preview, saved review/acknowledgment, discard and explicit skip preview. QA activity restored and baseline matched by ID. Same-location context meant no external route call; acceptance was not performed. [Details](../tired-traveler-learning.md). No push or deployment.
+
+## 92. Accept a fatigue proposal in the live app
+
+17 November 2026. Resumed dedicated QA trip, explicitly skipped a disposable future activity with 30-minute rest, saved and acknowledged its review, accepted and reloaded. Empty day persisted. Full draft and accepted plan matched baseline by logical activity ID; completed lifecycle restored. New accepted version 7 remains in QA history. All-skipped case required no provider route call; linked-cost retention and different-location acceptance remain unverified live. [Evidence](../tired-traveler-learning.md). No push or deployment.
+
+## 93. Rehearse fatigue with a real different-location route
+
+17 November 2026. Retrieved a distinct starting place, previewed walking plus rest with Google route estimates, saved the review and attempted explicit acceptance. Fresh context/routes guard rejected it; exact cause was hidden by generic feedback. Review discarded, QA draft/accepted baseline values restored and completed lifecycle restored. Accepted version 7 unchanged. [Evidence and limits](../tired-traveler-learning.md). No push or deployment.
+
+## 94. Explain remaining-day conflicts
+
+18 November 2026. Readiness, preview, proposal saving and acceptance now share guidance for remaining-day errors. A signed-in browser check on desktop and at 390px confirmed the live scheduled-date conflict and its recovery instructions. The check did not mutate the QA trip. Automated tests cover distinct acceptance failure messages. Live acceptance with a different starting location remains open.
+
+## 95. Accept a remaining-day review with a live walking route
+
+18 November 2026. In the signed-in browser, used two distinct mapped San Francisco museums, a 30-minute rest and a live Google walking estimate. The draft visit moved from 13:20 to 13:46 after explicit acceptance and successful route recheck. Restored and verified both draft and latest accepted contents against the original QA plan. The trip remains in planning, with two new accepted snapshots in QA history. Venue hours and weather were outside this check.
+
+## 96. Cover venue-hours gating in remaining-day acceptance
+
+18 November 2026. Added a backend integration test with simulated provider responses. A reported closure keeps the review pending and prevents route rechecks or plan acceptance. When reported hours fit, the same review checks the candidate visit times and rechecks routes before accepting. The focused test and Ruff passed. Live browser coverage for the optional hours check remains open.
+
+## 97. Verify the remaining-day hours check in the browser
+
+18 November 2026. A signed-in QA walkthrough enabled optional venue hours and requested a matching listing for the Asian Art Museum. Google Places rejected the backend key. The UI explained the access error and required a matching listing before the checked acceptance could proceed. Discarded the review and restored the saved QA activity to day 1 at 18:00. Live hours acceptance still depends on Places access.
+
+## 98. Isolate the Places access rejection
+
+18 November 2026. Reproduced HTTP 403 directly from the backend host using the configured Places key and a minimal Text Search request. Google supplied a generic access-denied reason without a specific restriction. Documented the separate Places and Routes credentials and the Cloud configuration checks in the [learning notes](../tired-traveler-learning.md).
+
+## 99. Reject a reviewed schedule when a fresh route no longer fits
+
+18 November 2026. Added an acceptance regression case where the simulated route grows by one minute after the proposal is saved. The focused integration run confirmed the expiry response, pending review, unchanged draft times and no accepted snapshot. Ruff passed. A broader rerun could not start because the Supabase pooler hostname failed DNS resolution.
+
+## 100. Verify the backend suite on isolated PostgreSQL
+
+18 November 2026. A hosted database connection dropped during the acceptance suite. Initialized disposable PostgreSQL 17 clusters with private Unix sockets, applied the current migrations and ran the tests with a command-scoped database URL. All 12 remaining-day proposal tests and all 479 backend tests passed locally, as did all 185 frontend tests. This verifies application and database behavior under the fixtures. The live Places access rejection remains open.
+
+## 101. Make isolated backend verification repeatable
+
+18 November 2026. Added [scripts/test-backend-local.sh](../../scripts/test-backend-local.sh). It starts a fresh PostgreSQL instance on a private Unix socket, applies migrations, passes arguments through to pytest, and removes the temporary cluster on exit. The local database URL is scoped to the command, so the configured Supabase URL can stay in place. Run `scripts/test-backend-local.sh -q` from the repo root. It needs `uv` and PostgreSQL binaries on PATH, or `PG_BIN` set to the PostgreSQL bin directory. Verified all 479 backend tests through the script.
+
+## 102. Check migration drift in the local test runner
+
+18 November 2026. After applying migrations to the disposable PostgreSQL instance, the local runner now checks for missing migration operations before running tests, matching the schema check in GitHub Actions. Alembic detected no drift and all 479 backend tests passed.
+
+## 103. Run the full local checks with one command
+
+18 November 2026. Added `make check-local` for backend lint, migration verification and tests on disposable PostgreSQL, followed by the existing frontend checks. Verified all 479 backend tests, all 185 frontend tests, type checking and the production build. A deliberate invalid pytest path also confirmed that the runner preserves pytest's exit code and removes its temporary cluster on failure.
+
+## 104. Keep the generated OpenAPI schema in sync
+
+18 November 2026. Compared the checked-in API snapshot with FastAPI's generated schema. All routes matched, and the only difference was the Relocation schema description. Synced the description and added a test that detects future snapshot drift. The focused test and Ruff passed.
+
+## 105. Verify the contract check in the full local workflow
+
+18 November 2026. Ran `make check-local` after adding the OpenAPI snapshot assertion. All 480 backend and 185 frontend tests passed, along with lint, migration drift detection, type checking and the production build. The API snapshot check now runs as part of the existing backend test command in CI.
+
+## 106. Verify hours checks stay tied to the reviewed route
+
+18 November 2026. Extended coverage for optional hours acceptance. A request with a different arrival buffer than the reviewed route is rejected before either provider is called. The original review can still be accepted after the matching context and evidence are supplied. All 12 remaining-day proposal tests passed on disposable PostgreSQL, and Ruff passed.
+
+## 107. Reject incomplete listing coverage
+
+18 November 2026. The remaining-day integration test now verifies that enabling venue hours requires a matching listing for every remaining visit. A partial listing map is rejected before either provider is called. All 12 remaining-day proposal tests and Ruff passed.
+
+## 108. Bind venue hours to the reviewed date
+
+18 November 2026. Verified that remaining-day acceptance rejects an hours check for a different date before either provider is called. The original review remains available for the correct date. All 12 remaining-day proposal tests and Ruff passed.
+
+## 109. Distinguish provider access failures from reported closures
+
+18 November 2026. Added integration coverage for a Places access rejection during the optional remaining-day hours check. The API returns a provider error for the affected visit and stops before rechecking routes. The test also covers reported closure and successful retry. All 12 remaining-day proposal tests and Ruff passed.
+
+## 110. Keep local verification on locked dependencies
+
+18 November 2026. The isolated backend runner now uses the checked-in Python lockfile for migration, schema verification and tests. Alembic found no drift and all 480 backend tests passed.
+
+## 111. Make API snapshot regeneration repeatable
+
+18 November 2026. Added `make openapi` and pointed the snapshot regression test to it. Running the command reproduced the existing generated file byte for byte, and the snapshot test passed.
+
+## 112. Cover a missing route at acceptance
+
+18 November 2026. Simulated Google returning no route after a proposal was saved. Acceptance returned a route-unavailable error and kept the proposal pending without creating an accepted snapshot. The suite also checks the distinct codes for route warnings and stale time. All 13 remaining-day proposal tests and Ruff passed.
+
+## 113. Preserve reviewed times when a renewed route still fits
+
+18 November 2026. The acceptance test now simulates a route becoming one minute shorter after review. The reviewed start times still apply. Retrying the successful acceptance with the same request key returns the same result without another route request. All 13 remaining-day proposal tests passed.
+
+## 114. Preserve an existing accepted plan when hours checks fail
+
+18 November 2026. The hours-gating integration test now begins with an accepted itinerary. A closure leaves that accepted snapshot selected, keeps draft start times intact and preserves the pending review. The test checks the date, start and duration sent for each visit before allowing acceptance on a successful retry. All 13 remaining-day proposal tests passed.
+
+## 115. Verify hours acceptance on an active trip
+
+18 November 2026. The hours integration scenario now starts an already accepted trip through the lifecycle API. It verifies that failed hours checks preserve the accepted version and draft, and that successful acceptance leaves the trip active. All 13 remaining-day proposal tests passed with simulated provider responses.
+
+## 116. Verify active-trip acceptance across the backend suite
+
+18 November 2026. Verified that a successful hours-enabled retry writes the reviewed times to both the editable draft and accepted snapshot while keeping the trip active. The complete suite passed all 481 tests on disposable PostgreSQL. Alembic found no schema drift. The active-trip hours test uses simulated providers, and live hours acceptance remains open.
+
+## 117. Check the upgrade from the committed schema
+
+18 November 2026. Applied migrations through the committed revision `0019_google_place_ids` on disposable PostgreSQL, verified that revision, then upgraded to the worktree head `0024_activity_skipped`. Alembic found no schema drift. This was a schema-only rehearsal with an empty database. It did not exercise migration of existing rows or touch hosted data.
+
+## 118. Rehearse the upgrade with existing activity data
+
+18 November 2026. Seeded a synthetic trip and two legacy activity rows at revision `0019_google_place_ids`, then applied migrations through `0024_activity_skipped`. Both activity IDs, labels, start times, durations and completion states survived. Both rows defaulted to `skipped=false` and PostgreSQL rejected a completed-and-skipped update. Alembic found no drift. The rehearsal used a disposable database.
+
+## 119. Preserve legacy costs on accepted plans
+
+18 November 2026. Found that migration 0020's legacy JSON conversion updates plan preferences, which the accepted-plan trigger would reject. The migration now disables and reenables that specific trigger inside the migration transaction when rows need conversion. A disposable PostgreSQL rehearsal preserved an accepted plan, its pace preference and exact paid amount, verified the unknown-tax default, and confirmed the trigger was enabled after migration. All 481 backend tests passed.
+
+## 120. Preserve explicit zero during legacy cost migration
+
+18 November 2026. Migration 0020 now converts an empty amount to NULL while preserving numeric zero. A disposable PostgreSQL upgrade from revision 0019 verified that an accepted plan's zero paid record and unknown estimate survived as separate values. Ruff passed for the migration.
+
+## 121. Automate the legacy cost upgrade regression check
+
+18 November 2026. Added a PostgreSQL integration test that upgrades a synthetic accepted plan from revision 0019 to head in a temporary schema rolled back at the end. It checks logical cost IDs, paid zero, unknown estimate, preserved plan preferences and the reenabled snapshot guard. All 482 backend tests passed.
+
+## 122. Verify the accepted-plan guard after migration
+
+18 November 2026. The legacy cost migration regression test now attempts to update an accepted plan after upgrade and checks that PostgreSQL rejects the write. A savepoint isolates the expected failure. The focused test and Ruff passed.
+
+## 123. Prevent concurrent plan writes during cost backfill
+
+18 November 2026. Migration 0020 acquires the plan table's write-conflicting lock before creating the cost table and reading legacy preferences. This closes the window where a concurrent save could be overwritten by the backfill. The populated migration regression and Ruff passed. Apply the migration in a maintenance window because plan writes wait for the migration transaction.
+
+## 124. Protect costs in accepted snapshots
+
+18 November 2026. Added migration 0025 so accepted cost rows use the existing snapshot guard, like activities and stops. The populated migration regression confirms PostgreSQL rejects edits to the migrated accepted cost. All 482 backend tests passed, including draft editing and proposal acceptance. The migration was verified locally.
+
+## 125. Verify the boundary between draft and accepted costs
+
+18 November 2026. The migration regression now verifies that PostgreSQL rejects inserting, editing and deleting cost rows on an accepted plan. The cost coverage suite checks that draft edits and review acceptance still work.
+
+## 126. Rehearse rollback of the accepted-cost guard
+
+18 November 2026. Verified that downgrading migration 0025 removes the cost trigger while preserving every cost field, and upgrading restores the guard. The populated PostgreSQL regression and Ruff passed.
+
+## 127. Verify costs survive historical itinerary restoration
+
+18 November 2026. Extended the cost integration scenario to restore an accepted itinerary after removing a linked activity from the draft. Opening the restoration review leaves draft costs alone. Accepting it restores both linked costs in the draft and a new accepted snapshot, while the historical costs remain intact. All 28 cost coverage tests passed.
+
+## 128. Verify paid ticket retention in fatigue acceptance
+
+18 November 2026. Extended the automated skip-and-rest scenario to compare the retained ticket against its original ID, amount and paid status, and verify the resulting cost in both the draft and accepted snapshot. The focused test passed on disposable PostgreSQL.
+
+## 129. Disclose paid cost changes before restoration
+
+18 November 2026. A historical restoration can replace newer paid records. The review now names affected payments and requires explicit acknowledgment, with wording that makes clear no refund is issued. The acceptance endpoint recomputes the warning. The integration test verifies that omitting this acknowledgment preserves the newer payment. All 39 cost and revision tests passed. The new warning still needs a signed-in browser walkthrough.
+
+## 130. Verify the payment warning in the signed-in browser
+
+18 November 2026. Saved a synthetic paid cost on the dedicated QA trip and opened a restoration review of version 5. The review named the payment, clarified that no refund is issued, and showed acceptance disabled before acknowledgment. Discarded the review and removed the synthetic cost. The draft showed the account-save confirmation. Screenshot: `.local/qa/restoration-paid-warning.png`. Desktop walkthrough only.
+
+## 131. Verify payment consent at phone width
+
+18 November 2026. On the signed-in QA trip at 390 × 844, checked all other acknowledgments and confirmed that leaving the payment acknowledgment unchecked disables restoration. Checking it enabled the button. Discarded the review, removed the synthetic paid entry and confirmed account save. Screenshot: `.local/qa/restoration-paid-warning-phone.png`.
+
+## 132. Invalidate restoration consent after a payment edit
+
+19 November 2026. The restoration regression now verifies that editing a paid amount after opening the review makes the old review stale even with all acknowledgments supplied. The updated amount remains in the draft until a fresh review is accepted. All 39 cost and revision tests passed. The full local baseline passed 483 backend tests, 185 frontend tests, lint, migration drift detection, type checking and the production build.
+
+## 133. Warn when restoration changes a payment’s inherited currency
+
+19 November 2026. A payment without its own currency uses the trip display currency. A restoration that changes that currency now requires payment acknowledgment even when the cost record itself is identical. An unchanged payment with an explicit currency does not trigger this warning solely because the trip display currency changes. All 41 cost and revision tests and Ruff passed. The existing warning was previously verified on desktop and phone. This new trigger was verified with backend tests.
+
+## 134. Warn when restoration changes a per-person payment total
+
+19 November 2026. Restoration now requires acknowledgment when the historical plan changes the traveler count for an otherwise identical paid per-person record. A whole-group cost does not trigger this warning on traveler count alone. All 43 cost and revision tests and Ruff passed. Backend tests cover the new trigger, and prior desktop and phone checks cover the shared review control.
+
+## 135. Include conversion rates in restoration payment checks
+
+19 November 2026. Restoration now flags a paid record with a saved conversion rate when the historical plan changes the trip display currency. The rate expresses display-currency units, so preserving the foreign denomination alone does not preserve the converted amount. All 44 cost and revision tests and Ruff passed. This adds a backend condition to the previously browser-verified acknowledgment.
+
+## 136. Verify the combined restoration safeguards
+
+19 November 2026. `make check-local` passed 488 backend tests and 185 frontend tests, including lint, migration drift detection, TypeScript and the production build. Updated the development status to distinguish the browser-confirmed consent interaction from the automated currency, rate, traveler count and stale-review checks.
+
+## 137. Verify browser-role grants after the cost migrations
+
+19 November 2026. Ran the Supabase migration helper against disposable PostgreSQL with simulated Supabase browser roles and permissive default grants. The helper applied migrations and removed all table privileges for both roles from cost items, plan versions and migration metadata. A grant on a synthetic auth-schema table and the default grants on future tables remained intact. This verifies the helper locally; no hosted database migration was performed.
+
+## 138. Detect inherited column access before committing migrations
+
+19 November 2026. Expanded the Supabase migration helper’s final verification to check column privileges and additional table privileges. In disposable PostgreSQL, a synthetic inherited column grant caused the helper to roll back the upgrade from 0024. Revoking the grant allowed the same helper to reach 0025 on retry. Ruff passed. Hosted grants were outside this rehearsal.
+
+## 139. Identify remaining browser grants at rollback
+
+19 November 2026. The Supabase migration helper now names the affected browser role and application table when its access check rolls back a migration. Other failures keep the existing sanitized message. A disposable PostgreSQL rehearsal verified the diagnostic for an inherited column grant on cost items, the unchanged revision after rollback and omission of the connection URL. Ruff passed.
+
+## 140. Recheck backend verification without provider credentials
+
+19 November 2026. Ran the full backend suite on disposable PostgreSQL with command-local overrides clearing Supabase, Groq, Google and Geoapify credentials and disabling optional providers and worker startup. All 488 tests passed, and Alembic found no schema drift. This checks the current worktree under CI-style settings. Live provider behavior and the actual GitHub Actions run are separate.
+
+## 141. Rehearse readiness before and after the schema upgrade
+
+19 November 2026. Verified the configured deployment health path against disposable PostgreSQL at revision 0024. FastAPI remained live but returned `503 DATABASE_NOT_READY` until the Supabase migration helper applied 0025. Readiness then returned 200 with the expected revision without restarting the test app. The embedded planning worker was disabled for this database check. No hosted migration or deployment was run.
+
+## 142. Rehearse API startup with the embedded worker
+
+19 November 2026. Started a single Uvicorn process with the embedded worker enabled against disposable PostgreSQL at revision 0025. Both HTTP health endpoints returned 200; SIGTERM completed application shutdown. Used the fixture planning engine and an empty queue. This check covers startup and shutdown, not hosted execution, queue consumption or live Groq.
+
+## 143. Publish the completed work in reviewable parts
+
+19 November 2026. At the user's request, organized the combined work into backend behavior and migrations, frontend workflows and recovery, isolated verification/migration tooling, Render hosting configuration, and documentation commits. Shared API/workspace dependencies stay together rather than representing them as independently complete feature slices. Re-ran `make check-local`: 488 backend and 185 frontend tests, lint, migration drift detection, TypeScript and production build all passed. Publication targets the existing feature branch, not main. No new product behavior, hosted migration, browser mutation or deployment was performed; existing browser evidence and remaining live Places-access limits still apply. Local credentials and QA artifacts are excluded, and approved landing files are unchanged.

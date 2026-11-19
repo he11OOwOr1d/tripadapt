@@ -1,0 +1,7 @@
+# Keep the chosen time when moving an activity
+
+16 November 2026. A signed-in browser walkthrough exposed a mismatch: after entering 12:00 for a move, the field displayed 12:00 but the preview used the original 09:00. The controlled time input had not synchronized the browser input event with the request state. The earlier adapter checks could only verify the time supplied to the adapter; they could not catch an incorrect value before it reached that boundary.
+
+The move-time field now synchronizes both input and change events, like the existing activity and check-date forms. An emptied time is kept empty and blocks the preview with an explanation instead of falling back silently. The original time remains the initial choice until the traveler changes it. The existing server validation, preview, and explicit apply boundary remain in place.
+
+Verification: on the signed-in dedicated QA trip, reproduced 12:00 being previewed as 09:00 before the fix. Afterward an empty field disabled preview, and selecting 12:00 produced 12:00 in the server-backed preview and in the saved moved activity. The temporary activity was removed and the stay restored; the complete saved draft matched its original baseline, with lifecycle and accepted pointer unchanged. The existing frontend suite, TypeScript and production build passed. This browser check used desktop Chrome; phone interaction was not separately exercised. No changes were made to the accepted trip, reservations, core design documents, or deployment.

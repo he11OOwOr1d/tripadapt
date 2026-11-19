@@ -1,0 +1,9 @@
+# Recover an interrupted draft review
+
+16 November 2026. Preparing a draft review previously had no timeout, so a stalled request could keep the review dialog busy indefinitely. If the server had saved the review but its response was lost, closing and preparing a new review could also leave the traveler unsure where to find the first one.
+
+The review request now times out after 15 seconds, including time spent waiting for the sign-in session. A timed-out session lookup is checked again before any network request, so it cannot start a late submission. The existing retry uses the same idempotency key while the dialog remains open. The error explains that the review might have been saved and offers **Check pending reviews**, a read-only route to the existing list; no review is accepted automatically. The list still requires the service to be reachable and does not infer which review resulted from an interrupted request.
+
+Verification: 180 frontend tests passed, including bounded session waiting, no late request after an aborted session lookup, and reuse of the same submission key. Typecheck and production build passed. In the signed-in browser on a dedicated QA trip, the local backend was briefly stopped before submission. The form showed a connection message, retry and pending-review options. After the backend restarted, the pending list opened and showed its empty state. No review was created or accepted and no trip data was changed. This tests a connection failure, not a response lost after a successful server commit; the timeout and idempotency behavior are covered by automated tests. The service was restarted afterward. An initial parallel typecheck collided with generated build files; it passed when rerun after the build.
+
+No backend contract, migration, finalized design document, push or deployment changed.
