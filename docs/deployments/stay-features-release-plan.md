@@ -4,7 +4,7 @@
 
 ## What is in the batch
 
-- **Backend:** `POST /journeys/from-stay`, `/journeys/to-stay` and `/journeys/intercity` (a driving estimate between two mapped destinations); an optional `place_id` on a stay record; the AI day planner and chat read the stay; the readiness context offers a searched stay as a known location. OpenAPI snapshot regenerated.
+- **Backend:** `POST /journeys/from-stay`, `/journeys/to-stay` and `/journeys/intercity` (a driving estimate between two mapped places, including a starting point chosen from the map search); an optional `place_id` on a stay record; the AI day planner and chat read the stay; the readiness context offers a searched stay as a known location. OpenAPI snapshot regenerated.
 - **Frontend:** the stay journey section with check-in and check-out notes, an intercity drive-estimate button on the arrival and departure cards, linked costs in the stay panel, the stay in the restore review, keyboard focus fixes in the stay form and the chat log, a unique label on the map section, h2 transfer-card headings, and darker muted text in the trip stylesheets (`app/trips/*.css` only; the locked landing and `app/design/` are untouched).
 - **No migration, no new environment variable, no new dependency.** The AI features use the existing Groq key; route checks use the existing Geoapify backend key.
 
@@ -30,7 +30,8 @@ Use a dedicated QA trip, record its baseline, restore it afterwards, and do not 
 6. Link a temporary cost to the stay in the trip form and confirm it is listed in the stay panel, then remove it.
 7. At 390 px: no horizontal overflow and no control under 44 px in the stay section.
 8. With a second destination on the QA trip (remove it afterwards): open the first destination's last day and press "Estimate the drive" on the "Moving on" card; expect a plausible road time and distance and the Geoapify credit. The first and finish legs (the trip origin) must show no button.
-9. Look at the page once on a visible window: the darker muted text and the stay pin have only been checked by numbers and DOM so far.
+9. Starting location: in the trip form choose a starting location from the map search; the first destination's first day and last day (when returning to the start) each show an estimate. Then retype the plain name to restore the trip, and confirm the buttons are gone.
+10. Look at the page once on a visible window: the darker muted text and the stay pin have only been checked by numbers and DOM so far.
 
 ## Known gaps carried into the release
 

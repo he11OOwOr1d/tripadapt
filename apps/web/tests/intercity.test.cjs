@@ -1,7 +1,8 @@
 const {test}=require('node:test');const assert=require('node:assert/strict');const ts=require('typescript');const fs=require('node:fs');const vm=require('node:vm');const path=require('node:path');
-function load(file){const out={};vm.runInNewContext(ts.transpileModule(fs.readFileSync(path.resolve(__dirname,file),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports:out,require:()=>({}),Object,Array,String,Number,Math,JSON});return out;}
+function load(file,deps={}){const out={};vm.runInNewContext(ts.transpileModule(fs.readFileSync(path.resolve(__dirname,file),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports:out,require:n=>deps[n.replace(/^\.\//,'')]??{},Object,Array,String,Number,Math,JSON});return out;}
 const i=load('../lib/trips/intercity.ts');
-const stop=(ref)=>({id:'s',name:'X',nights:1,timezone:'UTC',...(ref?{location:{reference_id:ref}}:{})});
+const J=v=>JSON.parse(JSON.stringify(v));
+const stop=(ref,name='X')=>({id:'s',name,nights:1,timezone:'UTC',...(ref?{location:{reference_id:ref}}:{})});
 test('travel time reads as hours and minutes without false precision',()=>{
   assert.equal(i.formatTravelTime(270),'4 h 30 min');
   assert.equal(i.formatTravelTime(60),'1 h');
@@ -10,13 +11,28 @@ test('travel time reads as hours and minutes without false precision',()=>{
   assert.equal(i.formatTravelTime(61.6),'1 h 2 min');
   assert.equal(i.formatTravelTime(-5),'0 min');
 });
-test('both destinations need a retained location and must differ',()=>{
-  assert.deepEqual(JSON.parse(JSON.stringify(i.intercityEndpoints(stop('a'),stop('b')))),{from:'a',to:'b'});
-  assert.equal(i.intercityEndpoints(stop('a'),stop()),null);
-  assert.equal(i.intercityEndpoints(stop(),stop('b')),null);
-  assert.equal(i.intercityEndpoints(stop('a'),stop('a')),null);
-  assert.equal(i.intercityEndpoints(undefined,stop('b')),null);
-  assert.equal(i.intercityEndpoints(stop('a'),undefined),null);
+test('a destination is mapped only with a retained reference',()=>{
+  assert.deepEqual(J(i.stopPlace(stop('a','Agra'))),{name:'Agra',end:{reference_id:'a'}});
+  assert.deepEqual(J(i.stopPlace(stop(undefined,'Agra'))),{name:'Agra',end:null});
+  assert.equal(i.stopPlace(undefined),undefined);
+});
+test('the starting point is mapped only when it was chosen from a search',()=>{
+  assert.deepEqual(J(i.originPlace({origin:'Delhi',originPoint:{latitude:28.6,longitude:77.2}})),{name:'Delhi',end:{latitude:28.6,longitude:77.2}});
+  assert.deepEqual(J(i.originPlace({origin:'Delhi'})),{name:'Delhi',end:null});
+  assert.equal(i.originPlace({origin:''}).name,'Starting point');
+});
+test('both ends must be mapped and different, in either form',()=>{
+  const a=i.stopPlace(stop('a')),b=i.stopPlace(stop('b')),home=i.originPlace({origin:'D',originPoint:{latitude:1,longitude:2}}),homeAgain=i.originPlace({origin:'D2',originPoint:{latitude:1,longitude:2}}),none=i.stopPlace(stop());
+  assert.deepEqual(J(i.intercityEndpoints(a,b)),{origin:{reference_id:'a'},destination:{reference_id:'b'}});
+  assert.deepEqual(J(i.intercityEndpoints(home,a)),{origin:{latitude:1,longitude:2},destination:{reference_id:'a'}});
+  assert.deepEqual(J(i.intercityEndpoints(a,home)),{origin:{reference_id:'a'},destination:{latitude:1,longitude:2}});
+  assert.equal(i.intercityEndpoints(a,a),null);
+  assert.equal(i.intercityEndpoints(home,homeAgain),null);
+  assert.equal(i.intercityEndpoints(a,none),null);
+  assert.equal(i.intercityEndpoints(none,b),null);
+  assert.equal(i.intercityEndpoints(undefined,b),null);
+  assert.equal(i.intercityEndpoints(a,undefined),null);
+  assert.equal(i.intercityEndpoints(i.originPlace({origin:'D'}),a),null);
 });
 test('the headline gives road time and whole kilometres',()=>{
   assert.equal(i.intercityHeadline({travel_minutes:270,distance_meters:281400}),'About 4 h 30 min by road · 281 km');

@@ -6,7 +6,7 @@ from typing import Literal
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, Request
-from pydantic import Field
+from pydantic import Field, model_validator
 from sqlalchemy.orm import Session
 
 from app.api.identity import current_user, session
@@ -81,11 +81,35 @@ class StayReturnCheck(StrictModel):
     warnings: list[str]
 
 
-class IntercityInput(StrictModel):
-    """Between two retained destination references; the server reads their coordinates."""
+class IntercityPlace(StrictModel):
+    """A retained destination reference, or the trip's own starting point as coordinates."""
 
-    from_reference_id: UUID
-    to_reference_id: UUID
+    reference_id: UUID | None = None
+    latitude: float | None = Field(default=None, ge=-90, le=90, allow_inf_nan=False)
+    longitude: float | None = Field(default=None, ge=-180, le=180, allow_inf_nan=False)
+
+    @model_validator(mode="after")
+    def one_form(self):
+        point = (self.latitude, self.longitude)
+        if self.reference_id is not None:
+            if point != (None, None):
+                raise ValueError("Use a reference or coordinates, not both")
+        elif None in point:
+            raise ValueError("Provide a reference, or both coordinates")
+        elif point == (0, 0):
+            raise ValueError("Coordinates 0, 0 are not a place")
+        return self
+
+
+class IntercityInput(StrictModel):
+    origin: IntercityPlace
+    destination: IntercityPlace
+
+    @model_validator(mode="after")
+    def different(self):
+        if self.origin == self.destination:
+            raise ValueError("Choose two different places")
+        return self
 
 
 class IntercityCheck(StrictModel):
@@ -229,6 +253,15 @@ def check_journey_to_stay(
     )
 
 
+def resolve_point(db, place):
+    if place.reference_id is None:
+        return (place.latitude, place.longitude)
+    reference = db.get(PlaceReference, place.reference_id)
+    if reference is None:
+        raise HTTPException(404, "RESOURCE_NOT_FOUND")
+    return (reference.payload["latitude"], reference.payload["longitude"])
+
+
 @router.post("/journeys/intercity", response_model=Envelope[IntercityCheck])
 def check_intercity(
     body: IntercityInput,
@@ -236,18 +269,13 @@ def check_intercity(
     user: AppUser = Depends(current_user),
     db: Session = Depends(session),
 ):
-    """A driving estimate between two destinations. No schedule, mode choice or booking."""
-    if body.from_reference_id == body.to_reference_id:
+    """A driving estimate between two places. No schedule, mode choice or booking."""
+    start, end = resolve_point(db, body.origin), resolve_point(db, body.destination)
+    if start == end:
         raise HTTPException(422, "JOURNEY_SAME_PLACE")
-    places = []
-    for ident in (body.from_reference_id, body.to_reference_id):
-        reference = db.get(PlaceReference, ident)
-        if reference is None:
-            raise HTTPException(404, "RESOURCE_NOT_FOUND")
-        places.append((reference.payload["latitude"], reference.payload["longitude"]))
     try:
         minutes, meters, warnings = geoapify_checks.route(
-            str(user.id), "DRIVE", places[0], places[1]
+            str(user.id), "DRIVE", start, end
         )
     except CheckFailure as error:
         fail(error)

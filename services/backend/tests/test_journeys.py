@@ -308,7 +308,10 @@ def test_intercity_drive_estimate_uses_the_two_references_and_stores_nothing(
         return RouteEstimate(270, 281000, ["Check road conditions."])
 
     monkeypatch.setattr(journeys, "geoapify_checks", SimpleNamespace(route=route))
-    body = {"from_reference_id": str(delhi), "to_reference_id": str(jaipur)}
+    body = {
+        "origin": {"reference_id": str(delhi)},
+        "destination": {"reference_id": str(jaipur)},
+    }
     before = db.scalar(select(func.count()).select_from(PlaceReference))
     db.commit()
     response = client.post("/api/v1/journeys/intercity", json=body)
@@ -326,7 +329,32 @@ def test_intercity_drive_estimate_uses_the_two_references_and_stores_nothing(
     assert db.scalar(select(func.count()).select_from(PlaceReference)) == before
 
 
-def test_intercity_rejects_the_same_place_unknown_ids_extra_fields_and_anonymous(
+def test_intercity_accepts_the_trips_starting_point_as_coordinates_at_either_end(
+    context, monkeypatch
+):
+    client, db, _ = context
+    jaipur = reference(db, 1269515, 26.91, 75.79)
+    calls = []
+
+    def route(*args):
+        calls.append(args)
+        return RouteEstimate(60, 1000, [])
+
+    monkeypatch.setattr(journeys, "geoapify_checks", SimpleNamespace(route=route))
+    home = {"latitude": 28.61, "longitude": 77.21}
+    stop = {"reference_id": str(jaipur)}
+    url = "/api/v1/journeys/intercity"
+    assert (
+        client.post(url, json={"origin": home, "destination": stop}).status_code == 200
+    )
+    assert (
+        client.post(url, json={"origin": stop, "destination": home}).status_code == 200
+    )
+    assert calls[0][2:] == ((28.61, 77.21), (26.91, 75.79))
+    assert calls[1][2:] == ((26.91, 75.79), (28.61, 77.21))
+
+
+def test_intercity_rejects_bad_places_unknown_ids_extra_fields_and_anonymous(
     context, monkeypatch
 ):
     client, db, _ = context
@@ -338,23 +366,36 @@ def test_intercity_rejects_the_same_place_unknown_ids_extra_fields_and_anonymous
         SimpleNamespace(route=lambda *a: RouteEstimate(1, 1, [])),
     )
     url = "/api/v1/journeys/intercity"
-    ids = {"from_reference_id": str(one), "to_reference_id": str(two)}
-    assert (
-        client.post(url, json={**ids, "to_reference_id": str(one)}).status_code == 422
+    a, b = {"reference_id": str(one)}, {"reference_id": str(two)}
+    point = {"latitude": 10.0, "longitude": 10.0}
+    bad = [
+        {"origin": a, "destination": a},  # the same reference
+        {"origin": point, "destination": point},  # the same point
+        {"origin": a, "destination": {"reference_id": str(two), **point}},  # both forms
+        {"origin": a, "destination": {"latitude": 10.0}},  # one coordinate
+        {"origin": a, "destination": {}},  # neither
+        {"origin": a, "destination": {"latitude": 0, "longitude": 0}},
+        {"origin": a, "destination": {"latitude": 91, "longitude": 0}},
+        {"origin": a, "destination": {**b, "extra": 1}},
+        {"origin": a, "destination": b, "mode": "WALK"},
+        {"origin": "x", "destination": "y"},
+    ]
+    for body in bad:
+        assert client.post(url, json=body).status_code == 422, body
+    raw = (
+        '{"origin": {"reference_id": "%s"}, "destination": {"latitude": NaN, "longitude": 1}}'
+        % one
     )
-    assert client.post(url, json={**ids, "mode": "WALK"}).status_code == 422
+    nan = client.post(url, content=raw, headers={"content-type": "application/json"})
+    assert nan.status_code == 422
+    unknown = {"reference_id": str(uuid4())}
     assert (
-        client.post(url, json={**ids, "to_reference_id": str(uuid4())}).status_code
-        == 404
+        client.post(url, json={"origin": a, "destination": unknown}).status_code == 404
     )
-    assert (
-        client.post(
-            url, json={"from_reference_id": "x", "to_reference_id": "y"}
-        ).status_code
-        == 422
-    )
+    # A point equal to a reference's own coordinates is still the same place.
+    assert client.post(url, json={"origin": a, "destination": point}).status_code == 422
     app.dependency_overrides.pop(verified_identity)
-    assert client.post(url, json=ids).status_code == 401
+    assert client.post(url, json={"origin": a, "destination": b}).status_code == 401
 
 
 def test_intercity_provider_failure_is_reported_not_zero(context, monkeypatch):
@@ -368,7 +409,10 @@ def test_intercity_provider_failure_is_reported_not_zero(context, monkeypatch):
     monkeypatch.setattr(journeys, "geoapify_checks", SimpleNamespace(route=failing))
     response = client.post(
         "/api/v1/journeys/intercity",
-        json={"from_reference_id": str(one), "to_reference_id": str(two)},
+        json={
+            "origin": {"reference_id": str(one)},
+            "destination": {"reference_id": str(two)},
+        },
     )
     assert response.status_code == 503
     assert "ROUTES_UNAVAILABLE" in response.text

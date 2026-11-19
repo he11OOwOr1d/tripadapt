@@ -392,19 +392,19 @@ export default function TripCreation({
               )}
               {step === 0 && (
                 <>
-                  <label>
-                    Starting location
-                    <input
-                      required
-                      autoComplete="address-level2"
-                      placeholder="Town, airport or station"
-                      value={trip.origin}
-                      onChange={(e) => update({ origin: e.target.value })}
-                      aria-describedby="origin-help"
-                    />
-                  </label>
+                  <PlaceLookup
+                    label="Starting location"
+                    placeholder="Town, airport or station"
+                    describedBy="origin-help"
+                    required
+                    autoComplete="address-level2"
+                    value={trip.origin}
+                    error={false}
+                    onChange={(value) => update({ origin: value, originPoint: undefined })}
+                    onSelect={(choice) => update({ origin: choice.label, originPoint: { latitude: choice.latitude, longitude: choice.longitude } })}
+                  />
                   <p id="origin-help" className="creation-note">
-                    Include the region or country if there are namesakes.
+                    Include the region or country if there are namesakes. Choose a match from the map search to get driving estimates for your first and last journeys; a typed name alone is kept as written.
                   </p>
                   <div className="trip-fields">
                     <label>

@@ -2,11 +2,17 @@
 import { useEffect, useRef, useState } from "react";
 import { placeSearchAdapter, type PlaceResult, type PlaceSearch } from "../../lib/trips/place-search";
 
-export default function PlaceLookup({ value, error, onChange, onSelect }: {
+export default function PlaceLookup({ value, error, onChange, onSelect, label = "Destination", placeholder = "e.g. Kyoto, Japan", describedBy, required = false, autoComplete }: {
   value: string;
   error: boolean;
   onChange: (value: string) => void;
   onSelect: (place: PlaceResult) => void;
+  label?: string;
+  placeholder?: string;
+  /** The id of the help text for the field; defaults to the destination form's ids. */
+  describedBy?: string;
+  required?: boolean;
+  autoComplete?: string;
 }) {
   const [page, setPage] = useState<PlaceSearch | null>(null);
   const [busy, setBusy] = useState(false);
@@ -37,8 +43,8 @@ export default function PlaceLookup({ value, error, onChange, onSelect }: {
     } finally { if (id === request.current) setBusy(false); }
   }
   return <div className="place-lookup">
-    <label>Destination
-      <input value={value} maxLength={300} aria-invalid={error} aria-describedby={error ? "place-error" : "place-help"} placeholder="e.g. Kyoto, Japan" onChange={e => onChange(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); void search(); } }} />
+    <label>{label}
+      <input value={value} maxLength={300} required={required} autoComplete={autoComplete} aria-invalid={error} aria-describedby={describedBy ?? (error ? "place-error" : "place-help")} placeholder={placeholder} onChange={e => onChange(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); void search(); } }} />
     </label>
     <button type="button" disabled={busy || value.trim().length < 2} onClick={() => void search()}>{busy ? "Searching places…" : "Search places"}</button>
     {busy && <p role="status">Looking up matching destinations…</p>}

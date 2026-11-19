@@ -4678,7 +4678,7 @@
     "/api/v1/journeys/intercity": {
       "post": {
         "summary": "Check Intercity",
-        "description": "A driving estimate between two destinations. No schedule, mode choice or booking.",
+        "description": "A driving estimate between two places. No schedule, mode choice or booking.",
         "operationId": "check_intercity_api_v1_journeys_intercity_post",
         "requestBody": {
           "content": {
@@ -7606,25 +7606,66 @@
       },
       "IntercityInput": {
         "properties": {
-          "from_reference_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "From Reference Id"
+          "origin": {
+            "$ref": "#/components/schemas/IntercityPlace"
           },
-          "to_reference_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "To Reference Id"
+          "destination": {
+            "$ref": "#/components/schemas/IntercityPlace"
           }
         },
         "additionalProperties": false,
         "type": "object",
         "required": [
-          "from_reference_id",
-          "to_reference_id"
+          "origin",
+          "destination"
         ],
-        "title": "IntercityInput",
-        "description": "Between two retained destination references; the server reads their coordinates."
+        "title": "IntercityInput"
+      },
+      "IntercityPlace": {
+        "properties": {
+          "reference_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference Id"
+          },
+          "latitude": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 90.0,
+                "minimum": -90.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latitude"
+          },
+          "longitude": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 180.0,
+                "minimum": -180.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Longitude"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "IntercityPlace",
+        "description": "A retained destination reference, or the trip's own starting point as coordinates."
       },
       "JobView": {
         "properties": {

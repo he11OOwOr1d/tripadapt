@@ -54,8 +54,10 @@ export type IntercityCheck = {
   distance_meters: number;
   warnings: string[];
 };
+/** A retained destination reference, or the trip's own starting point as coordinates. */
+export type IntercityEnd = { reference_id: string } | { latitude: number; longitude: number };
 export const intercityAdapter = {
-  async check(input: { from_reference_id: string; to_reference_id: string }, signal: AbortSignal) {
+  async check(input: { origin: IntercityEnd; destination: IntercityEnd }, signal: AbortSignal) {
     return (await accountRequest<IntercityCheck>("/journeys/intercity", { method: "POST", signal: AbortSignal.any([signal, AbortSignal.timeout(15000)]), body: JSON.stringify(input) })).data;
   },
 };

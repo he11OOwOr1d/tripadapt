@@ -1,3 +1,5 @@
+import { validCoordinates } from "./day-map";
+import { originPointFrom } from "./origin-point";
 import { parseDayCheck, type DayCheckDiagnostic } from "./day-check-feedback";
 import type { ActivityPlace } from "./activity-search";
 import { authClient } from "../auth/client";
@@ -34,7 +36,7 @@ type Plan = {
   room_count: number;
   display_currency: string;
   budget: { amount: string; mode: "target" | "strict" } | null;
-  origin: { label: string } | null;
+  origin: { label: string; latitude?: number | string | null; longitude?: number | string | null } | null;
   return_location: { label: string } | null;
   preferences: {
     pace: string;
@@ -248,7 +250,7 @@ function input(trip: Trip) {
     room_count: trip.rooms,
     display_currency: trip.currency,
     budget: trip.budget ? { amount: trip.budget, mode: trip.budgetMode ?? "target" } : null,
-    origin: trip.origin ? { label: trip.origin } : null,
+    origin: trip.origin ? { label: trip.origin, ...(trip.originPoint ? { latitude: trip.originPoint.latitude, longitude: trip.originPoint.longitude } : {}) } : null,
     return_location: trip.finish ? { label: trip.finish } : null,
     preferences: {
       pace: trip.pace === "busy" ? "fast" : trip.pace,
@@ -327,6 +329,7 @@ export const accountTripAdapter = {
       budget: p.budget?.amount ?? "",
       budgetMode: p.budget?.mode ?? "target",
       origin: p.origin?.label ?? "",
+      ...originPointFrom(p.origin),
       finish: p.return_location?.label ?? "",
       returnToOrigin: p.preferences.return_to_origin ?? true,
       pace: p.preferences.pace === "fast" ? "busy" : p.preferences.pace,

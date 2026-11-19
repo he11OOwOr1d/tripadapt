@@ -1,3 +1,4 @@
+import { validCoordinates } from "./day-map";
 import { isActivityPlace, type ActivityPlace } from "./activity-search";
 import type { PlaceResult } from "./place-search";
 import { isLodging, type Lodging } from "./lodging";
@@ -38,6 +39,8 @@ export type Trip = {
   pace: string;
   interests: string;
   origin: string;
+  /** Map point for the starting location, set only when it was chosen from a map search. */
+  originPoint?: { latitude: number; longitude: number };
   stops: Stop[];
   activities: Activity[];
   finish?: string;
@@ -306,6 +309,11 @@ export function isTrip(value: unknown): value is Trip {
   return (
     textFields.every((k) => typeof t[k] === "string") &&
     (t.budgetMode === undefined || t.budgetMode === "target" || t.budgetMode === "strict") &&
+    (t.originPoint === undefined ||
+      (!!t.originPoint &&
+        typeof t.originPoint === "object" &&
+        Object.keys(t.originPoint).every((k) => k === "latitude" || k === "longitude") &&
+        validCoordinates((t.originPoint as Record<string, unknown>).latitude, (t.originPoint as Record<string, unknown>).longitude))) &&
     (t.finish === undefined || typeof t.finish === "string") &&
     (t.returnToOrigin === undefined || typeof t.returnToOrigin === "boolean") &&
     optionalRecord(
