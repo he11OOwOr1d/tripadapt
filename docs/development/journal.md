@@ -888,3 +888,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026. Two optional buffers (settling in after arrival, being at the gate before departure) on each recorded journey, shown in the summary, used in the day flags and in the AI planner's enforced window. 616 backend and 233 frontend tests pass; verified live and signed in (flag, validation, summary, axe). Committed locally; not pushed. See [the booking note](../transfer-bookings-learning.md).
 
+## 192. Fix what the review of the booking work found
+
+20 November 2026. Fixed a remount that dropped the save notice and keyboard focus, a stale "not set" caveat beside a saved booking, and an inverted planner window (now an honest empty proposal without calling the model). Overnight arrivals and cache accounting are deliberate and documented. 617 backend and 233 frontend tests pass; verified live and signed in. Committed locally; not pushed.
+

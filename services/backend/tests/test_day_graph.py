@@ -3,7 +3,7 @@ from uuid import uuid4
 
 import pytest
 
-from app.agents.day_graph import DayCandidate, run_day_graph
+from app.agents.day_graph import DayCandidate, run_day_graph, validate_ai_candidate
 from app.agents.groq_provider import PlanningFailure
 from app.trips.schemas import (
     Lodging,
@@ -256,3 +256,16 @@ def test_buffers_widen_the_margin_around_recorded_journeys():
     result, _ = run_day_graph(plan, stop, 20, uuid4(), departure)
     assert departure.schema_calls == 2
     assert result.activities[-1].local_start_time.hour == 11
+
+
+def test_a_recorded_journey_that_leaves_no_time_adds_nothing_and_skips_the_model():
+    plan, stop = base()
+    with_journey(plan, 0, arrival="17:30", arrival_buffer=60)
+    provider = RecordingProvider([])
+    result, metadata = run_day_graph(plan, stop, 0, uuid4(), provider)
+    assert provider.seen == [] and metadata["model_calls"] == 0
+    assert metadata["additions"] == [] and "No usable time" in metadata["summary"]
+    assert len(result.activities) == len(plan.activities)
+    assert result is not plan
+    # The publish boundary accepts an empty, honest proposal as well.
+    validate_ai_candidate(plan, result, stop, 0, uuid4(), metadata)

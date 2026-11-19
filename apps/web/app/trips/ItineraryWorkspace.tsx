@@ -34,7 +34,7 @@ import IntercityEstimate from "./IntercityEstimate";
 import RouteDrives from "./RouteDrives";
 import TransferBooking from "./TransferBooking";
 import { originPlace, stopPlace, withTravelHours } from "../../lib/trips/intercity";
-import { mergeIssues, transferConflicts, withTransferBooking } from "../../lib/trips/transfers";
+import { hasBooking, mergeIssues, transferConflicts, withTransferBooking } from "../../lib/trips/transfers";
 import { withLodging } from "../../lib/trips/lodging";
 const kindName = {
   custom: "Activity",
@@ -400,10 +400,12 @@ export default function ItineraryWorkspace({
                             ? ` · ${pref.overnight} nights on the move`
                             : ""}
                         </p>
-                        <p className="day-transfer-caveat">
-                          Departure time and arrival buffer not set.
-                        </p>
-                        <TransferBooking key={`${leg.key}:${JSON.stringify([pref?.departure, pref?.arrival, pref?.reference, pref?.booked])}`} from={from?.name ?? leg.from} to={to?.name ?? leg.to} pref={pref} disabled={editorOpen} onSave={(booking) => onUpdate({ travelPreferences: withTransferBooking(trip.travelPreferences, leg.key, booking) })} />
+                        {!hasBooking(pref) && (
+                          <p className="day-transfer-caveat">
+                            Departure time and arrival buffer not set.
+                          </p>
+                        )}
+                        <TransferBooking key={leg.key} from={from?.name ?? leg.from} to={to?.name ?? leg.to} pref={pref} disabled={editorOpen} onSave={(booking) => onUpdate({ travelPreferences: withTransferBooking(trip.travelPreferences, leg.key, booking) })} />
                         <IntercityEstimate key={JSON.stringify([from?.name, from?.end, to?.name, to?.end])} from={from} to={to} currentHours={pref?.hours ?? ""} disabled={editorOpen} onUse={(hours) => onUpdate({ travelPreferences: withTravelHours(trip.travelPreferences, leg.key, hours) })} />
                       </div>
                       <button

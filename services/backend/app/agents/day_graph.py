@@ -157,7 +157,7 @@ def run_day_graph(
         "local_day_offset": day,
         "pace": plan.preferences.pace,
         "interests": [s[:200] for s in plan.preferences.interests[:10]],
-        "planning_window": f"{window_start // 60:02d}:{window_start % 60:02d}–{window_end // 60:02d}:{window_end % 60:02d} local",
+        "planning_window": f"{window_text} local",
         "existing": [a.model_dump(mode="json") for a in items],
     }
     if arrival:
@@ -176,6 +176,20 @@ def run_day_graph(
         }
     if len(json.dumps(context)) > 40000:
         raise PlanningFailure("AI_DAY_TOO_LARGE")
+    if window_end - window_start < 15:
+        # The traveler's own recorded journey leaves no usable time: say so, do not ask the model.
+        return plan.model_copy(deep=True), {
+            "catalog_ids": [c["id"] for c in catalog],
+            "engine": "groq",
+            "evidence": "mapped_places" if mapped else "sample_catalog",
+            "place_ids": place_ids or [],
+            "summary": f"No usable time is left on this day: your recorded arrival and departure leave {window_text}, so nothing was added.",
+            "model_calls": 0,
+            "input_tokens": None,
+            "output_tokens": None,
+            "tool_reads": [],
+            "additions": [],
+        }
     started = time.monotonic()
 
     def checkpoint(stage):

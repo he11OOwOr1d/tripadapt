@@ -40,3 +40,18 @@ The PRD asks for boarding and check-in buffers to be visible assumptions, so eac
 
 Verified: backend tests for the new fields (valid, invalid, default zero) and for both buffer directions in the planner's window (616 backend tests pass), a frontend test for both flag messages, the exact margins and the summary (233 frontend tests pass), typecheck and build. Live, signed in, on the disposable trip: a 10:30 visit with a recorded arrival of 10:00 and a 60-minute settling time was flagged "Starts inside the 60 minutes you allowed to settle in after arriving at 10:00.", an out-of-range value (999) showed the error, the card summary read "arrives 10:00 · 60 min allowed to settle in", and axe found no violations with the form open. I removed the details and the visit afterwards. Not re-run live: the planner window with buffers (unit-tested only).
 
+## Review follow-up (20 November 2026)
+
+A code review of the cache, booking, planner-window and buffer commits found, and I fixed:
+
+- **A focus and notice bug.** The booking component was keyed on the saved values, so saving remounted it: the "Saved as you entered it" notice vanished and keyboard focus was lost (the same class of bug as the stay form's). The key is now the journey only. Verified live: after save and after remove the notice shows ("Saved as you entered it. Nothing was booked or checked." / "Booking details removed.") and focus returns to the Edit or Add button.
+- **A contradictory caveat.** The static line "Departure time and arrival buffer not set." stayed above a saved booking; it now shows only while no booking details exist (hidden after saving, back after removing, checked live).
+- **An impossible planner window.** An arrival at 17:30 with a 60-minute settling time left an inverted window that would be sent to the model. When less than 15 minutes remain, the planner now skips the model and returns an honest empty proposal ("No usable time is left on this day: your recorded arrival and departure leave 18:30-18:00, so nothing was added."), with a test that also passes the publish-boundary check. The context now reuses the one window string.
+
+Reviewed and left as designed:
+
+- **Overnight journeys.** A recorded arrival is a time of day on the stop's first day and a departure one on its last. A journey that arrives after midnight, or takes more than a day, is not modelled: entering the arrival time as it appears on the ticket works for an overnight train arriving the next morning, but a 23:30 arrival after a day-long trip would narrow day 1 hard. This is listed as not done above.
+- **Cache hits skip the per-user quota.** That is the point of the intercity cache (a public road route costs the provider nothing to repeat); it does mean a caller can repeat cached routes without spending quota, which is harmless because they cost no provider call. The warnings stored with an entry are provider data and are empty for Geoapify, so nothing user-specific is shared. A second process has its own empty cache, so behavior can differ between deployments; this is stated in the release plan.
+
+617 backend and 233 frontend tests pass; typecheck and build pass.
+
