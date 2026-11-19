@@ -512,3 +512,43 @@
 .route-location-source summary { cursor: pointer; padding: .7rem 0; min-height: 44px; box-sizing: border-box; }
 .route-location-source small { display: block; line-height: 1.6; overflow-wrap: anywhere; }
 .route-location-source summary:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+
+.trip-lifecycle {
+  margin: 12px 0 18px;
+  padding: 14px 20px;
+  border-left: 3px solid #567760;
+  background: #eeeade;
+  border-radius: 0 10px 10px 0;
+}
+.trip-lifecycle strong { color: #284c3e; font-size: 15px; }
+.trip-lifecycle p { margin: 3px 0 0; max-width: 72ch; color: #4d6055; }
+.day-test-planner.day-current-start { padding: 14px; background: #e5ede5; border-radius: 10px; }
+.day-current-start button { min-height: 44px; }
+.trip-lifecycle { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.trip-lifecycle > button { flex-shrink: 0; min-height: 44px; }
+@media (max-width: 600px) { .trip-lifecycle { align-items: flex-start; flex-direction: column; gap: 12px; } }
+.trip-lifecycle-dialog p { max-width: 62ch; }
+.trip-lifecycle-dialog footer { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+.trip-lifecycle-dialog button { min-height: 44px; }
+
+/* Feeling tired: explicit rest/skip choices inside the remaining-day check. */
+.replan-tired { margin: 12px 0; }
+.replan-tired summary { min-height: 44px; cursor: pointer; font-weight: 600; }
+.replan-skip label { display: flex; gap: 8px; align-items: center; min-height: 44px; }
+
+/* Change nights between stays: draft-only, previewed, explicit drops. */
+.stay-rebalance { margin: 12px 0; }
+.stay-rebalance summary { min-height: 44px; cursor: pointer; font-weight: 600; }
+.stay-rebalance label { display: grid; gap: 4px; margin: 8px 0; }
+.stay-rebalance-row { display: flex; gap: 8px; }
+.stay-rebalance-row label { flex: 1; }
+.stay-rebalance button { min-height: 44px; margin: 4px 8px 4px 0; }
+.trip-app .stay-rebalance-drop label { display: flex; gap: 8px; align-items: center; min-height: 44px; }
+.stay-rebalance-choice { display: grid; gap: 4px; padding: 8px 0; border-top: 1px solid #d9dece; }
+.stay-rebalance-choice small { color: #7a5a2c; }
+.day-activity.is-skipped { opacity: 0.7; }
+.day-activity.is-skipped strong { text-decoration: line-through; }
+.trip-outcome-recap { margin: 16px 0; padding: 20px; background: #edf1e8; border-left: 3px solid #567760; }
+.trip-outcome-recap h2 { margin: 0; font-size: 1.1rem; }
+.trip-outcome-recap ul { display: flex; flex-wrap: wrap; gap: 12px 24px; padding-left: 20px; }
+.trip-outcome-recap p { max-width: 70ch; }

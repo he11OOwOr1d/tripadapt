@@ -1,4 +1,6 @@
 "use client";
+import { tripCapabilities } from "../../lib/trips/lifecycle";
+import ChatReplacementOptions from "./ChatReplacementOptions";
 import { useEffect, useRef, useState } from "react";
 import {
   conversationAdapter,
@@ -9,21 +11,35 @@ import { planningJobAdapter, terminalJob } from "../../lib/trips/planning-jobs";
 
 export default function TripChat({
   account,
+  lifecycle,
   stopId,
   day,
   place,
   canSend,
+  exactDates,
   onClose,
   onReview,
+  onRemainingRequest,
+  canOpenRemainingRequest,
+  onWeatherRequest,
+  canOpenWeatherRequest,
 }: {
+  lifecycle?: string;
   account: { id: string; versionEtag: string };
   stopId: string;
   day: number;
   place: string;
   canSend: boolean;
+  exactDates:boolean;
   onClose: () => void;
   onReview: (id: string) => void;
+  onRemainingRequest:(turn:ConversationTurn)=>void;
+  canOpenRemainingRequest:(turn:ConversationTurn)=>boolean;
+  onWeatherRequest:(turn:ConversationTurn)=>void;
+  canOpenWeatherRequest:(turn:ConversationTurn)=>boolean;
 }) {
+  const capabilities = tripCapabilities(lifecycle);
+  const canChat = canSend && capabilities.chat;
   const [turns, setTurns] = useState<ConversationTurn[]>([]),
     [cursor, setCursor] = useState<string | null>(null),
     [text, setText] = useState(""),
@@ -32,6 +48,8 @@ export default function TripChat({
     [error, setError] = useState(""),
     [refresh, setRefresh] = useState(0),
     [tick, setTick] = useState(Date.now());
+  const [researchTurn,setResearchTurn]=useState<string>();
+  const researchTrigger=useRef<HTMLButtonElement|null>(null);
   const initialized = useRef(false);
   const draftKey = `elsewhere.chat-draft:${account.id}`;
   useEffect(() => {
@@ -115,7 +133,7 @@ export default function TripChat({
     if (log.current) log.current.scrollTop = log.current.scrollHeight;
   }, [turns.at(-1)?.id, turns.at(-1)?.assistant_text]);
   async function send(value = text) {
-    if (!value.trim() || sending || pending || !canSend) return;
+    if (!value.trim() || sending || pending || !canChat) return;
     submitted.current = true;
     setSending(true);
     setError("");
@@ -202,6 +220,7 @@ export default function TripChat({
       <p className="chat-context">
         {place} · day {day} in this place
       </p>
+      <p className="chat-context">{capabilities.lifecycle === "active" ? "Ask about your day or confirm a fresh starting point. AI edits stay in the planner’s review flow." : !capabilities.chat ? "Conversation history is available. New requests are closed for this trip status." : "Suggestions become changes only after you review and accept them."}</p>
       <div
         className="chat-log"
         ref={log}
@@ -217,18 +236,13 @@ export default function TripChat({
         {!turns.length && !loading && (
           <div className="chat-welcome">
             <p>
-              Ask about your route, or make a little room in this day. I’ll show
-              you a proposal before changing anything.
+              Ask about your route or the day ahead. Choose a starting point below.
             </p>
             <div className="chat-choices">
-              {[
-                "Explain this day",
-                "Summarize my route",
-                "Suggest a rest break",
-              ].map((choice) => (
+              {capabilities.choices.map((choice) => (
                 <button
                   key={choice}
-                  disabled={!canSend || sending}
+                  disabled={!canChat || sending}
                   onClick={() => void send(choice)}
                 >
                   {choice}
@@ -248,6 +262,13 @@ export default function TripChat({
               <div className="chat-reply">
                 <span>Elsewhere</span>
                 <p>{turn.assistant_text}</p>
+                {turn.remaining_handoff && <div className="chat-weather-request"><p>Confirm your time and location before previewing changes.</p><button className="chat-planner-link" type="button" disabled={!canChat||!canOpenRemainingRequest(turn)} onClick={()=>onRemainingRequest(turn)}>Confirm today’s starting point</button>{!canOpenRemainingRequest(turn)&&<small>This request no longer matches the saved plan and selected day. Ask again from the current day.</small>}</div>}
+                {capabilities.generate && turn.weather_handoff && <div className="chat-weather-request">
+                  <button className="chat-proposal" type="button" disabled={!canChat || !canOpenWeatherRequest(turn)} onClick={event=>{researchTrigger.current=event.currentTarget;setResearchTurn(turn.id);}}>Find options in chat<span>Check the date and choose a retrieved place before review.</span></button>
+                  {researchTurn===turn.id&&canOpenWeatherRequest(turn)&&<ChatReplacementOptions key={`${turn.id}:${account.versionEtag}`} account={account} turn={turn} exactDates={exactDates} disabled={!canChat||sending||!!pending} onReview={onReview} onClose={()=>{setResearchTurn(undefined);researchTrigger.current?.focus();}}/>}
+                  <button className="chat-planner-link" type="button" disabled={!canChat || !canOpenWeatherRequest(turn)} onClick={()=>onWeatherRequest(turn)}>Open planner chooser</button>
+                  {(!canChat || !canOpenWeatherRequest(turn)) && <small>This request belongs to its saved draft and day. Wait for saving, select that day, or ask again from your latest plan.</small>}
+                </div>}
                 {turn.job.proposal_id && (
                   <button
                     className="chat-proposal"
@@ -259,10 +280,10 @@ export default function TripChat({
                 )}
                 {turn.id === turns.at(-1)?.id && (
                   <div className="chat-choices">
-                    {turn.choices.map((choice) => (
+                    {(capabilities.generate ? turn.choices : capabilities.choices).map((choice) => (
                       <button
                         key={choice}
-                        disabled={!canSend || !!pending || sending}
+                        disabled={!canChat || !!pending || sending}
                         onClick={() => void send(choice)}
                       >
                         {choice}
@@ -303,6 +324,8 @@ export default function TripChat({
                   ? "Request cancelled. Your trip is unchanged."
                   : turn.job.status === "superseded"
                     ? "Your saved trip changed. Ask again using the latest plan."
+                    : turn.job.error_code === "ACTIVE_CHAT_READ_ONLY" || turn.job.error_code === "AGENT_PLANNING_ONLY"
+                      ? "Active-trip chat can explain the saved day or open confirmation. No itinerary proposal was created."
                     : turn.job.error_code === "AI_LOCATION_REQUIRED"
                       ? "Choose a map location for this destination in Explore nearby places, then ask again."
                       : turn.job.error_code?.startsWith("ACTIVITY_") || turn.job.error_code === "AI_NO_PLACE_EVIDENCE"
@@ -347,21 +370,21 @@ export default function TripChat({
               void send();
             }
           }}
-          disabled={sending}
+          disabled={sending || !capabilities.chat}
           maxLength={2000}
           rows={2}
-          placeholder="Ask about this day, suggest a break, or move an activity to 11:00 AM…"
+          placeholder={capabilities.lifecycle === "active" ? "Ask about your day or replan the rest of today…" : capabilities.generate ? "Ask about this day, suggest a break, or move an activity to 11:00 AM…" : "Your conversation history is available above"}
         />
         <div>
           <small>
-            {!canSend
+            {!capabilities.chat ? "New requests are unavailable for this trip status." : !canChat
               ? "Waiting for your trip edits to save…"
-              : "AI place proposals use map records. Hours, travel times and prices are unverified."}
+              : capabilities.lifecycle === "active" ? "Chat won’t change your itinerary. Confirm fresh details in the day check." : "AI place proposals use map records. Hours, travel times and prices are unverified."}
           </small>
           <button
             className="day-primary"
             disabled={
-              !text.trim() || !canSend || !!pending || sending || loading
+              !text.trim() || !canChat || !!pending || sending || loading
             }
             type="submit"
           >

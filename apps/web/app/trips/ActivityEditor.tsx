@@ -1,7 +1,9 @@
 "use client";
+import { recoveryChoices, type RecoveryChoice } from "../../lib/trips/activity-recovery";
+import ActivityLocationPicker from "./ActivityLocationPicker";
+import { attachActivityLocation, detachActivityLocation, patchActivity } from "../../lib/trips/activity-location";
 import GooglePlaceCheck from "./GooglePlaceCheck";
 import { routeSchedule, provisionalDate } from "../../lib/trips/itinerary";
-import PlaceAttribution from "./PlaceAttribution";
 import { useEffect, useRef, useState } from "react";
 import type { Activity, Trip } from "../../lib/trips/adapter";
 import {
@@ -16,7 +18,13 @@ export default function ActivityEditor({
   onSave,
   onClose,
   onRemove,
+  focusLocation = false,
+  focusStatus = false,
+  recoveryChoice,
 }: {
+  focusLocation?: boolean;
+  focusStatus?: boolean;
+  recoveryChoice?: RecoveryChoice;
   initial: Activity;
   trip: Trip;
   onSave: (activity: Activity) => void;
@@ -27,6 +35,8 @@ export default function ActivityEditor({
     [errors, setErrors] = useState<string[]>([]);
   const dialog = useRef<HTMLDialogElement>(null);
   const firstInput = useRef<HTMLInputElement>(null);
+  const locationFocus = useRef<HTMLDivElement>(null);
+  const statusFocus = useRef<HTMLDetailsElement>(null);
   const existing = trip.activities.some((a) => a.id === initial.id);
   const stop = trip.stops.find((s) => s.id === draft.stopId);
   const arrival = routeSchedule(trip).find(s => s.stop.id === draft.stopId)?.arrivalDay;
@@ -47,14 +57,20 @@ export default function ActivityEditor({
     const previous = document.activeElement as HTMLElement | null;
     const node = dialog.current;
     node?.showModal();
-    firstInput.current?.focus();
+    if (recoveryChoice) {
+      if((recoveryChoice === "finished" || recoveryChoice === "missed") && statusFocus.current) statusFocus.current.open=true;
+      node?.querySelector<HTMLElement>(`[name="${recoveryChoices[recoveryChoice].focus}"]`)?.focus();
+    }
+    else if (focusLocation) locationFocus.current?.querySelector<HTMLElement>("summary")?.focus();
+    else if(focusStatus&&statusFocus.current){statusFocus.current.open=true;statusFocus.current.querySelector<HTMLElement>('input[name="completed"]')?.focus();}
+    else firstInput.current?.focus();
     return () => {
       if (node?.open) node.close();
       if (previous?.isConnected) previous.focus({ preventScroll: true });
     };
-  }, []);
+  }, [focusLocation,focusStatus,recoveryChoice]);
   const patch = (value: Partial<Activity>) => {
-    setDraft((a) => ({ ...a, ...value, googlePlaceId: (value.title !== undefined && value.title !== a.title) || (value.stopId !== undefined && value.stopId !== a.stopId) ? undefined : a.googlePlaceId, place: (value.title !== undefined && value.title !== a.title) || (value.stopId !== undefined && value.stopId !== a.stopId) ? undefined : a.place }));
+    setDraft((a) => patchActivity(a, value));
     setErrors([]);
   };
   return (
@@ -71,10 +87,7 @@ export default function ActivityEditor({
         onSubmit={(e) => {
           e.preventDefault();
           const fields = new FormData(e.currentTarget);
-          const submitted: Activity = {
-            ...draft,
-            googlePlaceId: String(fields.get("title") ?? "").trim() === draft.title && String(fields.get("stopId") ?? "") === draft.stopId ? draft.googlePlaceId : undefined,
-            place: String(fields.get("title") ?? "").trim() === draft.title && String(fields.get("stopId") ?? "") === draft.stopId ? draft.place : undefined,
+          const submitted: Activity = patchActivity(draft, {
             title: String(fields.get("title") ?? "").trim(),
             kind: String(fields.get("kind") ?? "custom") as Activity["kind"],
             stopId: String(fields.get("stopId") ?? ""),
@@ -83,8 +96,9 @@ export default function ActivityEditor({
             minutes: Number(fields.get("minutes")),
             fixed: fields.has("fixed"),
             completed: fields.has("completed"),
+            skipped: fields.has("skipped"),
             booked: fields.has("booked"),
-          };
+          });
           const problems = activityProblems(submitted, trip);
           if (problems.length) {
             setErrors(problems);
@@ -108,7 +122,7 @@ export default function ActivityEditor({
             ×
           </button>
         </header>
-        {draft.place && <div className="activity-picked-place"><PlaceAttribution place={draft.place} /><p>The 60-minute starting duration is an estimate. Choose your time before saving; this makes no reservation.</p></div>}
+        {recoveryChoice && <div className="recovery-guidance" role="note"><strong>{recoveryChoices[recoveryChoice].label}</strong><p>{recoveryChoices[recoveryChoice].guidance}</p><p>Only Save changes updates your draft. Then confirm fresh time and location to check this day again.</p></div>}
         <label>
           What would you like to do?
           <input
@@ -194,9 +208,10 @@ export default function ActivityEditor({
             ? `${clock(clockMinutes(draft.start) + draft.minutes - 1440)} next day`
             : clock(clockMinutes(draft.start) + draft.minutes)}
         </p>
+        <div ref={locationFocus}><ActivityLocationPicker startOpen={focusLocation} key={`${draft.stopId}:${stop?.location?.reference_id ?? "unmapped"}`} activity={draft} stop={stop} onChoose={place => { if (stop) { setDraft(value => attachActivityLocation(value, stop, place)); setErrors([]); } }} onRemove={() => { setDraft(detachActivityLocation); setErrors([]); }} /></div>
         {draft.place && <GooglePlaceCheck key={draft.place.id} sourceId={draft.place.id} googleId={draft.googlePlaceId} onSelect={id=>setDraft(value=>({...value,googlePlaceId:id}))} visitDate={visitDate} start={draft.start} minutes={draft.minutes} timezone={stop?.timezone ?? "UTC"} />}
-        <details className="editor-options">
-          <summary>Keep fixed, completed or booked</summary>
+        <details ref={statusFocus} className="editor-options">
+          <summary>Keep fixed, record what happened, or booked</summary>
           <label>
             <input
               type="checkbox"
@@ -211,9 +226,18 @@ export default function ActivityEditor({
               type="checkbox"
               name="completed"
               checked={draft.completed}
-              onChange={(e) => patch({ completed: e.target.checked })}
+              onChange={(e) => patch({ completed: e.target.checked, ...(e.target.checked ? { skipped: false } : {}) })}
             />
             Already completed
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              name="skipped"
+              checked={draft.skipped === true}
+              onChange={(e) => patch({ skipped: e.target.checked, ...(e.target.checked ? { completed: false } : {}) })}
+            />
+            Didn’t happen (keep it as a record)
           </label>
           <label>
             <input
@@ -224,7 +248,7 @@ export default function ActivityEditor({
             />
             I’ve already booked this elsewhere
           </label>
-          <p>These are your records. Choosing booked makes no reservation.</p>
+          <p>These are your records. Choosing booked makes no reservation. A skipped activity stays in your plan with its costs, no longer holds its time, and won’t be moved automatically.</p>
         </details>
         {!!errors.length && (
           <div className="editor-error" role="alert">

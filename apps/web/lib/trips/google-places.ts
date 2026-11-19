@@ -1,5 +1,5 @@
 import { accountRequest } from "./account-adapter";
-export type GoogleMatch = { id: string; name: string; address: string; latitude: number; longitude: number };
+export type GoogleMatch = { distance_meters?: number; id: string; name: string; address: string; latitude: number; longitude: number };
 export type GoogleCheck = {
   place: GoogleMatch;
   retrieved_at: string;
@@ -12,8 +12,8 @@ export type GoogleCheck = {
   attributions: string[];
 };
 export const googlePlacesAdapter = {
-  async matches(sourcePlaceId: string, signal: AbortSignal) {
-    return (await accountRequest<GoogleMatch[]>("/google-places/matches", {method:"POST", signal: AbortSignal.any([signal, AbortSignal.timeout(12000)]), body:JSON.stringify({source_place_id:sourcePlaceId})})).data;
+  async matches(sourcePlaceId: string, signal: AbortSignal, query?: string) {
+    return (await accountRequest<GoogleMatch[]>("/google-places/matches", {method:"POST", signal: AbortSignal.any([signal, AbortSignal.timeout(12000)]), body:JSON.stringify({source_place_id:sourcePlaceId,...(query?.trim()?{query:query.trim()}:{})})})).data;
   },
   async check(sourcePlaceId: string, googlePlaceId: string, date: string, start: string, minutes: number, signal: AbortSignal) {
     return (await accountRequest<GoogleCheck>("/google-places/check", {method:"POST", signal:AbortSignal.any([signal,AbortSignal.timeout(12000)]), body:JSON.stringify({source_place_id:sourcePlaceId,google_place_id:googlePlaceId,visit_date:date||null,start,duration_minutes:minutes})})).data;

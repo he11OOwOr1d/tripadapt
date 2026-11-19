@@ -20,6 +20,8 @@ export type Activity = {
   minutes: number;
   fixed: boolean;
   completed: boolean;
+  /** Traveler-recorded "didn't happen"; exclusive with completed, never inferred. */
+  skipped?: boolean;
   booked: boolean;
 };
 export type Trip = {
@@ -31,6 +33,7 @@ export type Trip = {
   travelers: number;
   rooms: number;
   budget: string;
+  budgetMode?: "target" | "strict";
   currency: string;
   pace: string;
   interests: string;
@@ -43,6 +46,9 @@ export type Trip = {
     string,
     { style: string; rate: string; basis: "room" | "bed" }
   >;
+  costRecords?: CostRecord[];
+  /** Traveler attests every cost is entered; required for a strict-budget check. */
+  costsConfirmed?: boolean;
   travelPreferences?: Record<
     string,
     {
@@ -54,6 +60,74 @@ export type Trip = {
     }
   >;
 };
+/**
+ * Traveler-entered cost. `amount` is a unit price; blank = unknown, "0" = free.
+ * Optionally linked to one activity or stay (stop). `link_removed` marks a paid
+ * cost whose item left the plan: kept as a commitment, never an implied refund.
+ */
+export type CostRecord = {
+  id: string;
+  category: "food" | "activity" | "accommodation" | "transport" | "taxes_fees" | "miscellaneous";
+  label: string;
+  unit: "per_person" | "per_group";
+  quantity: number;
+  amount: string;
+  status: "estimated" | "paid";
+  activity_id?: string | null;
+  stop_id?: string | null;
+  /** Intercity journey key from `routeLegs`; journeys are not rows. */
+  leg_key?: string | null;
+  link_removed?: boolean;
+  /** Original currency; absent/null means the trip's display currency. */
+  currency?: string | null;
+  /** Traveler-entered display-currency units per one unit of `currency`. */
+  conversion_rate?: string | null;
+  rate_note?: string | null;
+  rate_date?: string | null;
+  /** Whether `amount` includes tax; "unknown" is the honest default. */
+  tax_status?: "included" | "excluded" | "unknown";
+  /** Only for tax not included: percentage added on top. */
+  tax_percent?: string | null;
+};
+export const costCategories = ["food", "activity", "accommodation", "transport", "taxes_fees", "miscellaneous"] as const;
+export function isCostRecord(value: unknown): value is CostRecord {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const r = value as Record<string, unknown>;
+  const uuid = (v: unknown) =>
+    typeof v === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+  const link = (v: unknown) => v === undefined || v === null || uuid(v);
+  const allowed = ["id", "category", "label", "unit", "quantity", "amount", "status", "activity_id", "stop_id", "leg_key", "link_removed", "currency", "conversion_rate", "rate_note", "rate_date", "tax_status", "tax_percent"];
+  const optional = (v: unknown, ok: (x: unknown) => boolean) => v === undefined || v === null || ok(v);
+  const links = [r.activity_id, r.stop_id, r.leg_key].filter(Boolean).length;
+  return (
+    Object.keys(r).every((k) => allowed.includes(k)) &&
+    uuid(r.id) &&
+    (costCategories as readonly unknown[]).includes(r.category) &&
+    link(r.activity_id) &&
+    link(r.stop_id) &&
+    (r.leg_key === undefined || r.leg_key === null || (typeof r.leg_key === "string" && r.leg_key.length > 0 && r.leg_key.length <= 1500)) &&
+    links <= 1 &&
+    optional(r.currency, (v) => typeof v === "string" && /^[A-Z]{3}$/.test(v)) &&
+    optional(r.conversion_rate, (v) => typeof v === "string" && /^\d{1,10}(\.\d{1,10})?$/.test(v) && Number(v) > 0) &&
+    optional(r.rate_note, (v) => typeof v === "string" && v.length > 0 && v.length <= 200) &&
+    optional(r.rate_date, (v) => typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v)) &&
+    (r.currency || (!r.conversion_rate && !r.rate_note && !r.rate_date)) &&
+    (r.tax_status === undefined || ["included", "excluded", "unknown"].includes(String(r.tax_status))) &&
+    optional(r.tax_percent, (v) => typeof v === "string" && /^\d{1,3}(\.\d{1,3})?$/.test(v) && Number(v) <= 100 && r.tax_status === "excluded") &&
+    (r.link_removed === undefined || typeof r.link_removed === "boolean") &&
+    (!r.link_removed || (r.status === "paid" && links === 0)) &&
+    typeof r.label === "string" &&
+    r.label.trim().length > 0 &&
+    r.label.length <= 120 &&
+    (r.unit === "per_person" || r.unit === "per_group") &&
+    Number.isSafeInteger(r.quantity) &&
+    Number(r.quantity) >= 1 &&
+    Number(r.quantity) <= 10000 &&
+    typeof r.amount === "string" &&
+    /^$|^\d{1,14}(\.\d{1,2})?$/.test(r.amount) &&
+    (r.status === "estimated" || (r.status === "paid" && r.amount !== ""))
+  );
+}
 export const emptyTrip: Trip = {
   title: "",
   mode: "duration",
@@ -63,6 +137,7 @@ export const emptyTrip: Trip = {
   travelers: 2,
   rooms: 1,
   budget: "",
+  budgetMode: "target",
   currency: "INR",
   pace: "balanced",
   interests: "",
@@ -230,6 +305,7 @@ export function isTrip(value: unknown): value is Trip {
     typeof n === "number" && Number.isSafeInteger(n) && n > 0;
   return (
     textFields.every((k) => typeof t[k] === "string") &&
+    (t.budgetMode === undefined || t.budgetMode === "target" || t.budgetMode === "strict") &&
     (t.finish === undefined || typeof t.finish === "string") &&
     (t.returnToOrigin === undefined || typeof t.returnToOrigin === "boolean") &&
     optionalRecord(
@@ -249,6 +325,12 @@ export function isTrip(value: unknown): value is Trip {
         Number(p.overnight) >= 0 &&
         ["person", "vehicle"].includes(String(p.basis)),
     ) &&
+    (t.costsConfirmed === undefined || typeof t.costsConfirmed === "boolean") &&
+    (t.costRecords === undefined ||
+      (Array.isArray(t.costRecords) &&
+        t.costRecords.length <= 200 &&
+        t.costRecords.every(isCostRecord) &&
+        new Set(t.costRecords.map((r) => r.id)).size === t.costRecords.length)) &&
     ["exact", "window", "duration"].includes(String(t.mode)) &&
     [t.travelers, t.rooms].every(positive) &&
     typeof t.days === "number" &&
@@ -273,9 +355,11 @@ export function isTrip(value: unknown): value is Trip {
         positive(a.day) &&
         positive(a.minutes) &&
         (a.googlePlaceId === undefined || (typeof a.googlePlaceId === "string" && /^[A-Za-z0-9_-]{1,200}$/.test(a.googlePlaceId))) &&
-        (a.place === undefined || (isActivityPlace(a.place) && a.place.name === a.title)) &&
+        (a.place === undefined || isActivityPlace(a.place)) &&
         (a.kind === undefined || ["custom","meal","rest","free_time"].includes(a.kind)) &&
-        [a.fixed, a.completed, a.booked].every((v) => typeof v === "boolean"),
+        [a.fixed, a.completed, a.booked].every((v) => typeof v === "boolean") &&
+        (a.skipped === undefined || typeof a.skipped === "boolean") &&
+        !(a.completed && a.skipped),
     )
   );
 }

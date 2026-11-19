@@ -1,6 +1,12 @@
+import type { RemainingHandoff } from "./remaining-handoff";
+import type { WeatherHandoff } from "./weather-handoff";
 import { accountRequest } from "./account-adapter";
 import type { PlanningJob } from "./planning-jobs";
 export type ConversationTurn = {
+  remaining_handoff?:RemainingHandoff|null;
+  remaining_handoff_stale?:boolean;
+  weather_handoff?: WeatherHandoff|null;
+  weather_handoff_stale?: boolean;
   id: string;
   user_text: string;
   assistant_text: string | null;

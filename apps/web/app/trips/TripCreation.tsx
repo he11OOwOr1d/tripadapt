@@ -1,5 +1,10 @@
 "use client";
-import { useRef, useState } from "react";
+import CostCoverage from "./CostCoverage";
+import { draftCostSource } from "../../lib/trips/cost-coverage";
+import BudgetPreference from "./BudgetPreference";
+import CostRecords from "./CostRecords";
+import JourneyImpact from "./JourneyImpact";
+import { useEffect, useRef, useState } from "react";
 import PlaceLookup from "./PlaceLookup";
 import type { PlaceResult } from "../../lib/trips/place-search";
 import type { Trip, Stop } from "../../lib/trips/adapter";
@@ -45,8 +50,10 @@ export default function TripCreation({
   initialStep = 0,
   onStepChange,
   accountSavingAvailable = false,
+  costAccount,
 }: {
   accountSavingAvailable?: boolean;
+  costAccount?:{id:string;versionEtag:string};
   initialStep?: number;
   onStepChange?: (step: number) => void;
   trip: Trip;
@@ -56,6 +63,13 @@ export default function TripCreation({
   onOpen: () => void;
 }) {
   const [step, setStep] = useState(initialStep);
+  // The route as it was when the places step opened, to show removed journeys.
+  const [routeBaseline, setRouteBaseline] = useState<Trip | null>(null);
+  useEffect(() => {
+    setRouteBaseline(step === 2 ? trip : null);
+    // Capture only on entering or leaving the step, not on every edit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
   const [collapsed, setCollapsed] = useState(false);
   const [furthest, setFurthest] = useState(() =>
     Math.max(
@@ -253,8 +267,9 @@ export default function TripCreation({
               : `${time.remaining} ${time.remaining === 1 ? "night" : "nights"} left open.`}
       </p>
       <div className="creation-summary-cost">
-        <span>Your estimated costs</span>
-        <strong>{costs.known ? money(costs.total) : "Budget left open"}</strong>
+        <span>Your stay & travel estimates</span>
+        <strong>{costs.known ? money(costs.total) : "Estimates not entered"}</strong>
+        {trip.budget!==""&&<span>{trip.budgetMode==="strict"?"Strict limit":"Budget target"}: {money(Number(trip.budget))}</span>}
         {!!costs.known && (
           <span>{money(costs.total / trip.travelers)} per traveler</span>
         )}
@@ -519,7 +534,7 @@ export default function TripCreation({
                     </label>
                     <div className="trip-fields">
                       <label>
-                        Budget target · whole trip
+                        Budget · whole trip
                         <input
                           type="number"
                           min="0"
@@ -561,6 +576,7 @@ export default function TripCreation({
                         </select>
                       </label>
                     </div>
+                    <BudgetPreference trip={trip} onChange={budgetMode=>update({budgetMode})}/>
                     <label>
                       Pace
                       <select
@@ -705,6 +721,13 @@ export default function TripCreation({
                     connections need their own travel details; old leg
                     allowances are excluded from the subtotal.
                   </p>
+                  {routeBaseline && (
+                    <JourneyImpact
+                      baseline={routeBaseline}
+                      trip={trip}
+                      onChange={(patch) => update(patch)}
+                    />
+                  )}
                 </>
               )}
               {step === 3 && (
@@ -1156,6 +1179,11 @@ export default function TripCreation({
                       </details>
                     </section>
                   ))}
+                  <CostRecords
+                    trip={trip}
+                    onChange={(costRecords) => update({ costRecords })}
+                    onConfirm={(costsConfirmed) => update({ costsConfirmed })}
+                  />
                   {problems.length > 0 && (
                     <div className="creation-alert">
                       {problems.map((p) => (
@@ -1247,10 +1275,12 @@ export default function TripCreation({
                   <div className="creation-review-header">
                     <h3>Your budget</h3>
                     <button type="button" onClick={() => go(4)}>
-                      Edit stay & travel
+                      Edit stay, travel & costs
                     </button>
                   </div>
+                  <BudgetPreference trip={trip} onChange={budgetMode=>update({budgetMode})}/>
                   <CostBreakdown trip={trip} />
+                  <CostCoverage source={draftCostSource(costAccount)}/>
                   <div className="creation-info">
                     <h3>Room for what comes next</h3>
                     <p>
@@ -1361,7 +1391,7 @@ function CostBreakdown({ trip }: { trip: Trip }) {
       {trip.budget !== "" && c.total > Number(trip.budget) && (
         <p className="creation-alert">
           Entered allowances already exceed your {money(Number(trip.budget))}{" "}
-          target.
+          {trip.budgetMode === "strict" ? "strict limit" : "target"}.
         </p>
       )}
       <p className="creation-note">

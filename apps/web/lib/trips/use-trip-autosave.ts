@@ -9,6 +9,8 @@ import {
 import { mockTripAdapter, guestTripAdapter, type Trip } from "./adapter";
 export type AccountReference = {
   id: string;
+  lifecycle?: string;
+  currentVersionId?: string | null;
   tripEtag: string;
   versionEtag: string;
 };
@@ -63,6 +65,8 @@ export function useTripAutosave(props: Props) {
           : await accountTripAdapter.create(snapshot);
         target = {
           id: saved.id,
+          lifecycle: saved.lifecycle,
+          currentVersionId: saved.currentVersionId,
           tripEtag: saved.tripEtag,
           versionEtag: saved.versionEtag,
         };

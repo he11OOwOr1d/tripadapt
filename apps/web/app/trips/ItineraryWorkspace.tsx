@@ -1,4 +1,12 @@
 "use client";
+import type { RebalanceSummary } from "../../lib/trips/stay-rebalance";
+import StayRebalance from "./StayRebalance";
+import { canResumeDelay, type DelaySeed, type DelayReturn } from "../../lib/trips/delay-handoff";
+import type { WeatherSeed } from "../../lib/trips/weather-handoff";
+import DayWeather from "./DayWeather";
+import DayDelayReview from "./DayDelayReview";
+import ReplanningReadiness from "./ReplanningReadiness";
+import { recoveryIsAccepted, type ReadinessEditHandler, type ReadinessReturn } from "../../lib/trips/readiness-edit";
 import type { TimeChangeAccount } from "./TimeChangeReview";
 import JourneyCheck from "./JourneyCheck";
 import ActivityDiscovery from "./ActivityDiscovery";
@@ -14,6 +22,8 @@ import {
   clock,
   clockMinutes,
   itineraryStats,
+  visibleDayEntries,
+  activityOutcomeLabel,
 } from "../../lib/trips/itinerary";
 import { planningCosts, planningProblems } from "../../lib/trips/planning";
 const kindName = {
@@ -24,6 +34,8 @@ const kindName = {
 };
 export default function ItineraryWorkspace({
   trip,
+  onRebalanced,
+  lifecycle,
   selected,
   day,
   onSelect,
@@ -35,8 +47,34 @@ export default function ItineraryWorkspace({
   onUpdate,
   onSetup,
   timeChangeReview,
+  delayReturn,
+  onDismissDelayReturn,
+  editorOpen = false,
+  weatherSeed,
+  readinessRequest,
+  onReadinessRequestHandled,
+  onReadinessEdit,
+  readinessReturn,
+  onDismissReadinessReturn,
+  onReviewCorrections,
+  onRefreshReviewStatus,
+  recoveryStatusBusy=false,
 }: {
+  onReadinessEdit?:ReadinessEditHandler;
+  readinessReturn?:ReadinessReturn;
+  onDismissReadinessReturn?:()=>void;
+  onReviewCorrections?:()=>void;
+  onRefreshReviewStatus?:()=>void;
+  recoveryStatusBusy?:boolean;
+  readinessRequest?:{key:string};
+  onReadinessRequestHandled?:()=>void;
+  weatherSeed?: WeatherSeed;
   timeChangeReview?: TimeChangeAccount;
+  delayReturn?: DelayReturn | null;
+  onDismissDelayReturn?: () => void;
+  editorOpen?: boolean;
+  lifecycle?: string;
+  onRebalanced?:(result:RebalanceSummary)=>void;
   trip: Trip;
   selected: string;
   day: number;
@@ -49,7 +87,27 @@ export default function ItineraryWorkspace({
   onUpdate: (patch: Partial<Trip>) => void;
   onSetup: (step?: number) => void;
 }) {
+  const [delayOpen,setDelayOpen]=useState(false);
+  const [readinessOpen,setReadinessOpen]=useState(false);
+  const [readinessBasis,setReadinessBasis]=useState<"accepted"|"draft">("accepted");
+  const readinessReturnFocus=useRef<HTMLDivElement>(null);
+  const reviewStatusTrigger=useRef<HTMLButtonElement>(null);
+  const reviewStatusWasBusy=useRef(false);
+  useEffect(()=>{
+    if(reviewStatusWasBusy.current&&!recoveryStatusBusy&&document.activeElement===document.body) {
+      (reviewStatusTrigger.current??readinessReturnFocus.current)?.focus({preventScroll:true});
+    }
+    reviewStatusWasBusy.current=recoveryStatusBusy;
+  },[recoveryStatusBusy]);
+  const [delaySeed,setDelaySeed]=useState<DelaySeed>();
+  const returnFocus = useRef<HTMLDivElement>(null);
+  const wasEditing = useRef(editorOpen);
+  useEffect(() => { if(wasEditing.current && !editorOpen) (readinessReturn?readinessReturnFocus:returnFocus).current?.focus(); wasEditing.current=editorOpen; }, [editorOpen,readinessReturn]);
   const [overview, setOverview] = useState(false);
+  const [showRecorded, setShowRecorded] = useState(true);
+  const readinessTrigger=useRef<HTMLButtonElement>(null),readinessWasOpen=useRef(false);
+  useEffect(()=>{if(readinessRequest&&timeChangeReview&&!editorOpen){setOverview(false);setReadinessBasis("accepted");setReadinessOpen(true);onReadinessRequestHandled?.();}},[readinessRequest,timeChangeReview,editorOpen,onReadinessRequestHandled]);
+  useEffect(()=>{if(readinessWasOpen.current&&!readinessOpen)readinessTrigger.current?.focus();readinessWasOpen.current=readinessOpen;},[readinessOpen]);
   const heading = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
@@ -166,13 +224,23 @@ export default function ItineraryWorkspace({
         >
           {overview ? "Back to this day" : "See the whole trip"}
         </button>
+        {timeChangeReview && (
+          <StayRebalance
+            tripId={timeChangeReview.account.id}
+            etag={timeChangeReview.account.versionEtag}
+            currency={trip.currency}
+            stops={trip.stops.map((s) => ({ id: s.id, name: s.name, nights: s.nights }))}
+            onApplied={async(message,result)=>{await timeChangeReview.onAccepted(message);onRebalanced?.(result);}}
+          />
+        )}
         <div className="day-cost-note">
           <span>Your estimated stay & travel</span>
           <strong>
             {costs.known
               ? `${trip.currency} ${costs.total.toLocaleString()}`
-              : "Budget left open"}
+              : "Estimates not entered"}
           </strong>
+          {trip.budget!==""&&<span>{trip.budgetMode==="strict"?"Strict limit":"Budget target"}: {trip.currency} {Number(trip.budget).toLocaleString()}</span>}
           <small>Activities and local spending are extra.</small>
         </div>
       </aside>
@@ -184,7 +252,7 @@ export default function ItineraryWorkspace({
               <h1>Your trip, day by day.</h1>
               <span>
                 {stats.days ? `${stats.days} days` : "Dates open"} ·{" "}
-                {stats.activities} planned items
+                {activityOutcomeLabel(trip.activities)}
               </span>
             </header>
             <div className="day-overview">
@@ -198,11 +266,7 @@ export default function ItineraryWorkspace({
                     </p>
                   </div>
                   <p>
-                    {
-                      trip.activities.filter((a) => a.stopId === s.stop.id)
-                        .length
-                    }{" "}
-                    items planned
+                    {activityOutcomeLabel(trip.activities.filter((a) => a.stopId === s.stop.id))}
                   </p>
                   <button
                     onClick={() => {
@@ -352,7 +416,7 @@ export default function ItineraryWorkspace({
                 </h2>
                 <p>
                   {activities.length
-                    ? `${activities.length} planned ${activities.length === 1 ? "item" : "items"}`
+                    ? activityOutcomeLabel(activities)
                     : "Add your first activity, or leave the day open."}
                 </p>
               </div>
@@ -377,13 +441,31 @@ export default function ItineraryWorkspace({
                 </span>
               </p>
             )}
+            {timeChangeReview && activities.some(a=>!a.completed) && <p className="day-test-planner"><button type="button" onClick={()=>{setDelaySeed(undefined);setDelayOpen(true);}}>Running late? Adjust the rest of this day</button><span>Review a user-reported delay before anything changes.</span></p>}
+            {delayReturn && delayReturn.seed.stopId === current.stop.id && delayReturn.seed.day === localDay && <div className="delay-return" ref={returnFocus} tabIndex={-1} role="region" aria-label="Continue your delay adjustment"><strong>Your delay adjustment is still here.</strong><p>The original review stays pending. Prepare a fresh review after editing; nothing from it is applied automatically.</p>{!timeChangeReview ? <p>Waiting for account saving to finish. Resolve any save error above before continuing.</p> : !canResumeDelay(trip,delayReturn.seed) ? <p>The starting activity moved or is no longer available. Begin a new delay adjustment for this day.</p> : <p>Your starting activity and {delayReturn.seed.readyTime} ready time are kept. Confirm you can still be there before previewing.</p>}<button type="button" disabled={!timeChangeReview||editorOpen||!canResumeDelay(trip,delayReturn.seed)} onClick={()=>{setDelaySeed(delayReturn.seed);setDelayOpen(true);}}>Continue delay adjustment</button><button type="button" onClick={onDismissDelayReturn}>Dismiss return reminder</button></div>}
+            {timeChangeReview && <p className={`day-test-planner ${lifecycle === "active" ? "day-current-start" : ""}`}><button ref={readinessTrigger} type="button" disabled={editorOpen} onClick={()=>{setReadinessBasis("accepted");setReadinessOpen(true);}}>Check a fresh start for today</button><span>Confirm your local time, location and remaining activities.</span></p>}
+            {readinessReturn&&<div ref={readinessReturnFocus} tabIndex={-1} role="region" aria-label="Continue your readiness check" className="delay-return">
+              <strong>{timeChangeReview&&recoveryIsAccepted(readinessReturn,timeChangeReview.account)?"Corrections accepted. Check your day afresh.":readinessReturn.edited?"Your corrections are in the draft":"Return to your day check"}</strong>
+              <p>{timeChangeReview&&recoveryIsAccepted(readinessReturn,timeChangeReview.account)?"The accepted plan now includes this reviewed draft. Confirm your current time and location again; acceptance does not verify the rest of today.":readinessReturn.edited?"Saving a correction does not change your accepted plan. Review the whole saved draft before accepting it.":"Confirm your current time and location again before checking this day."}</p>
+              {readinessReturn.receiptUnavailable&&<p>The saved review status could not be checked. Retry the status check or open plan history. No acceptance was retried.</p>}
+              {!timeChangeReview&&<p>Waiting for your draft to finish saving. Resolve any saving error above before continuing.</p>}
+              {readinessReturn.edited&&onReviewCorrections&&!(timeChangeReview&&recoveryIsAccepted(readinessReturn,timeChangeReview.account))&&<button type="button" disabled={editorOpen||!timeChangeReview||recoveryStatusBusy} onClick={onReviewCorrections}>{readinessReturn.proposalId?"Resume saved review":"Review saved corrections"}</button>}
+              <button type="button" disabled={editorOpen||!timeChangeReview||recoveryStatusBusy} onClick={()=>{setReadinessBasis(timeChangeReview&&recoveryIsAccepted(readinessReturn,timeChangeReview.account)?"accepted":"draft");setReadinessOpen(true);onDismissReadinessReturn?.();}}>{timeChangeReview&&recoveryIsAccepted(readinessReturn,timeChangeReview.account)?"Check accepted day again":"Check this day again"}</button>
+              {readinessReturn.proposalId&&onRefreshReviewStatus&&<button type="button" disabled={editorOpen||!timeChangeReview||recoveryStatusBusy} ref={reviewStatusTrigger} onClick={onRefreshReviewStatus}>{recoveryStatusBusy?"Checking review status…":readinessReturn.receiptUnavailable?"Retry review status":"Check review status"}</button>}
+              {recoveryStatusBusy&&<p role="status">Reading your saved review. Nothing is being accepted or submitted.</p>}
+              <button type="button" onClick={onDismissReadinessReturn}>Dismiss check reminder</button>
+            </div>}
+            {readinessOpen && timeChangeReview && <ReplanningReadiness key={`${current.stop.id}:${localDay}`} tripId={timeChangeReview.account.id} onEditActivity={onReadinessEdit} initialBasis={readinessBasis} onAccepted={timeChangeReview.onAccepted} stopId={current.stop.id} day={localDay-1} onClose={()=>setReadinessOpen(false)} />}
+            {delayOpen && timeChangeReview && <DayDelayReview key={`${current.stop.id}:${localDay}`} activities={activities} place={current.stop.name} timezone={current.stop.timezone} review={timeChangeReview} initial={delaySeed} onEditActivity={timeChangeReview.onEditActivity ? (proposal,id)=>{const opened=timeChangeReview.onEditActivity!(proposal,id);if(opened)setDelayOpen(false);return opened;} : undefined} onClose={()=>setDelayOpen(false)} />}
             <p className="day-window">
               Local times · open gaps shown around an 08:00–22:00 planning day
               {transfers.length ? " · allow for untimed transfers" : ""}
             </p>
+            <DayWeather key={`${current.stop.id}:${localDay}:${date??"flexible"}:${current.stop.location?.reference_id??"unmapped"}:${weatherSeed?.key??"manual"}`} stop={current.stop} visitDate={date} activities={activities} review={timeChangeReview} initial={weatherSeed} />
             <JourneyCheck key={JSON.stringify(activities.map(a => [a.id, a.start, a.minutes, a.place?.id, a.googlePlaceId, a.kind, a.title]).concat([[date, current.stop.timezone]]))} activities={activities} onEdit={onEdit} timeChangeReview={timeChangeReview} visitDate={date} timezone={current.stop.timezone} />
+            {activities.some(a=>a.completed||a.skipped)&&<div className="day-recorded-controls"><label><input type="checkbox" checked={showRecorded} onChange={e=>setShowRecorded(e.target.checked)}/> Show recorded outcomes</label>{!showRecorded&&<p role="status">{activities.filter(a=>a.completed||a.skipped).length} completed or missed {activities.filter(a=>a.completed||a.skipped).length===1?"record":"records"} hidden. Completed time stays occupied; missed activities leave their time open.</p>}</div>}
             <div className="day-timeline">
-              {entries.map((entry) =>
+              {visibleDayEntries(entries, showRecorded).map((entry) =>
                 entry.type === "gap" ? (
                   <div className="day-gap" key={`gap-${entry.start}`}>
                     <time>
@@ -417,7 +499,7 @@ export default function ItineraryWorkspace({
                   </div>
                 ) : (
                   <article
-                    className={`day-activity ${conflicts[entry.activity.id] ? "has-conflict" : ""} ${entry.activity.completed ? "is-completed" : ""}`}
+                    className={`day-activity ${conflicts[entry.activity.id] ? "has-conflict" : ""} ${entry.activity.completed ? "is-completed" : ""} ${entry.activity.skipped ? "is-skipped" : ""}`}
                     key={entry.activity.id}
                   >
                     <time>
@@ -434,10 +516,11 @@ export default function ItineraryWorkspace({
                         {kindName[entry.activity.kind ?? "custom"]}
                         {entry.activity.fixed ? " · Fixed" : ""}
                         {entry.activity.booked ? " · Booked elsewhere" : ""}
+                        {entry.activity.skipped ? " · Didn’t happen" : ""}
                       </div>
                       <h3>{entry.activity.title}</h3>
                       <p>{entry.activity.minutes} minutes</p>
-                      {entry.activity.place && <PlaceAttribution place={entry.activity.place} />}
+                      {entry.activity.place && <>{entry.activity.title !== entry.activity.place.name && <small>Map location: {entry.activity.place.name}</small>}<PlaceAttribution place={entry.activity.place} /></>}
                       {conflicts[entry.activity.id]?.map((issue) => (
                         <p className="day-item-conflict" key={issue}>
                           {issue}
@@ -455,7 +538,7 @@ export default function ItineraryWorkspace({
                               onUpdate({
                                 activities: trip.activities.map((a) =>
                                   a.id === entry.activity.id
-                                    ? { ...a, completed: e.target.checked }
+                                    ? { ...a, completed: e.target.checked, ...(e.target.checked ? { skipped: false } : {}) }
                                     : a,
                                 ),
                               })
