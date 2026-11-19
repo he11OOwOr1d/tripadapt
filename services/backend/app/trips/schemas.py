@@ -12,10 +12,52 @@ class StrictModel(BaseModel):
     model_config = ConfigDict(extra="forbid", from_attributes=True)
 
 
+def no_controls(value):
+    if any(ord(c) < 32 or ord(c) == 127 for c in value):
+        raise ValueError("Control characters are not allowed")
+    return value
+
+
+class Lodging(StrictModel):
+    """Where the traveler is staying. A record of their choice: never a booking,
+    availability or price, and never checked against the supplier."""
+
+    name: str = Field(min_length=1, max_length=120)
+    address: str = Field(default="", max_length=200)
+    latitude: float | None = Field(default=None, ge=-90, le=90, allow_inf_nan=False)
+    longitude: float | None = Field(default=None, ge=-180, le=180, allow_inf_nan=False)
+    # Set only when the place was picked from a map search.
+    external_id: str | None = Field(
+        default=None,
+        max_length=500,
+        pattern=r"^((node|way|relation)/[1-9][0-9]*|geoapify/[A-Za-z0-9_-]{1,400})$",
+    )
+    source: str = Field(default="", max_length=120)
+    booked: bool = False
+    check_in: str = Field(default="", pattern=r"^$|^([01][0-9]|2[0-3]):[0-5][0-9]$")
+    check_out: str = Field(default="", pattern=r"^$|^([01][0-9]|2[0-3]):[0-5][0-9]$")
+
+    @field_validator("name", "address", "source")
+    @classmethod
+    def plain_text(cls, value):
+        return no_controls(value)
+
+    @model_validator(mode="after")
+    def consistent(self):
+        if (self.latitude is None) != (self.longitude is None):
+            raise ValueError("Provide both coordinates or neither")
+        if self.latitude == 0 and self.longitude == 0:
+            raise ValueError("Coordinates 0, 0 are not a place")
+        if self.external_id and self.latitude is None:
+            raise ValueError("A searched place needs its coordinates")
+        return self
+
+
 class StayPreference(StrictModel):
     style: str = Field(max_length=100)
     rate: str = Field(pattern=r"^$|^\d+(\.\d{1,2})?$")
     basis: Literal["room", "bed"]
+    lodging: Lodging | None = None
 
 
 class TravelPreference(StrictModel):

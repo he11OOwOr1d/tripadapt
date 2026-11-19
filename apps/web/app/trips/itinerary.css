@@ -1006,3 +1006,25 @@ fieldset.live-acceptance { border-inline: 0; min-width: 0; }
 .day-activity.is-map-selected { outline: 3px solid #a8480d; outline-offset: 4px; }
 @media (prefers-reduced-motion: reduce) { .day-map-panel .map-pin.is-selected { transform: none; } }
 @media (max-width: 640px) { .day-map-canvas { height: 18rem; } }
+
+/* Where you're staying */
+.lodging-panel { margin: 1rem 0; padding: 1rem; border: 1px solid #bdc4b4; border-radius: .25rem; }
+.lodging-head { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; justify-content: space-between; }
+.lodging-head h3 { margin: 0; }
+.lodging-panel p { max-width: 65ch; line-height: 1.5; margin: .5rem 0; }
+.lodging-panel small { display: block; margin-block: .4rem; line-height: 1.5; max-width: 65ch; overflow-wrap: anywhere; }
+.lodging-panel button { min-height: 44px; padding: .6rem .9rem; font: inherit; color: inherit; background: transparent; border: 1px solid currentColor; border-radius: .25rem; cursor: pointer; }
+.lodging-panel button[type="submit"] { background: #283d32; color: #f8f7f1; border-color: #283d32; }
+.lodging-panel button:disabled { opacity: .55; cursor: not-allowed; }
+.lodging-panel button:focus-visible, .lodging-panel input:focus-visible { outline: 3px solid #476442; outline-offset: 3px; }
+.lodging-form { display: grid; gap: .75rem; }
+.lodging-form label { display: grid; gap: .3rem; }
+.lodging-form input:not([type="checkbox"]) { min-height: 44px; padding: .5rem .6rem; font: inherit; width: 100%; box-sizing: border-box; }
+.lodging-times { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: .75rem; }
+.lodging-panel .lodging-booked { display: inline-flex; flex-direction: row; align-items: center; gap: .6rem; min-height: 44px; cursor: pointer; }
+.lodging-booked input { width: 1.15rem; height: 1.15rem; margin: 0; }
+.lodging-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.lodging-results { list-style: none; margin: 0; padding: 0; display: grid; gap: .75rem; }
+.lodging-results li { display: grid; gap: .3rem; padding: .6rem; border: 1px solid #d3d8cb; }
+.day-map-panel .map-pin.is-lodging { border-radius: .4rem .4rem 50% 50%; background: #3a4f7a; color: #f8f7f1; font-size: 1.15rem; }
+.day-map-panel .map-pin.is-lodging.is-selected { background: #a8480d; color: #fff; }

@@ -130,12 +130,12 @@ export default function DayMap({ model, selectedId, onSelect }: { model: MapMode
         }
       });
       for (const p of model.points) {
-        const label = p.kind === "stop" && p.order === 0 ? `${p.label}, destination centre` : `${p.kind === "stop" ? "Destination" : "Visit"} ${p.order}: ${p.label}, ${p.detail}`;
+        const label = p.kind === "lodging" ? `Your stay: ${p.label}, ${p.detail}` : p.kind === "stop" && p.order === 0 ? `${p.label}, destination centre` : `${p.kind === "stop" ? "Destination" : "Visit"} ${p.order}: ${p.label}, ${p.detail}`;
         let pin = pins.current.get(p.id);
         if (!pin) {
           const el = document.createElement("button");
           el.type = "button";
-          el.className = `map-pin ${p.kind === "stop" ? "is-stop" : ""}`;
+          el.className = `map-pin ${p.kind === "stop" ? "is-stop" : p.kind === "lodging" ? "is-lodging" : ""}`;
           el.addEventListener("click", (event) => {
             event.stopPropagation();
             onSelectRef.current(p.id);
@@ -144,7 +144,7 @@ export default function DayMap({ model, selectedId, onSelect }: { model: MapMode
           pins.current.set(p.id, pin);
         }
         pin.marker.setLngLat([p.lng, p.lat]);
-        pin.el.textContent = p.order > 0 ? String(p.order) : "◆";
+        pin.el.textContent = p.order > 0 ? String(p.order) : p.kind === "lodging" ? "⌂" : "◆";
         pin.el.setAttribute("aria-label", label);
         pin.el.title = label;
       }

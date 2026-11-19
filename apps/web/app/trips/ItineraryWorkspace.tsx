@@ -28,6 +28,8 @@ import {
 import { planningCosts, planningProblems } from "../../lib/trips/planning";
 import { validCoordinates } from "../../lib/trips/day-map";
 import DayMapPanel from "./DayMapPanel";
+import LodgingPanel from "./LodgingPanel";
+import { withLodging } from "../../lib/trips/lodging";
 const kindName = {
   custom: "Activity",
   meal: "Meal",
@@ -466,7 +468,8 @@ export default function ItineraryWorkspace({
             </div>}
             {readinessOpen && timeChangeReview && <ReplanningReadiness key={`${current.stop.id}:${localDay}`} tripId={timeChangeReview.account.id} onEditActivity={onReadinessEdit} initialBasis={readinessBasis} onAccepted={timeChangeReview.onAccepted} stopId={current.stop.id} day={localDay-1} onClose={()=>setReadinessOpen(false)} />}
             {delayOpen && timeChangeReview && <DayDelayReview key={`${current.stop.id}:${localDay}`} activities={activities} place={current.stop.name} timezone={current.stop.timezone} review={timeChangeReview} initial={delaySeed} onEditActivity={timeChangeReview.onEditActivity ? (proposal,id)=>{const opened=timeChangeReview.onEditActivity!(proposal,id);if(opened)setDelayOpen(false);return opened;} : undefined} onClose={()=>setDelayOpen(false)} />}
-            <DayMapPanel key={`${current.stop.id}:${localDay}`} stop={current.stop} stops={schedule.map((s) => s.stop)} activities={activities} open={mapOpen} onOpenChange={setMapOpen} selectedId={mapSelected} onSelect={selectOnMap} />
+            <LodgingPanel key={current.stop.id} stop={current.stop} lodging={trip.stayPreferences?.[current.stop.id]?.lodging} disabled={editorOpen} onSave={(lodging) => onUpdate({ stayPreferences: withLodging(trip.stayPreferences, current.stop.id, lodging) })} />
+            <DayMapPanel key={`${current.stop.id}:${localDay}`} stop={current.stop} stops={schedule.map((s) => s.stop)} activities={activities} lodging={trip.stayPreferences?.[current.stop.id]?.lodging} open={mapOpen} onOpenChange={setMapOpen} selectedId={mapSelected} onSelect={selectOnMap} />
             <p className="day-window">
               Local times · open gaps shown around an 08:00–22:00 planning day
               {transfers.length ? " · allow for untimed transfers" : ""}

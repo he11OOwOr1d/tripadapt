@@ -3,7 +3,7 @@ export type ActivityPlace = {
   destination_reference_id: string;
   external_id: string;
   name: string;
-  category: "museum" | "gallery" | "attraction" | "park" | "viewpoint";
+  category: "museum" | "gallery" | "attraction" | "park" | "viewpoint" | "lodging";
   latitude: number;
   longitude: number;
   source: string;
@@ -23,7 +23,7 @@ export function isActivityPlace(value: unknown): value is ActivityPlace {
   const place = value as Record<string, unknown>;
   return ["id", "destination_reference_id", "external_id", "name", "source", "retrieved_at"].every(key => typeof place[key] === "string") &&
     /^((node|way|relation)\/[1-9][0-9]*|geoapify\/[A-Za-z0-9_-]{1,400})$/.test(String(place.external_id)) &&
-    ["museum", "gallery", "attraction", "park", "viewpoint"].includes(String(place.category)) &&
+    ["museum", "gallery", "attraction", "park", "viewpoint", "lodging"].includes(String(place.category)) &&
     typeof place.latitude === "number" && Number.isFinite(place.latitude) && Math.abs(place.latitude) <= 90 &&
     typeof place.longitude === "number" && Number.isFinite(place.longitude) && Math.abs(place.longitude) <= 180 && Number.isFinite(Date.parse(String(place.retrieved_at)));
 }

@@ -2,6 +2,10 @@
 
 Local implementation and verification status. The dated sections below preserve the evidence recorded at each stage.
 
+## Where you stay — 19 November 2026 (local, committed, not pushed or deployed)
+
+Each destination with nights has a **Where you're staying** panel: name, address, check-in/out, "booked by me" and an optional place from a nearby-stays search (Geoapify/OpenStreetMap, 12 results within 5 km). A stay with a location is a blue pin on the day map. It is the traveler's own record; nothing is booked, priced or checked. No migration: it lives in `stay_preferences`. 549 backend tests (18 new) and 201 frontend tests pass, build passes, and a live search returned 12 Jaipur stays. **Not verified:** saving to an account trip, the pin on the real basemap and the hosted app. Deploy order when approved: backend first (it must accept `lodging`), then frontend. See [the learning note](../lodging-learning.md).
+
 ## Itinerary map — 19 November 2026 (live on the hosted app)
 
 A day map and a whole-route map (MapLibre with Geoapify tiles, lazy loaded, with two-way selection with the timeline and a plain fallback) are on `main`. The owner added a separate browser key (`NEXT_PUBLIC_GEOAPIFY_MAP_KEY`) in Vercel and redeployed; the hosted map renders the basemap and was checked with screenshots, which led to a pin-color and duplicate-credit fix. Large trips and real touch gestures were not exercised. See [the learning note](../day-map-learning.md).

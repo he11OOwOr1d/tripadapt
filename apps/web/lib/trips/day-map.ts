@@ -1,11 +1,12 @@
 import type { Activity, Stop } from "./adapter";
+import type { Lodging } from "./lodging";
 
 // Pure map models. The map never owns trip data: it renders what the itinerary
 // already holds, and anything without usable coordinates stays in the timeline.
 export type MapScope = "day" | "route";
 export type MapPoint = {
   id: string;
-  kind: "activity" | "stop";
+  kind: "activity" | "stop" | "lodging";
   /** 1-based position along the line; 0 marks a destination centre. */
   order: number;
   label: string;
@@ -25,6 +26,7 @@ export type MapModel = {
 };
 
 export const STOP_ID_PREFIX = "stop:";
+export const LODGING_ID_PREFIX = "lodging:";
 
 /** Null Island (0, 0) is almost always a missing value, so it is not a place. */
 export function validCoordinates(lat: unknown, lng: unknown): boolean {
@@ -61,7 +63,7 @@ function finish(scope: MapScope, points: MapPoint[], unmapped: MapModel["unmappe
 }
 
 /** One destination day: the stay's centre plus mapped visits in timeline order. */
-export function dayMapModel(stop: Stop | undefined, activities: Activity[]): MapModel {
+export function dayMapModel(stop: Stop | undefined, activities: Activity[], lodging?: Lodging | null): MapModel {
   const points: MapPoint[] = [];
   const unmapped: MapModel["unmapped"] = [];
   const centre = stop?.location;
@@ -74,6 +76,20 @@ export function dayMapModel(stop: Stop | undefined, activities: Activity[]): Map
       detail: "Destination centre",
       lng: centre.longitude,
       lat: centre.latitude,
+    });
+  }
+  // Type-only import above: lodging.ts imports this file, so no runtime cycle.
+  const home = lodging && validCoordinates(lodging.latitude, lodging.longitude) ? { lat: lodging.latitude as number, lng: lodging.longitude as number } : null;
+  if (stop && lodging && home) {
+    // The traveler's own record of where they sleep; not part of the visit line.
+    points.push({
+      id: LODGING_ID_PREFIX + stop.id,
+      kind: "lodging",
+      order: 0,
+      label: lodging.name,
+      detail: lodging.booked ? "Your stay · marked booked by you" : "Your stay",
+      lng: home.lng,
+      lat: home.lat,
     });
   }
   const ordered = [...activities]
@@ -127,5 +143,6 @@ export function mapSummary(model: MapModel): string {
   const n = model.points.filter((p) => p.order > 0).length;
   const what = model.scope === "route" ? (n === 1 ? "destination" : "destinations") : n === 1 ? "mapped visit" : "mapped visits";
   const missing = model.unmapped.length;
-  return `${n} ${what} shown${missing ? `; ${missing} without a map location stay in the list only` : ""}.`;
+  const stay = model.points.some((p) => p.kind === "lodging") ? "; your recorded stay is marked" : "";
+  return `${n} ${what} shown${stay}${missing ? `; ${missing} without a map location stay in the list only` : ""}.`;
 }

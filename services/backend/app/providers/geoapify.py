@@ -16,6 +16,7 @@ CATEGORIES = {
     "attraction": "tourism.attraction",
     "park": "leisure.park",
     "viewpoint": "tourism.attraction.viewpoint",
+    "lodging": "accommodation",
 }
 
 

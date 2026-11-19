@@ -2,17 +2,18 @@
 import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
 import type { Activity, Stop } from "../../lib/trips/adapter";
+import type { Lodging } from "../../lib/trips/lodging";
 import { dayMapModel, mapSummary, routeMapModel, type MapScope } from "../../lib/trips/day-map";
 
 // MapLibre is large, so it loads only after someone opens the map.
 const DayMap = dynamic(() => import("./DayMap"), { ssr: false, loading: () => <p role="status">Loading the map…</p> });
 
-export default function DayMapPanel({ stop, stops, activities, open, onOpenChange, selectedId, onSelect }: {
-  stop: Stop; stops: Stop[]; activities: Activity[]; open: boolean; onOpenChange: (open: boolean) => void;
+export default function DayMapPanel({ stop, stops, activities, lodging, open, onOpenChange, selectedId, onSelect }: {
+  stop: Stop; stops: Stop[]; activities: Activity[]; lodging?: Lodging | null; open: boolean; onOpenChange: (open: boolean) => void;
   selectedId?: string; onSelect: (id: string) => void;
 }) {
   const [scope, setScope] = useState<MapScope>("day");
-  const model = useMemo(() => (scope === "day" ? dayMapModel(stop, activities) : routeMapModel(stops)), [scope, stop, stops, activities]);
+  const model = useMemo(() => (scope === "day" ? dayMapModel(stop, activities, lodging) : routeMapModel(stops)), [scope, stop, stops, activities, lodging]);
   const selected = model.points.find((p) => p.id === selectedId);
   return <section className="day-map-panel" aria-label="Map">
     <div className="day-map-head">

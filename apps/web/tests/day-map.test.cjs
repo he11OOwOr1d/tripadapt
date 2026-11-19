@@ -56,3 +56,21 @@ test('the text alternative agrees with the model and is honest about what is mis
 test('the input is never mutated',()=>{
   const list=[act('b','12:00',37.78,-122.4),act('a','10:00',37.79,-122.41)];const before=JSON.stringify(list);out.dayMapModel(stop,list);assert.equal(JSON.stringify(list),before);
 });
+
+const home={name:'Hotel Aurora',latitude:37.775,longitude:-122.41,booked:true};
+test('a recorded stay with a location is an unnumbered pin outside the visit line',()=>{
+  const m=out.dayMapModel(stop,[act('a','10:00',37.79,-122.41),act('b','12:00',37.78,-122.4)],home);
+  const l=m.points.find(p=>p.kind==='lodging');
+  assert.deepEqual(J([l.id,l.order,l.label,l.detail]),['lodging:s1',0,'Hotel Aurora','Your stay · marked booked by you']);
+  assert.deepEqual(J(m.links),[{from:'a',to:'b'}]);
+  assert.match(out.mapSummary(m),/2 mapped visits shown; your recorded stay is marked/);
+});
+test('a stay without a usable location, or without a stop, adds nothing',()=>{
+  for(const bad of [{name:'X'},{name:'X',latitude:0,longitude:0},{name:'X',latitude:91,longitude:1},null,undefined])
+    assert.equal(out.dayMapModel(stop,[],bad).points.filter(p=>p.kind==='lodging').length,0);
+  assert.equal(out.dayMapModel(undefined,[],home).points.length,0);
+});
+test('the stay widens the bounds so it is never off screen',()=>{
+  const m=out.dayMapModel(stop,[act('a','10:00',37.79,-122.41)],{name:'Far',latitude:37.5,longitude:-122.6});
+  assert.deepEqual(J(m.bounds),[[-122.6,37.5],[-122.41,37.79]]);
+});

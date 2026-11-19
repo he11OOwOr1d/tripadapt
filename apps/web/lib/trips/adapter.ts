@@ -1,5 +1,6 @@
 import { isActivityPlace, type ActivityPlace } from "./activity-search";
 import type { PlaceResult } from "./place-search";
+import { isLodging, type Lodging } from "./lodging";
 /** UI view models, NOT published API schemas. Replace the adapter after OpenAPI is available. */
 export type Stop = {
   id: string;
@@ -43,7 +44,7 @@ export type Trip = {
   returnToOrigin?: boolean;
   stayPreferences?: Record<
     string,
-    { style: string; rate: string; basis: "room" | "bed" }
+    { style: string; rate: string; basis: "room" | "bed"; lodging?: Lodging | null }
   >;
   costRecords?: CostRecord[];
   /** Traveler attests every cost is entered; required for a strict-budget check. */
@@ -312,7 +313,8 @@ export function isTrip(value: unknown): value is Trip {
       (p) =>
         typeof p.style === "string" &&
         optionalAmount(p.rate) &&
-        ["bed", "room"].includes(String(p.basis)),
+        ["bed", "room"].includes(String(p.basis)) &&
+        (p.lodging === undefined || p.lodging === null || isLodging(p.lodging)),
     ) &&
     optionalRecord(
       t.travelPreferences,

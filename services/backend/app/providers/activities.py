@@ -18,14 +18,24 @@ from pydantic import Field, ValidationError
 from app.config import settings
 from app.trips.schemas import StrictModel
 
-Category = Literal["museum", "gallery", "attraction", "park", "viewpoint"]
+Category = Literal["museum", "gallery", "attraction", "park", "viewpoint", "lodging"]
 FILTERS = {
     "museum": "[tourism=museum]",
     "gallery": "[tourism=gallery]",
     "attraction": "[tourism=attraction]",
     "park": "[leisure=park]",
     "viewpoint": "[tourism=viewpoint]",
+    "lodging": '[tourism~"^(hotel|guest_house|hostel|apartment|motel|chalet)$"]',
 }
+LODGING_TYPES = {"hotel", "guest_house", "hostel", "apartment", "motel", "chalet"}
+
+
+def category_matches(category, tags):
+    if category == "lodging":
+        return tags.get("tourism") in LODGING_TYPES or tags.get("tourism") == "lodging"
+    return tags.get("tourism") == category or (
+        category == "park" and tags.get("leisure") == "park"
+    )
 
 
 class ActivityPlace(StrictModel):
@@ -151,9 +161,7 @@ class ActivityDiscovery:
             for raw in data["elements"][:40]:
                 try:
                     tags = raw["tags"]
-                    if tags.get("tourism") != category and not (
-                        category == "park" and tags.get("leisure") == "park"
-                    ):
+                    if not category_matches(category, tags):
                         continue
                     center = raw.get("center", raw)
                     place = ActivityPlace(
