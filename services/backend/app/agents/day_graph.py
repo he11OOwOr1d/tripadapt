@@ -105,16 +105,19 @@ def planning_window(plan, stop, day):
 
     def recorded(i, field):
         entry = prefs.get(legs[i]["key"]) if 0 <= i < len(legs) else None
-        return getattr(entry, field) if entry else ""
+        empty = 0 if field.endswith("buffer") else ""
+        return getattr(entry, field) if entry else empty
 
     if day == 0:
         arrival = recorded(index, "arrival")
     if stop.desired_nights is not None and day == stop.desired_nights:
         departure = recorded(index + 1, "departure")
     if arrival:
-        start = max(start, clock_minutes(arrival))
+        start = max(start, clock_minutes(arrival) + recorded(index, "arrival_buffer"))
     if departure:
-        end = min(end, clock_minutes(departure))
+        end = min(
+            end, clock_minutes(departure) - recorded(index + 1, "departure_buffer")
+        )
     return start, end, arrival, departure
 
 

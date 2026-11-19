@@ -9,18 +9,18 @@ const trip=(stops,prefs,acts)=>({origin:'Delhi',stops,returnToOrigin:true,travel
 const legKey=(trp,i)=>planning.routeLegs(trp)[i].key;
 
 test('a booking is validated like the server does and trimmed',()=>{
-  const ok=J(t.finishBooking({departure:'09:15',arrival:'',reference:'  PNR 4X  ',booked:true}));
-  assert.deepEqual(ok,{booking:{departure:'09:15',arrival:'',reference:'PNR 4X',booked:true}});
-  for(const bad of [{departure:'24:00'},{departure:'9:15'},{arrival:'noon'},{reference:'x'.repeat(101)},{reference:'a\nb'},{reference:'a\x07'}]){
-    assert.ok('error' in t.finishBooking({departure:'',arrival:'',reference:'',booked:false,...bad}),JSON.stringify(bad));
+  const ok=J(t.finishBooking({departure:'09:15',arrival:'',reference:'  PNR 4X  ',booked:true,arrival_buffer:30,departure_buffer:90}));
+  assert.deepEqual(ok,{booking:{departure:'09:15',arrival:'',reference:'PNR 4X',booked:true,arrival_buffer:30,departure_buffer:90}});
+  for(const bad of [{departure:'24:00'},{departure:'9:15'},{arrival:'noon'},{reference:'x'.repeat(101)},{reference:'a\nb'},{reference:'a\x07'},{arrival_buffer:-1},{arrival_buffer:241},{departure_buffer:1.5},{departure_buffer:NaN}]){
+    assert.ok('error' in t.finishBooking({departure:'',arrival:'',reference:'',booked:false,arrival_buffer:0,departure_buffer:0,...bad}),JSON.stringify(bad));
   }
 });
 test('saving a booking changes only the booking fields of that journey',()=>{
   const prefs={a:{mode:'Rail',hours:'5',overnight:1,rate:'20',basis:'vehicle'},b:{mode:'',hours:'',overnight:0,rate:'',basis:'person'}};
-  const next=J(t.withTransferBooking(prefs,'a',{departure:'09:00',arrival:'12:00',reference:'R',booked:true}));
-  assert.deepEqual(next.a,{mode:'Rail',hours:'5',overnight:1,rate:'20',basis:'vehicle',departure:'09:00',arrival:'12:00',reference:'R',booked:true});
+  const next=J(t.withTransferBooking(prefs,'a',{departure:'09:00',arrival:'12:00',reference:'R',booked:true,arrival_buffer:20,departure_buffer:60}));
+  assert.deepEqual(next.a,{mode:'Rail',hours:'5',overnight:1,rate:'20',basis:'vehicle',departure:'09:00',arrival:'12:00',reference:'R',booked:true,arrival_buffer:20,departure_buffer:60});
   assert.deepEqual(next.b,prefs.b);
-  assert.deepEqual(J(t.withTransferBooking(undefined,'k',{departure:'',arrival:'10:00',reference:'',booked:false})).k,{mode:'',hours:'',overnight:0,rate:'',basis:'person',departure:'',arrival:'10:00',reference:'',booked:false});
+  assert.deepEqual(J(t.withTransferBooking(undefined,'k',{departure:'',arrival:'10:00',reference:'',booked:false,arrival_buffer:0,departure_buffer:0})).k,{mode:'',hours:'',overnight:0,rate:'',basis:'person',departure:'',arrival:'10:00',reference:'',booked:false,arrival_buffer:0,departure_buffer:0});
   assert.equal(prefs.a.departure,undefined);
 });
 test('the summary says what was entered and that it was not checked',()=>{
@@ -63,3 +63,18 @@ test('the second stop uses the legs between the stops, not the trip start',()=>{
 test('merging keeps both sides',()=>{
   assert.deepEqual(J(t.mergeIssues({a:['x'],b:['y']},{b:['z'],c:['w']})),{a:['x'],b:['y','z'],c:['w']});
 });
+test('buffers widen the margin and say so, and are shown even without a recorded time, but only flag next to one',()=>{
+  const stops=[stop('s1',1)];
+  const base=trip(stops,{},[]);
+  const prefs={[legKey(base,0)]:{mode:'',hours:'',overnight:0,rate:'',basis:'person',arrival:'10:00',arrival_buffer:60},[legKey(base,1)]:{mode:'',hours:'',overnight:0,rate:'',basis:'person',departure:'14:00',departure_buffer:90}};
+  const acts=[act('before','s1',1,'09:30',30),act('settling','s1',1,'10:30',30),act('ok','s1',1,'11:00',30),
+    act('gate','s1',2,'11:00',100),act('fine','s1',2,'10:00',60),act('over','s1',2,'13:30',60)];
+  const out=J(t.transferConflicts(trip(stops,prefs,acts),'s1',1));
+  assert.deepEqual(out,{before:['Starts before your recorded arrival at 10:00.'],settling:['Starts inside the 60 minutes you allowed to settle in after arriving at 10:00.']});
+  const last=J(t.transferConflicts(trip(stops,prefs,acts),'s1',2));
+  assert.deepEqual(last,{gate:['Ends inside the 90 minutes you allowed before departing at 14:00.'],over:['Runs past your recorded departure at 14:00.']});
+  assert.match(t.bookingSummary({arrival:'10:00',arrival_buffer:60,departure:'14:00',departure_buffer:90}),/60 min allowed to settle in · be there 90 min before/);
+  assert.equal(t.bookingSummary({arrival_buffer:60}),'Your planned times · 60 min allowed to settle in. As you entered it; not checked with the supplier.');
+  assert.equal(t.hasBooking({arrival_buffer:30}),true);
+});
+

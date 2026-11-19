@@ -11166,6 +11166,20 @@
             "type": "boolean",
             "title": "Booked",
             "default": false
+          },
+          "arrival_buffer": {
+            "type": "integer",
+            "maximum": 240.0,
+            "minimum": 0.0,
+            "title": "Arrival Buffer",
+            "default": 0
+          },
+          "departure_buffer": {
+            "type": "integer",
+            "maximum": 240.0,
+            "minimum": 0.0,
+            "title": "Departure Buffer",
+            "default": 0
           }
         },
         "additionalProperties": false,

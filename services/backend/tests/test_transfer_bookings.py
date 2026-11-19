@@ -14,12 +14,19 @@ def test_a_journey_without_booking_details_is_unchanged():
     preference = leg()
     assert preference.departure == "" and preference.arrival == ""
     assert preference.reference == "" and preference.booked is False
+    assert preference.arrival_buffer == 0 and preference.departure_buffer == 0
 
 
 def test_booking_details_are_recorded_as_entered():
     preference = leg(
-        departure="09:15", arrival="12:40", reference="PNR 4X7Q", booked=True
+        departure="09:15",
+        arrival="12:40",
+        reference="PNR 4X7Q",
+        booked=True,
+        arrival_buffer=30,
+        departure_buffer=90,
     )
+    assert (preference.arrival_buffer, preference.departure_buffer) == (30, 90)
     assert (preference.departure, preference.arrival) == ("09:15", "12:40")
     assert preference.reference == "PNR 4X7Q" and preference.booked is True
 
@@ -35,6 +42,11 @@ def test_booking_details_are_recorded_as_entered():
         dict(reference="x" * 101),
         dict(reference="PNR\nINJECT"),
         dict(reference="bell\x07"),
+        dict(arrival_buffer=-1),
+        dict(arrival_buffer=241),
+        dict(departure_buffer=-5),
+        dict(departure_buffer=1000),
+        dict(arrival_buffer="soon"),
         dict(unknown="field"),
     ],
 )

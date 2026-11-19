@@ -884,3 +884,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026. The day graph narrows its planning window to the traveler's recorded arrival (first day at a stop) and departure (last day), passes it to the model, and enforces it after the answer so a clash is repaired rather than trusted. 3 backend tests (610 pass); live with real Groq on the disposable trip: with arrival 11:00 the proposal started at 11:15. Proposal discarded, details removed. Committed locally; not pushed. See [the booking note](../transfer-bookings-learning.md).
 
+## 191. Add visible buffers to recorded journeys
+
+20 November 2026. Two optional buffers (settling in after arrival, being at the gate before departure) on each recorded journey, shown in the summary, used in the day flags and in the AI planner's enforced window. 616 backend and 233 frontend tests pass; verified live and signed in (flag, validation, summary, axe). Committed locally; not pushed. See [the booking note](../transfer-bookings-learning.md).
+

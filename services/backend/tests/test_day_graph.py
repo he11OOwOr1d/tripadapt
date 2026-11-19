@@ -239,3 +239,20 @@ def _run_text(plan, stop, day):
     provider = RecordingProvider([answer("10:00")])
     run_day_graph(plan, stop, day, uuid4(), provider)
     return "".join(provider.seen)
+
+
+def test_buffers_widen_the_margin_around_recorded_journeys():
+    plan, stop = base()
+    with_journey(plan, 0, arrival="10:00", arrival_buffer=60)
+    # 10:30 is after the arrival but inside the hour to settle in, so it is repaired.
+    arrival = RecordingProvider([answer("10:30"), answer("11:00")])
+    result, _ = run_day_graph(plan, stop, 0, uuid4(), arrival)
+    assert arrival.schema_calls == 2
+    assert result.activities[-1].local_start_time.hour == 11
+    plan, stop = base()
+    with_journey(plan, 1, departure="14:00", departure_buffer=90)
+    # The window ends 90 minutes before 14:00, at 12:30: an hour block must start by 11:30.
+    departure = RecordingProvider([answer("12:00"), answer("11:30")])
+    result, _ = run_day_graph(plan, stop, 20, uuid4(), departure)
+    assert departure.schema_calls == 2
+    assert result.activities[-1].local_start_time.hour == 11
