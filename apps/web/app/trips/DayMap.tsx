@@ -55,7 +55,7 @@ export default function DayMap({ model, selectedId, onSelect }: { model: MapMode
         dragRotate: false,
         pitchWithRotate: false,
         touchPitch: false,
-        attributionControl: { compact: true, customAttribution: '<a href="https://www.geoapify.com/" target="_blank" rel="noopener noreferrer">Powered by Geoapify</a>' },
+        attributionControl: { compact: true },
       });
     } catch {
       setState("unsupported");
@@ -149,7 +149,7 @@ export default function DayMap({ model, selectedId, onSelect }: { model: MapMode
         pin.el.title = label;
       }
       setLinks();
-      if (model.bounds) m.fitBounds(model.bounds, { padding: 56, maxZoom: 15, duration: 0 });
+      if (model.bounds) m.fitBounds(model.bounds, { padding: { top: 56, right: 56, left: 56, bottom: 84 }, maxZoom: 15, duration: 0 });
       else if (model.center) m.jumpTo({ center: model.center, zoom: 14 });
     };
     if (loaded.current || m.isStyleLoaded()) sync();

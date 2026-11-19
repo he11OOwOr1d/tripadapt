@@ -15,6 +15,7 @@
 
 ## Lessons
 
+- **Look at it.** DOM counts and computed values said the map worked while it looked wrong; only a screenshot showed the style override and the duplicate credit. A visual check belongs in the verification of any UI change.
 - Do not infer the cause from the symptom. The plain-map fallback fired because the **worker** failed, not the key or style; direct requests to the style returned 200. Recording the first error's details found it in one step.
 - A GPU canvas cannot be read back for a check, so the component exposes `data-idle` and `data-rendered`, the count of features the map actually drew, which lets a test prove the basemap rendered.
 
@@ -22,8 +23,9 @@
 
 - **Automated.** 192 frontend tests (9 new for the model), typecheck, and the production build.
 - **Live browser, local app against the hosted data, on the QA trip `452b84e7-4ca4-4f1c-b3bd-9dbce366c2c9`.** With a key: the map reached idle and rendered about 6,400 features at 539 px and 4,400 at 390 px, with three pins, the dashed link and the Geoapify, OpenMapTiles and OpenStreetMap credits. A pin click highlighted its row and a row button highlighted its pin, in both directions, with a status announcement. The Whole route view showed the one destination. Pins are keyboard-focusable 44 px buttons; there was no horizontal overflow at 539 or 390 px; touch uses cooperative gestures. Without a key: the plain map, three pins, an honest caption and zero Geoapify requests.
-- **Not verified.** A screenshot of the finished map (the capture tool could not render frames with the window hidden), so appearance rests on the structural checks above; the hosted app, which needs the browser key added first; a trip with many destinations or very long days; and two-finger gestures on a real touch device.
+- **Hosted app, after the owner added the separate browser key and redeployed.** The production map rendered about 9,700 features with three pins, selection worked, and the style request carried the separate browser key (fingerprint compared, never the backend key). A real screenshot then showed what the structural checks had not: a global `button` style was overriding the pin colors (one pin pale beige, every numeral dark green, and dark green on orange for the selected pin, which is poor contrast), and the Geoapify credit appeared twice. Fixed by scoping the pin styles under the panel, using a darker orange (#a8480d, about 5.8:1 with white), removing the duplicate credit, and adding bottom padding so pins clear the attribution bar; a second screenshot confirmed it.
+- **Not verified.** A trip with many destinations or very long days, and two-finger gestures on a real touch device.
 
 ## To use it on the hosted app
 
-Create a second Geoapify key for the browser (and restrict its allowed origins if the dashboard offers it), add it to Vercel as `NEXT_PUBLIC_GEOAPIFY_MAP_KEY`, and redeploy the frontend. Until then the hosted map shows the plain fallback.
+Create a second Geoapify key for the browser (and restrict its allowed origins if the dashboard offers it), add it to Vercel as `NEXT_PUBLIC_GEOAPIFY_MAP_KEY`, and redeploy the frontend. Done on 19 November. Without the key the hosted map shows the plain fallback.

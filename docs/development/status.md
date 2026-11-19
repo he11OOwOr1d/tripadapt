@@ -2,9 +2,9 @@
 
 Local implementation and verification status. The dated sections below preserve the evidence recorded at each stage.
 
-## Itinerary map — 19 November 2026 (built, not yet on the hosted app)
+## Itinerary map — 19 November 2026 (live on the hosted app)
 
-A day map and a whole-route map (MapLibre with Geoapify tiles, lazy loaded, with two-way selection with the timeline and a plain fallback) are on `main`. They need a separate browser key (`NEXT_PUBLIC_GEOAPIFY_MAP_KEY`) added in Vercel before the hosted app shows a basemap; until then it shows the labeled plain map. Verified in a local browser against the hosted data; no screenshot was captured and large trips were not exercised. See [the learning note](../day-map-learning.md).
+A day map and a whole-route map (MapLibre with Geoapify tiles, lazy loaded, with two-way selection with the timeline and a plain fallback) are on `main`. The owner added a separate browser key (`NEXT_PUBLIC_GEOAPIFY_MAP_KEY`) in Vercel and redeployed; the hosted map renders the basemap and was checked with screenshots, which led to a pin-color and duplicate-credit fix. Large trips and real touch gestures were not exercised. See [the learning note](../day-map-learning.md).
 
 ## Google replaced by Geoapify — 19 November 2026 (merged to main and deployed)
 
