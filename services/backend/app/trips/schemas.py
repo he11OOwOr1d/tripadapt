@@ -33,6 +33,9 @@ class Lodging(StrictModel):
         pattern=r"^((node|way|relation)/[1-9][0-9]*|geoapify/[A-Za-z0-9_-]{1,400})$",
     )
     source: str = Field(default="", max_length=120)
+    # The retained place record behind a searched stay, so it can serve as the
+    # traveler's reported location. Server-checked wherever it is used.
+    place_id: UUID | None = None
     booked: bool = False
     check_in: str = Field(default="", pattern=r"^$|^([01][0-9]|2[0-3]):[0-5][0-9]$")
     check_out: str = Field(default="", pattern=r"^$|^([01][0-9]|2[0-3]):[0-5][0-9]$")
@@ -50,6 +53,8 @@ class Lodging(StrictModel):
             raise ValueError("Coordinates 0, 0 are not a place")
         if self.external_id and self.latitude is None:
             raise ValueError("A searched place needs its coordinates")
+        if self.place_id and not self.external_id:
+            raise ValueError("A place record needs the searched place it came from")
         return self
 
 

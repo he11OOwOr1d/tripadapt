@@ -7852,6 +7852,18 @@
             "title": "Source",
             "default": ""
           },
+          "place_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Place Id"
+          },
           "booked": {
             "type": "boolean",
             "title": "Booked",

@@ -35,6 +35,17 @@ def test_a_searched_place_keeps_its_source_and_coordinates():
     assert lodging.external_id == "geoapify/51abc" and lodging.booked
 
 
+def test_a_searched_stay_may_carry_its_retained_place_id():
+    lodging = stay(
+        name="Hotel Aurora",
+        latitude=26.9,
+        longitude=75.8,
+        external_id="geoapify/51abc",
+        place_id="7a5c1f0e-33d8-4a8e-9b7d-0d6e2f7f9a11",
+    ).lodging
+    assert str(lodging.place_id) == "7a5c1f0e-33d8-4a8e-9b7d-0d6e2f7f9a11"
+
+
 @pytest.mark.parametrize(
     "bad",
     [
@@ -47,6 +58,16 @@ def test_a_searched_place_keeps_its_source_and_coordinates():
         dict(name="A", latitude=0, longitude=0),  # Null Island is a missing value
         dict(name="A", external_id="geoapify/1"),  # a searched place needs coordinates
         dict(name="A", external_id="https://example.test/1", latitude=1, longitude=1),
+        dict(
+            name="A",
+            place_id="not-a-uuid",
+            external_id="geoapify/1",
+            latitude=1,
+            longitude=1,
+        ),
+        dict(
+            name="A", place_id="7a5c1f0e-33d8-4a8e-9b7d-0d6e2f7f9a11"
+        ),  # no searched place behind it
         dict(name="A", check_in="25:00"),
         dict(name="A", check_out="9:00"),
         dict(name="A", latitude=float("nan"), longitude=1),

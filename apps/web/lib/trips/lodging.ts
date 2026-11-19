@@ -13,6 +13,8 @@ export type Lodging = {
   /** Set only when picked from a map search. */
   external_id?: string | null;
   source?: string;
+  /** The retained place record behind a searched stay; lets it serve as "where I am". */
+  place_id?: string | null;
   booked?: boolean;
   check_in?: string;
   check_out?: string;
@@ -22,6 +24,7 @@ export type StayPreferences = Record<string, { style: string; rate: string; basi
 export const LODGING_NAME_MAX = 120;
 export const LODGING_ADDRESS_MAX = 200;
 const TIME = /^$|^([01][0-9]|2[0-3]):[0-5][0-9]$/;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const EXTERNAL = /^((node|way|relation)\/[1-9][0-9]*|geoapify\/[A-Za-z0-9_-]{1,400})$/;
 const plain = (v: unknown, max: number) => typeof v === "string" && v.length <= max && ![...v].some((c) => c.charCodeAt(0) < 32 || c.charCodeAt(0) === 127);
 
@@ -29,7 +32,7 @@ const plain = (v: unknown, max: number) => typeof v === "string" && v.length <= 
 export function isLodging(value: unknown): value is Lodging {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const l = value as Record<string, unknown>;
-  const allowed = ["name", "address", "latitude", "longitude", "external_id", "source", "booked", "check_in", "check_out"];
+  const allowed = ["name", "address", "latitude", "longitude", "external_id", "source", "place_id", "booked", "check_in", "check_out"];
   const has = (k: string) => l[k] !== undefined && l[k] !== null;
   const mapped = has("latitude") || has("longitude");
   return (
@@ -41,7 +44,8 @@ export function isLodging(value: unknown): value is Lodging {
     (l.check_in === undefined || (typeof l.check_in === "string" && TIME.test(l.check_in))) &&
     (l.check_out === undefined || (typeof l.check_out === "string" && TIME.test(l.check_out))) &&
     (!mapped || (has("latitude") && has("longitude") && validCoordinates(l.latitude, l.longitude))) &&
-    (!has("external_id") || (typeof l.external_id === "string" && EXTERNAL.test(l.external_id) && mapped))
+    (!has("external_id") || (typeof l.external_id === "string" && EXTERNAL.test(l.external_id) && mapped)) &&
+    (!has("place_id") || (typeof l.place_id === "string" && UUID.test(l.place_id) && has("external_id")))
   );
 }
 
@@ -60,6 +64,7 @@ export function lodgingFromPlace(place: ActivityPlace, keep?: Lodging | null): L
     longitude: place.longitude,
     external_id: place.external_id,
     source: place.source.slice(0, 120),
+    place_id: place.id,
     booked: keep?.booked ?? false,
     check_in: keep?.check_in ?? "",
     check_out: keep?.check_out ?? "",

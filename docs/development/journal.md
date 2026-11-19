@@ -788,3 +788,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026. The leave-by and way-back checks assume the traveler is at the stay, which is wrong before check-in on the arrival day or after check-out on the departure day. Added a plain note in those cases rather than changing the estimate. 1 frontend test (208 total); verified live and signed in for the arrival-day branch, baseline restored; the departure-day branch was checked live afterwards on day 3 and restored. Committed locally; not pushed. See [the learning note](../lodging-learning.md).
 
+## 167. Offer the stay as the starting place for a fresh-start check
+
+20 November 2026. A searched stay now keeps its retained place id and appears in the readiness check's list of mapped places, so "I'm at my hotel" is a one-click starting point. The id only nominates a candidate; the destination-scoped lookup and later checks are unchanged. 3 backend and 1 frontend test (582 / 209 pass); verified live and signed in up to selecting the stay, baseline restored. Deploy backend first. Committed locally; not pushed. See [the learning note](../lodging-learning.md).
+

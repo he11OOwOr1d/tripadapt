@@ -283,3 +283,69 @@ def test_real_readiness_report_preserves_rows_and_separates_accepted_from_draft(
         headers={"If-Match": accepted["base_etag"]},
     )
     assert result.status_code == 200, result.text
+
+
+def test_a_searched_stay_is_offered_as_a_known_location_only_when_its_record_exists(
+    context, monkeypatch
+):
+    import test_place_references
+
+    from app.persistence.models import DiscoveredPlace
+    from app.trips.schemas import Lodging, StayPreference
+
+    client, db, _ = context
+    reference = test_place_references.selected(client, monkeypatch)
+    plan, body, now = inputs()
+    stop = plan.stops[0]
+    stop.name = reference["label"]
+    stop.timezone = reference["timezone"]
+    stop.place_reference_id = UUID(reference["reference_id"])
+
+    def place(destination):
+        row = DiscoveredPlace(
+            id=uuid4(),
+            destination_reference_id=destination,
+            payload=dict(
+                external_id="node/777",
+                name="Hotel Aurora",
+                category="lodging",
+                latitude=35.02,
+                longitude=135.75,
+                source="OpenStreetMap contributors via Overpass",
+                retrieved_at=now.isoformat(),
+            ),
+        )
+        db.add(row)
+        db.commit()
+        return row
+
+    def locations(row):
+        plan.preferences.stay_preferences[stop.client_id] = StayPreference(
+            style="",
+            rate="",
+            basis="room",
+            lodging=Lodging(
+                name="Hotel Aurora",
+                latitude=35.02,
+                longitude=135.75,
+                external_id="node/777",
+                place_id=row.id,
+            ),
+        )
+        db.commit()
+        trip = client.post(
+            "/api/v1/trips",
+            json={"title": "Stay location", "plan": plan.model_dump(mode="json")},
+        ).json()["data"]
+        params = dict(basis="draft", stop_id=str(body.stop_id), local_day_offset=12)
+        db.commit()
+        ctx = client.get(
+            f"/api/v1/trips/{trip['id']}/replanning/context", params=params
+        ).json()["data"]
+        return [p["name"] for p in ctx["known_locations"]]
+
+    assert locations(place(stop.place_reference_id)) == ["Hotel Aurora"]
+    # A record the server does not hold is never offered.
+    from types import SimpleNamespace
+
+    assert locations(SimpleNamespace(id=uuid4())) == []

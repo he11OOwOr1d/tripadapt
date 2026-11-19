@@ -49,7 +49,7 @@ export default function LodgingPanel({ stop, lodging, onSave, disabled = false }
     const base: Lodging = draft.place
       ? lodgingFromPlace(draft.place, { ...lodging, address: draft.address.trim(), booked: draft.booked, check_in: draft.check_in, check_out: draft.check_out })
       : // Editing a searched stay's text keeps its location only while the name is unchanged.
-        { ...(lodging && lodging.name === name ? { latitude: lodging.latitude, longitude: lodging.longitude, external_id: lodging.external_id, source: lodging.source } : {}), name, address: draft.address.trim(), booked: draft.booked, check_in: draft.check_in, check_out: draft.check_out };
+        { ...(lodging && lodging.name === name ? { latitude: lodging.latitude, longitude: lodging.longitude, external_id: lodging.external_id, source: lodging.source, place_id: lodging.place_id } : {}), name, address: draft.address.trim(), booked: draft.booked, check_in: draft.check_in, check_out: draft.check_out };
     const next: Lodging = { ...base, name, address: draft.address.trim(), booked: draft.booked, check_in: draft.check_in, check_out: draft.check_out };
     if (!isLodging(next)) { setError("Enter a name up to 120 characters, with plain text only."); return; }
     onSave(next);

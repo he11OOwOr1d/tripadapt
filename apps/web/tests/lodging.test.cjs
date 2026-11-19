@@ -3,7 +3,8 @@ function load(file,deps={}){const out={};vm.runInNewContext(ts.transpileModule(f
 const map=load('../lib/trips/day-map.ts',{lodging:{lodgingPoint:()=>null}});
 const out=load('../lib/trips/lodging.ts',{'day-map':map});
 const J=v=>JSON.parse(JSON.stringify(v));
-const place={id:'p',destination_reference_id:'d',external_id:'geoapify/51abc',name:'Hotel Aurora',category:'lodging',latitude:26.91,longitude:75.78,source:'Geoapify / OpenStreetMap contributors',retrieved_at:'2026-11-19T00:00:00Z'};
+const PID='7a5c1f0e-33d8-4a8e-9b7d-0d6e2f7f9a11';
+const place={id:PID,destination_reference_id:'d',external_id:'geoapify/51abc',name:'Hotel Aurora',category:'lodging',latitude:26.91,longitude:75.78,source:'Geoapify / OpenStreetMap contributors',retrieved_at:'2026-11-19T00:00:00Z'};
 
 test('a name alone is a valid stay; a searched place needs coordinates',()=>{
   assert.equal(out.isLodging({name:'Haveli'}),true);
@@ -19,7 +20,7 @@ test('nulls the server returns for unset fields are accepted',()=>{
 });
 test('choosing a place keeps the traveler’s own times, flag and address',()=>{
   const l=J(out.lodgingFromPlace(place,{name:'Old',address:'Gate 2',booked:true,check_in:'14:00',check_out:'11:00'}));
-  assert.deepEqual(l,{name:'Hotel Aurora',address:'Gate 2',latitude:26.91,longitude:75.78,external_id:'geoapify/51abc',source:'Geoapify / OpenStreetMap contributors',booked:true,check_in:'14:00',check_out:'11:00'});
+  assert.deepEqual(l,{name:'Hotel Aurora',address:'Gate 2',latitude:26.91,longitude:75.78,external_id:'geoapify/51abc',source:'Geoapify / OpenStreetMap contributors',place_id:PID,booked:true,check_in:'14:00',check_out:'11:00'});
   assert.equal(out.isLodging(l),true);
   assert.equal(J(out.lodgingFromPlace(place)).booked,false);
 });
@@ -37,3 +38,13 @@ test('the summary never claims a booking the traveler did not mark',()=>{
   assert.match(out.lodgingSummary({name:'X'}),/not marked as booked/);
   assert.match(out.lodgingSummary({name:'X',booked:true,check_in:'14:00',check_out:'11:00'}),/marked as booked by you · check-in 14:00, check-out 11:00/);
 });
+test('a retained place id is accepted as a uuid on a searched stay and rejected elsewhere',()=>{
+  const searched={name:'A',latitude:1,longitude:2,external_id:'geoapify/1'};
+  assert.equal(out.isLodging({...searched,place_id:PID}),true);
+  assert.equal(out.isLodging({...searched,place_id:null}),true);
+  assert.equal(out.isLodging({name:'A',place_id:null}),true);
+  assert.equal(out.isLodging({...searched,place_id:'p'}),false);
+  assert.equal(out.isLodging({...searched,place_id:5}),false);
+  assert.equal(out.isLodging({name:'A',place_id:PID}),false);
+});
+
