@@ -1,4 +1,4 @@
-.PHONY: setup db db-local db-local-stop migrate migrate-supabase api web check
+.PHONY: setup db db-local db-local-stop migrate migrate-supabase api web check check-local check-web openapi
 setup:
 	cd services/backend && uv sync --locked
 	cd apps/web && npm ci
@@ -26,6 +26,17 @@ web:
 
 check:
 	cd services/backend && uv run ruff check . && uv run pytest
+	$(MAKE) check-web
+
+check-local:
+	cd services/backend && uv run ruff check .
+	./scripts/test-backend-local.sh -q
+	$(MAKE) check-web
+
+openapi:
+	cd services/backend && uv run --locked python -c 'import json; from pathlib import Path; from app.main import app; Path("openapi.json").write_text(json.dumps(app.openapi(), indent=2) + "\n", encoding="utf-8")'
+
+check-web:
 	cd apps/web && npm test && npm run typecheck && npm run build
 
 # Explicit local fixture planner; requires PLANNING_FIXTURES_ENABLED=true.

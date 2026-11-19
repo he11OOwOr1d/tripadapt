@@ -118,7 +118,7 @@ class GooglePlaces:
             "places.id,places.displayName,places.formattedAddress,places.location",
             {
                 "textQuery": name,
-                "pageSize": 3,
+                "pageSize": 10,
                 "languageCode": "en",
                 "locationBias": {
                     "circle": {
@@ -132,7 +132,7 @@ class GooglePlaces:
         if not isinstance(raw, list):
             raise GoogleFailure("GOOGLE_PLACES_UNAVAILABLE")
         matches = []
-        for place in raw[:3]:
+        for place in raw[:10]:
             try:
                 matches.append(
                     GoogleMatch(

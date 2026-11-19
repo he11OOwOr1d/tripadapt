@@ -48,11 +48,11 @@ def sample():
     return plan, {"stop_logical_id": stop, "local_day_offset": 15}
 
 
-@pytest.mark.parametrize("flag", ["fixed", "booked", "completed"])
+@pytest.mark.parametrize("flag", ["fixed", "booked", "completed", "skipped"])
 def test_protected_activity_cannot_move(flag):
     plan, scope = sample()
     setattr(plan.activities[0], flag, True)
-    with pytest.raises(ValueError, match="fixed, booked or completed"):
+    with pytest.raises(ValueError, match="fixed, booked, completed or skipped"):
         move_activity(
             plan,
             scope,

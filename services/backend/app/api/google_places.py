@@ -4,7 +4,7 @@ from datetime import date, datetime, time, timezone
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, Request
-from pydantic import Field
+from pydantic import Field, field_validator
 from sqlalchemy.orm import Session
 
 from app.api.identity import current_user, session
@@ -23,11 +23,30 @@ from app.trips.schemas import StrictModel
 google_places = GooglePlaces()
 
 
-class MatchInput(StrictModel):
+class SourceInput(StrictModel):
     source_place_id: UUID
 
 
-class CheckInput(MatchInput):
+class MatchInput(SourceInput):
+    query: str | None = Field(
+        default=None, min_length=2, max_length=160, pattern=r"^[^\x00-\x1f\x7f]+$"
+    )
+
+    @field_validator("query", mode="before")
+    @classmethod
+    def clean_query(cls, value):
+        if isinstance(value, str):
+            if any(ord(c) < 32 or ord(c) == 127 for c in value):
+                raise ValueError("Use a single-line place name or address")
+            return value.strip()
+        return value
+
+
+class NearbyGoogleMatch(GoogleMatch):
+    distance_meters: int = Field(ge=0, le=1000)
+
+
+class CheckInput(SourceInput):
     google_place_id: str = Field(pattern=GOOGLE_ID)
     visit_date: date | None = None
     start: time
@@ -61,7 +80,7 @@ def fail(error):
     ) from None
 
 
-@router.post("/google-places/matches", response_model=Envelope[list[GoogleMatch]])
+@router.post("/google-places/matches", response_model=Envelope[list[NearbyGoogleMatch]])
 def google_matches(
     body: MatchInput,
     request: Request,
@@ -69,28 +88,37 @@ def google_matches(
     db: Session = Depends(session),
 ):
     source = source_place(db, body.source_place_id)
+    destination = db.get(PlaceReference, source.destination_reference_id)
+    if destination is None:
+        raise HTTPException(404, "DESTINATION_REFERENCE_NOT_FOUND")
+    # Only an explicit venue query and authoritative destination context go upstream.
+    query = f"{body.query or source.payload['name']}, {destination.payload['label']}"
     try:
         results = google_places.matches(
             str(user.id),
-            source.payload["name"],
+            query,
             source.payload["latitude"],
             source.payload["longitude"],
         )
-        # Location bias is not a boundary. Never silently match a distant namesake.
-        return wrap(
-            request,
-            [
-                p
-                for p in results
-                if distance(
-                    source.payload["latitude"],
-                    source.payload["longitude"],
-                    p.latitude,
-                    p.longitude,
+        # A location bias is not a boundary. Always enforce the 1 km identity limit here.
+        matches = []
+        seen = set()
+        for place in results[:10]:
+            meters = distance(
+                source.payload["latitude"],
+                source.payload["longitude"],
+                place.latitude,
+                place.longitude,
+            )
+            if meters <= 1000 and place.id not in seen:
+                matches.append(
+                    NearbyGoogleMatch(
+                        **place.model_dump(), distance_meters=round(meters)
+                    )
                 )
-                <= 1000
-            ],
-        )
+                seen.add(place.id)
+        return wrap(request, matches)
+
     except GoogleFailure as error:
         fail(error)
 

@@ -74,6 +74,6 @@ def validate_scope(base: PlanInput, candidate: PlanInput, stop_id: str, day: int
             or item.local_day_offset != day
             or item.fixed
             or item.booked
-            or item.completed
+            or item.resolved
         ):
             raise ValueError("Candidate exceeds the requested scope")

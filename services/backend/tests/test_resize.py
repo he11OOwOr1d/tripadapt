@@ -29,11 +29,11 @@ def test_invalid_overlap_midnight_or_unchanged_duration_is_blocked(duration):
     assert plan == original
 
 
-@pytest.mark.parametrize("flag", ["fixed", "booked", "completed"])
+@pytest.mark.parametrize("flag", ["fixed", "booked", "completed", "skipped"])
 def test_protected_duration_cannot_change(flag):
     plan, scope = test_reschedule.sample()
     setattr(plan.activities[0], flag, True)
-    with pytest.raises(ValueError, match="fixed, booked or completed"):
+    with pytest.raises(ValueError, match="fixed, booked, completed or skipped"):
         resize_activity(
             plan,
             scope,

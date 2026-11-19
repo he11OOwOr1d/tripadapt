@@ -20,14 +20,17 @@ def remove_activity(base, scope, command):
         raise ValueError(
             "Select the relevant day in Plan first, then name one activity to remove."
         )
-    if target.fixed or target.booked or target.completed:
+    if target.fixed or target.booked or target.resolved:
         raise ValueError(
-            "That activity is fixed, booked or completed. It cannot be removed through chat. No reservation has been cancelled."
+            "That activity is fixed, booked, completed or skipped. It cannot be removed through chat. No reservation has been cancelled."
         )
     candidate = base.model_copy(deep=True)
     candidate.activities = [
         a for a in candidate.activities if a.logical_id != target.logical_id
     ]
+    # Re-validate so costs linked to the removed activity follow the removal
+    # rule here exactly as in the stored candidate (estimate out, paid kept).
+    candidate = type(candidate).model_validate(candidate.model_dump())
     blockers = [i for i in validate_plan(candidate)["issues"] if i["blocking"]]
     if blockers:
         raise ValueError(

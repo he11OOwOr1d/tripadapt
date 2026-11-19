@@ -1848,6 +1848,183 @@
         }
       }
     },
+    "/api/v1/trips/{trip_id}/proposals/day-delay": {
+      "post": {
+        "summary": "Propose Day Delay",
+        "operationId": "propose_day_delay_api_v1_trips__trip_id__proposals_day_delay_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "trip_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Trip Id"
+            }
+          },
+          {
+            "name": "if-match",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "If-Match"
+            }
+          },
+          {
+            "name": "idempotency-key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DayDelayInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_ProposalView_"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          }
+        }
+      }
+    },
     "/api/v1/trips/{trip_id}/proposals/{proposal_id}": {
       "get": {
         "summary": "Get Proposal",
@@ -2096,6 +2273,146 @@
           },
           "409": {
             "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DayCheckProblem"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DayCheckProblem"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DayCheckProblem"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DayCheckProblem"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        }
+      }
+    },
+    "/api/v1/trips/{trip_id}/proposals/{proposal_id}/discard": {
+      "post": {
+        "summary": "Discard",
+        "operationId": "discard_api_v1_trips__trip_id__proposals__proposal_id__discard_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "trip_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Trip Id"
+            }
+          },
+          {
+            "name": "proposal_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Proposal Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_ProposalView_"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "409": {
+            "content": {
               "application/problem+json": {},
               "application/json": {
                 "schema": {
@@ -2163,10 +2480,10 @@
         }
       }
     },
-    "/api/v1/trips/{trip_id}/proposals/{proposal_id}/discard": {
-      "post": {
-        "summary": "Discard",
-        "operationId": "discard_api_v1_trips__trip_id__proposals__proposal_id__discard_post",
+    "/api/v1/trips/{trip_id}/versions/{version_id}/budget": {
+      "get": {
+        "summary": "Budget",
+        "operationId": "budget_api_v1_trips__trip_id__versions__version_id__budget_get",
         "security": [
           {
             "HTTPBearer": []
@@ -2184,13 +2501,29 @@
             }
           },
           {
-            "name": "proposal_id",
+            "name": "version_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
               "format": "uuid",
-              "title": "Proposal Id"
+              "title": "Version Id"
+            }
+          },
+          {
+            "name": "if-match",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "If-Match"
             }
           }
         ],
@@ -2200,7 +2533,598 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Envelope_ProposalView_"
+                  "$ref": "#/components/schemas/Envelope_CostCoverage_"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          }
+        }
+      }
+    },
+    "/api/v1/places/search": {
+      "get": {
+        "summary": "Search Places",
+        "operationId": "search_places_api_v1_places_search_get",
+        "parameters": [
+          {
+            "name": "destination_reference_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Destination Reference Id"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "museum",
+                "gallery",
+                "attraction",
+                "park",
+                "viewpoint"
+              ],
+              "type": "string",
+              "default": "museum",
+              "title": "Category"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_PlacePage_"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          }
+        }
+      }
+    },
+    "/api/v1/places/{place_id}": {
+      "get": {
+        "summary": "Place Detail",
+        "operationId": "place_detail_api_v1_places__place_id__get",
+        "parameters": [
+          {
+            "name": "place_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Place Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_PlaceDetail_"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          }
+        }
+      }
+    },
+    "/api/v1/weather": {
+      "get": {
+        "summary": "Get Weather",
+        "operationId": "get_weather_api_v1_weather_get",
+        "parameters": [
+          {
+            "name": "destination_reference_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Destination Reference Id"
+            }
+          },
+          {
+            "name": "visit_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Visit Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_WeatherView_"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          }
+        }
+      }
+    },
+    "/api/v1/trips/{trip_id}/messages/{turn_id}/replacement-options": {
+      "post": {
+        "summary": "Replacement Options",
+        "operationId": "replacement_options_api_v1_trips__trip_id__messages__turn_id__replacement_options_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "trip_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Trip Id"
+            }
+          },
+          {
+            "name": "turn_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Turn Id"
+            }
+          },
+          {
+            "name": "if-match",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "If-Match"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplacementLookup"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_ReplacementOptions_"
                 }
               }
             }
@@ -3240,7 +4164,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Envelope_list_GoogleMatch__"
+                  "$ref": "#/components/schemas/Envelope_list_NearbyGoogleMatch__"
                 }
               }
             }
@@ -3616,36 +4540,57 @@
         ]
       }
     },
-    "/api/v1/places/search": {
+    "/api/v1/trips/{trip_id}/replanning/context": {
       "get": {
-        "summary": "Search Places",
-        "operationId": "search_places_api_v1_places_search_get",
+        "summary": "Replan Context",
+        "operationId": "replan_context_api_v1_trips__trip_id__replanning_context_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
-            "name": "destination_reference_id",
+            "name": "trip_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Trip Id"
+            }
+          },
+          {
+            "name": "basis",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "enum": [
+                "accepted",
+                "draft"
+              ],
+              "type": "string",
+              "title": "Basis"
+            }
+          },
+          {
+            "name": "stop_id",
             "in": "query",
             "required": true,
             "schema": {
               "type": "string",
               "format": "uuid",
-              "title": "Destination Reference Id"
+              "title": "Stop Id"
             }
           },
           {
-            "name": "category",
+            "name": "local_day_offset",
             "in": "query",
-            "required": false,
+            "required": true,
             "schema": {
-              "enum": [
-                "museum",
-                "gallery",
-                "attraction",
-                "park",
-                "viewpoint"
-              ],
-              "type": "string",
-              "default": "museum",
-              "title": "Category"
+              "type": "integer",
+              "minimum": 0,
+              "title": "Local Day Offset"
             }
           }
         ],
@@ -3655,7 +4600,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Envelope_PlacePage_"
+                  "$ref": "#/components/schemas/Envelope_ReadinessContext_"
                 }
               }
             }
@@ -3762,29 +4707,397 @@
         }
       }
     },
-    "/api/v1/places/{place_id}": {
-      "get": {
-        "summary": "Place Detail",
-        "operationId": "place_detail_api_v1_places__place_id__get",
+    "/api/v1/trips/{trip_id}/replanning/readiness": {
+      "post": {
+        "summary": "Check Readiness",
+        "operationId": "check_readiness_api_v1_trips__trip_id__replanning_readiness_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
-            "name": "place_id",
+            "name": "trip_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
               "format": "uuid",
-              "title": "Place Id"
+              "title": "Trip Id"
+            }
+          },
+          {
+            "name": "if-match",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "If-Match"
             }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReadinessInput"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Envelope_PlaceDetail_"
+                  "$ref": "#/components/schemas/Envelope_ReadinessView_"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          }
+        }
+      }
+    },
+    "/api/v1/trips/{trip_id}/replanning/preview": {
+      "post": {
+        "summary": "Preview Remaining Day",
+        "operationId": "preview_remaining_day_api_v1_trips__trip_id__replanning_preview_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "trip_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Trip Id"
+            }
+          },
+          {
+            "name": "if-match",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "If-Match"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemainingDayInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_RemainingPreview_"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          }
+        }
+      }
+    },
+    "/api/v1/trips/{trip_id}/proposals/remaining-day": {
+      "post": {
+        "summary": "Save Remaining Day",
+        "operationId": "save_remaining_day_api_v1_trips__trip_id__proposals_remaining_day_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "trip_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Trip Id"
+            }
+          },
+          {
+            "name": "if-match",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "If-Match"
+            }
+          },
+          {
+            "name": "idempotency-key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveRemainingInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_ProposalView_"
                 }
               }
             }
@@ -4230,6 +5543,341 @@
           }
         }
       }
+    },
+    "/api/v1/trips/{trip_id}/draft/stay-rebalance": {
+      "post": {
+        "summary": "Stay Rebalance",
+        "operationId": "stay_rebalance_api_v1_trips__trip_id__draft_stay_rebalance_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "trip_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Trip Id"
+            }
+          },
+          {
+            "name": "if-match",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "If-Match"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RebalanceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          }
+        }
+      }
+    },
+    "/api/v1/trips/{trip_id}/proposals/weather-change": {
+      "post": {
+        "summary": "Propose Weather Change",
+        "operationId": "propose_weather_change_api_v1_trips__trip_id__proposals_weather_change_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "trip_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Trip Id"
+            }
+          },
+          {
+            "name": "if-match",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "If-Match"
+            }
+          },
+          {
+            "name": "idempotency-key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WeatherChangeInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_ProposalView_"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Structured problem response"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -4260,6 +5908,16 @@
             "anyOf": [
               {
                 "$ref": "#/components/schemas/LiveAcceptance"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "day_live_check": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DelayLiveAcceptance"
               },
               {
                 "type": "null"
@@ -4356,6 +6014,11 @@
             "type": "boolean",
             "title": "Booked",
             "default": false
+          },
+          "skipped": {
+            "type": "boolean",
+            "title": "Skipped",
+            "default": false
           }
         },
         "additionalProperties": false,
@@ -4393,6 +6056,95 @@
           "activities"
         ],
         "title": "ActivitySyncCommand"
+      },
+      "AllowanceRow": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "accommodation",
+              "transport"
+            ],
+            "title": "Category"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "room_night",
+              "bed_night",
+              "person_trip",
+              "vehicle_trip"
+            ],
+            "title": "Unit"
+          },
+          "quantity": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantity"
+          },
+          "unit_amount": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit Amount"
+          },
+          "estimated_amount": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estimated Amount"
+          },
+          "amount_status": {
+            "type": "string",
+            "enum": [
+              "estimated",
+              "unknown"
+            ],
+            "title": "Amount Status"
+          },
+          "covered_by_records": {
+            "type": "string",
+            "title": "Covered By Records",
+            "default": "0.00"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "key",
+          "category",
+          "label",
+          "unit",
+          "quantity",
+          "unit_amount",
+          "estimated_amount",
+          "amount_status"
+        ],
+        "title": "AllowanceRow"
       },
       "Budget-Input": {
         "properties": {
@@ -4507,19 +6259,23 @@
                 },
                 {
                   "$ref": "#/components/schemas/ActivitySyncCommand"
+                },
+                {
+                  "$ref": "#/components/schemas/CostSyncCommand"
                 }
               ],
               "discriminator": {
                 "propertyName": "type",
                 "mapping": {
                   "activity.replace_user_schedule": "#/components/schemas/ActivitySyncCommand",
+                  "cost.replace_records": "#/components/schemas/CostSyncCommand",
                   "plan.update_settings": "#/components/schemas/SettingsCommand",
                   "stop.reorder": "#/components/schemas/StopSyncCommand"
                 }
               }
             },
             "type": "array",
-            "maxItems": 3,
+            "maxItems": 4,
             "minItems": 1,
             "title": "Commands"
           }
@@ -4561,6 +6317,508 @@
         ],
         "title": "ConversationPage"
       },
+      "CostCoverage": {
+        "properties": {
+          "version_id": {
+            "type": "string",
+            "title": "Version Id"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/AllowanceRow"
+            },
+            "type": "array",
+            "title": "Rows"
+          },
+          "estimated_subtotal": {
+            "type": "string",
+            "title": "Estimated Subtotal"
+          },
+          "known_allowances": {
+            "type": "integer",
+            "title": "Known Allowances"
+          },
+          "unknown_allowances": {
+            "type": "integer",
+            "title": "Unknown Allowances"
+          },
+          "records": {
+            "items": {
+              "$ref": "#/components/schemas/RecordRow"
+            },
+            "type": "array",
+            "title": "Records"
+          },
+          "estimated_records": {
+            "type": "integer",
+            "title": "Estimated Records"
+          },
+          "paid_records": {
+            "type": "integer",
+            "title": "Paid Records"
+          },
+          "unknown_records": {
+            "type": "integer",
+            "title": "Unknown Records"
+          },
+          "unconverted_records": {
+            "type": "integer",
+            "title": "Unconverted Records"
+          },
+          "tax_unknown_records": {
+            "type": "integer",
+            "title": "Tax Unknown Records"
+          },
+          "recorded_paid_subtotal": {
+            "type": "string",
+            "title": "Recorded Paid Subtotal"
+          },
+          "known_subtotal": {
+            "type": "string",
+            "title": "Known Subtotal"
+          },
+          "unpriced_categories": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Unpriced Categories"
+          },
+          "coverage_complete": {
+            "type": "boolean",
+            "title": "Coverage Complete"
+          },
+          "missing": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Missing"
+          },
+          "total": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total"
+          },
+          "paid_total": {
+            "type": "null",
+            "title": "Paid Total"
+          },
+          "budget_amount": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Budget Amount"
+          },
+          "budget_mode": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "target",
+                  "strict"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Budget Mode"
+          },
+          "estimates_exceed_budget": {
+            "type": "boolean",
+            "title": "Estimates Exceed Budget"
+          },
+          "notice": {
+            "type": "string",
+            "title": "Notice"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "version_id",
+          "currency",
+          "rows",
+          "estimated_subtotal",
+          "known_allowances",
+          "unknown_allowances",
+          "records",
+          "estimated_records",
+          "paid_records",
+          "unknown_records",
+          "unconverted_records",
+          "tax_unknown_records",
+          "recorded_paid_subtotal",
+          "known_subtotal",
+          "unpriced_categories",
+          "coverage_complete",
+          "missing",
+          "total",
+          "budget_amount",
+          "budget_mode",
+          "estimates_exceed_budget",
+          "notice"
+        ],
+        "title": "CostCoverage"
+      },
+      "CostInput": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "food",
+              "activity",
+              "accommodation",
+              "transport",
+              "taxes_fees",
+              "miscellaneous"
+            ],
+            "title": "Category"
+          },
+          "label": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Label"
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "per_person",
+              "per_group"
+            ],
+            "title": "Unit"
+          },
+          "quantity": {
+            "type": "integer",
+            "maximum": 10000.0,
+            "minimum": 1.0,
+            "title": "Quantity"
+          },
+          "amount": {
+            "type": "string",
+            "pattern": "^$|^\\d{1,14}(\\.\\d{1,2})?$",
+            "title": "Amount"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "estimated",
+              "paid"
+            ],
+            "title": "Status"
+          },
+          "activity_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activity Id"
+          },
+          "stop_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stop Id"
+          },
+          "leg_key": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1500,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Leg Key"
+          },
+          "link_removed": {
+            "type": "boolean",
+            "title": "Link Removed",
+            "default": false
+          },
+          "currency": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[A-Z]{3}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Currency"
+          },
+          "conversion_rate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^\\d{1,10}(\\.\\d{1,10})?$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conversion Rate"
+          },
+          "rate_note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rate Note"
+          },
+          "rate_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rate Date"
+          },
+          "tax_status": {
+            "type": "string",
+            "enum": [
+              "included",
+              "excluded",
+              "unknown"
+            ],
+            "title": "Tax Status",
+            "default": "unknown"
+          },
+          "tax_percent": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^\\d{1,3}(\\.\\d{1,3})?$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tax Percent"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "category",
+          "label",
+          "unit",
+          "quantity",
+          "amount",
+          "status"
+        ],
+        "title": "CostInput",
+        "description": "Traveler-entered cost; never a supplier quote, booking or charge.\n\n`amount` is a unit price. Total = amount \u00d7 quantity, multiplied by the\ntraveler count for per-person costs. Blank means unknown; zero is free.\nA cost may link to one activity or one stay (destination stop) by logical\nID. When that item leaves the plan, an estimate goes with it, but a paid\ncost stays as an unlinked commitment flagged `link_removed`: removing an\nitem never implies a refund."
+      },
+      "CostSyncCommand": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "cost.replace_records",
+            "title": "Type"
+          },
+          "costs": {
+            "items": {
+              "$ref": "#/components/schemas/CostInput"
+            },
+            "type": "array",
+            "maxItems": 500,
+            "title": "Costs"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "type",
+          "costs"
+        ],
+        "title": "CostSyncCommand"
+      },
+      "DayCheckDiagnostic": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "visit",
+              "journey"
+            ],
+            "title": "Kind"
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "location_missing",
+              "listing_mismatch",
+              "closed",
+              "outside_hours",
+              "hours_unknown",
+              "outside_coverage",
+              "shortfall",
+              "route_warning",
+              "provider_error"
+            ],
+            "title": "Reason"
+          },
+          "activity_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Activity Id"
+          },
+          "from_activity_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "From Activity Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "kind",
+          "reason",
+          "activity_id"
+        ],
+        "title": "DayCheckDiagnostic"
+      },
+      "DayCheckProblem": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "status": {
+            "type": "integer",
+            "title": "Status"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          },
+          "request_id": {
+            "type": "string",
+            "title": "Request Id"
+          },
+          "issues": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Issues",
+            "default": []
+          },
+          "day_check": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DayCheckDiagnostic"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code",
+          "detail",
+          "request_id"
+        ],
+        "title": "DayCheckProblem"
+      },
+      "DayDelayInput": {
+        "properties": {
+          "activity_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Activity Id"
+          },
+          "ready_time": {
+            "type": "string",
+            "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$",
+            "title": "Ready Time"
+          },
+          "at_start_location": {
+            "type": "boolean",
+            "const": true,
+            "title": "At Start Location"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "activity_id",
+          "ready_time",
+          "at_start_location"
+        ],
+        "title": "DayDelayInput"
+      },
       "DayScope": {
         "properties": {
           "type": {
@@ -4588,6 +6846,50 @@
         ],
         "title": "DayScope"
       },
+      "DelayLiveAcceptance": {
+        "properties": {
+          "visit_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Visit Date"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "WALK",
+              "DRIVE"
+            ],
+            "title": "Mode",
+            "default": "WALK"
+          },
+          "buffer_minutes": {
+            "type": "integer",
+            "maximum": 120.0,
+            "minimum": 0.0,
+            "title": "Buffer Minutes",
+            "default": 10
+          },
+          "listings": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "propertyNames": {
+              "format": "uuid"
+            },
+            "type": "object",
+            "maxProperties": 6,
+            "minProperties": 1,
+            "title": "Listings"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "visit_date",
+          "listings"
+        ],
+        "title": "DelayLiveAcceptance"
+      },
       "Envelope_ConversationPage_": {
         "properties": {
           "data": {
@@ -4603,6 +6905,22 @@
           "meta"
         ],
         "title": "Envelope[ConversationPage]"
+      },
+      "Envelope_CostCoverage_": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/CostCoverage"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "Envelope[CostCoverage]"
       },
       "Envelope_GoogleCheck_": {
         "properties": {
@@ -4732,6 +7050,38 @@
         ],
         "title": "Envelope[ProposalView]"
       },
+      "Envelope_ReadinessContext_": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ReadinessContext"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "Envelope[ReadinessContext]"
+      },
+      "Envelope_ReadinessView_": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ReadinessView"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "Envelope[ReadinessView]"
+      },
       "Envelope_ReferencedSearch_": {
         "properties": {
           "data": {
@@ -4747,6 +7097,38 @@
           "meta"
         ],
         "title": "Envelope[ReferencedSearch]"
+      },
+      "Envelope_RemainingPreview_": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/RemainingPreview"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "Envelope[RemainingPreview]"
+      },
+      "Envelope_ReplacementOptions_": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ReplacementOptions"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "Envelope[ReplacementOptions]"
       },
       "Envelope_RevisionPage_": {
         "properties": {
@@ -4812,11 +7194,27 @@
         ],
         "title": "Envelope[VersionView]"
       },
-      "Envelope_list_GoogleMatch__": {
+      "Envelope_WeatherView_": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/WeatherView"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "Envelope[WeatherView]"
+      },
+      "Envelope_list_NearbyGoogleMatch__": {
         "properties": {
           "data": {
             "items": {
-              "$ref": "#/components/schemas/GoogleMatch"
+              "$ref": "#/components/schemas/NearbyGoogleMatch"
             },
             "type": "array",
             "title": "Data"
@@ -4830,7 +7228,7 @@
           "data",
           "meta"
         ],
-        "title": "Envelope[list[GoogleMatch]]"
+        "title": "Envelope[list[NearbyGoogleMatch]]"
       },
       "Envelope_list_StopView__": {
         "properties": {
@@ -5356,6 +7754,20 @@
             "type": "string",
             "format": "uuid",
             "title": "Source Place Id"
+          },
+          "query": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 160,
+                "minLength": 2,
+                "pattern": "^[^\\x00-\\x1f\\x7f]+$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Query"
           }
         },
         "additionalProperties": false,
@@ -5457,6 +7869,55 @@
           "request_id"
         ],
         "title": "Meta"
+      },
+      "NearbyGoogleMatch": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{1,200}$",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "address": {
+            "type": "string",
+            "maxLength": 1000,
+            "title": "Address"
+          },
+          "latitude": {
+            "type": "number",
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Latitude"
+          },
+          "longitude": {
+            "type": "number",
+            "maximum": 180.0,
+            "minimum": -180.0,
+            "title": "Longitude"
+          },
+          "distance_meters": {
+            "type": "integer",
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Distance Meters"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "address",
+          "latitude",
+          "longitude",
+          "distance_meters"
+        ],
+        "title": "NearbyGoogleMatch"
       },
       "Page": {
         "properties": {
@@ -5817,6 +8278,14 @@
             "type": "array",
             "maxItems": 500,
             "title": "Stops"
+          },
+          "costs": {
+            "items": {
+              "$ref": "#/components/schemas/CostInput"
+            },
+            "type": "array",
+            "maxItems": 500,
+            "title": "Costs"
           }
         },
         "additionalProperties": false,
@@ -5962,6 +8431,14 @@
             "type": "array",
             "maxItems": 500,
             "title": "Stops"
+          },
+          "costs": {
+            "items": {
+              "$ref": "#/components/schemas/CostInput"
+            },
+            "type": "array",
+            "maxItems": 500,
+            "title": "Costs"
           }
         },
         "additionalProperties": false,
@@ -6065,11 +8542,93 @@
             "type": "object",
             "maxProperties": 501,
             "title": "Travel Preferences"
+          },
+          "costs_confirmed": {
+            "type": "boolean",
+            "title": "Costs Confirmed",
+            "default": false
           }
         },
         "additionalProperties": false,
         "type": "object",
         "title": "Preferences"
+      },
+      "PreviewActivity": {
+        "properties": {
+          "activity_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Activity Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "before": {
+            "type": "string",
+            "title": "Before"
+          },
+          "after": {
+            "type": "string",
+            "title": "After"
+          },
+          "duration_minutes": {
+            "type": "integer",
+            "title": "Duration Minutes"
+          },
+          "protected": {
+            "type": "boolean",
+            "title": "Protected"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "activity_id",
+          "label",
+          "before",
+          "after",
+          "duration_minutes",
+          "protected"
+        ],
+        "title": "PreviewActivity"
+      },
+      "PreviewJourney": {
+        "properties": {
+          "origin_place_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Origin Place Id"
+          },
+          "destination_place_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Destination Place Id"
+          },
+          "destination_activity_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Destination Activity Id"
+          },
+          "travel_minutes": {
+            "type": "integer",
+            "title": "Travel Minutes"
+          },
+          "buffer_minutes": {
+            "type": "integer",
+            "title": "Buffer Minutes"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "origin_place_id",
+          "destination_place_id",
+          "destination_activity_id",
+          "travel_minutes",
+          "buffer_minutes"
+        ],
+        "title": "PreviewJourney"
       },
       "Problem": {
         "properties": {
@@ -6214,6 +8773,427 @@
         ],
         "title": "ProposalView"
       },
+      "ReadinessActivity": {
+        "properties": {
+          "activity_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Activity Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "start": {
+            "type": "string",
+            "title": "Start"
+          },
+          "duration_minutes": {
+            "type": "integer",
+            "title": "Duration Minutes"
+          },
+          "fixed": {
+            "type": "boolean",
+            "title": "Fixed"
+          },
+          "booked": {
+            "type": "boolean",
+            "title": "Booked"
+          },
+          "completed": {
+            "type": "boolean",
+            "title": "Completed"
+          },
+          "skipped": {
+            "type": "boolean",
+            "title": "Skipped",
+            "default": false
+          },
+          "place_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Place Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "activity_id",
+          "label",
+          "start",
+          "duration_minutes",
+          "fixed",
+          "booked",
+          "completed",
+          "place_id"
+        ],
+        "title": "ReadinessActivity"
+      },
+      "ReadinessContext": {
+        "properties": {
+          "basis": {
+            "type": "string",
+            "enum": [
+              "accepted",
+              "draft"
+            ],
+            "title": "Basis"
+          },
+          "base_version_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Base Version Id"
+          },
+          "base_etag": {
+            "type": "string",
+            "title": "Base Etag"
+          },
+          "version_number": {
+            "type": "integer",
+            "title": "Version Number"
+          },
+          "stop_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Stop Id"
+          },
+          "local_day_offset": {
+            "type": "integer",
+            "title": "Local Day Offset"
+          },
+          "destination": {
+            "type": "string",
+            "title": "Destination"
+          },
+          "timezone": {
+            "type": "string",
+            "title": "Timezone"
+          },
+          "destination_reference_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Destination Reference Id"
+          },
+          "scheduled_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scheduled Date"
+          },
+          "current_local_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Current Local Date"
+          },
+          "current_local_time": {
+            "type": "string",
+            "title": "Current Local Time"
+          },
+          "utc_offset_minutes": {
+            "type": "integer",
+            "title": "Utc Offset Minutes"
+          },
+          "captured_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Captured At"
+          },
+          "activities": {
+            "items": {
+              "$ref": "#/components/schemas/ReadinessActivity"
+            },
+            "type": "array",
+            "title": "Activities"
+          },
+          "known_locations": {
+            "items": {
+              "$ref": "#/components/schemas/PlaceDetail"
+            },
+            "type": "array",
+            "title": "Known Locations"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "basis",
+          "base_version_id",
+          "base_etag",
+          "version_number",
+          "stop_id",
+          "local_day_offset",
+          "destination",
+          "timezone",
+          "destination_reference_id",
+          "scheduled_date",
+          "current_local_date",
+          "current_local_time",
+          "utc_offset_minutes",
+          "captured_at",
+          "activities",
+          "known_locations"
+        ],
+        "title": "ReadinessContext"
+      },
+      "ReadinessInput": {
+        "properties": {
+          "basis": {
+            "type": "string",
+            "enum": [
+              "accepted",
+              "draft"
+            ],
+            "title": "Basis"
+          },
+          "base_version_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Base Version Id"
+          },
+          "scope": {
+            "type": "string",
+            "const": "remaining_day",
+            "title": "Scope"
+          },
+          "stop_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Stop Id"
+          },
+          "local_day_offset": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Local Day Offset"
+          },
+          "local_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Local Date"
+          },
+          "local_time": {
+            "type": "string",
+            "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$",
+            "title": "Local Time"
+          },
+          "utc_offset_minutes": {
+            "type": "integer",
+            "maximum": 840.0,
+            "minimum": -840.0,
+            "title": "Utc Offset Minutes"
+          },
+          "current_location_place_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Current Location Place Id"
+          },
+          "confirmed": {
+            "type": "boolean",
+            "const": true,
+            "title": "Confirmed"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "basis",
+          "base_version_id",
+          "scope",
+          "stop_id",
+          "local_day_offset",
+          "local_date",
+          "local_time",
+          "utc_offset_minutes",
+          "current_location_place_id",
+          "confirmed"
+        ],
+        "title": "ReadinessInput"
+      },
+      "ReadinessIssue": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          },
+          "activity_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "title": "Activity Ids"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "detail",
+          "activity_ids"
+        ],
+        "title": "ReadinessIssue"
+      },
+      "ReadinessView": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "needs_attention",
+              "ready_for_proposal"
+            ],
+            "title": "Status"
+          },
+          "basis": {
+            "type": "string",
+            "enum": [
+              "accepted",
+              "draft"
+            ],
+            "title": "Basis"
+          },
+          "base_version_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Base Version Id"
+          },
+          "base_etag": {
+            "type": "string",
+            "title": "Base Etag"
+          },
+          "scope": {
+            "type": "string",
+            "const": "remaining_day",
+            "title": "Scope"
+          },
+          "stop_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Stop Id"
+          },
+          "local_day_offset": {
+            "type": "integer",
+            "title": "Local Day Offset"
+          },
+          "timezone": {
+            "type": "string",
+            "title": "Timezone"
+          },
+          "reported_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Reported At"
+          },
+          "checked_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Checked At"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expires At"
+          },
+          "current_location": {
+            "$ref": "#/components/schemas/PlaceDetail"
+          },
+          "completed": {
+            "items": {
+              "$ref": "#/components/schemas/ReadinessActivity"
+            },
+            "type": "array",
+            "title": "Completed"
+          },
+          "skipped": {
+            "items": {
+              "$ref": "#/components/schemas/ReadinessActivity"
+            },
+            "type": "array",
+            "title": "Skipped"
+          },
+          "past_unresolved": {
+            "items": {
+              "$ref": "#/components/schemas/ReadinessActivity"
+            },
+            "type": "array",
+            "title": "Past Unresolved"
+          },
+          "in_progress": {
+            "items": {
+              "$ref": "#/components/schemas/ReadinessActivity"
+            },
+            "type": "array",
+            "title": "In Progress"
+          },
+          "protected": {
+            "items": {
+              "$ref": "#/components/schemas/ReadinessActivity"
+            },
+            "type": "array",
+            "title": "Protected"
+          },
+          "flexible": {
+            "items": {
+              "$ref": "#/components/schemas/ReadinessActivity"
+            },
+            "type": "array",
+            "title": "Flexible"
+          },
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/ReadinessIssue"
+            },
+            "type": "array",
+            "title": "Issues"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "basis",
+          "base_version_id",
+          "base_etag",
+          "scope",
+          "stop_id",
+          "local_day_offset",
+          "timezone",
+          "reported_at",
+          "checked_at",
+          "expires_at",
+          "current_location",
+          "completed",
+          "skipped",
+          "past_unresolved",
+          "in_progress",
+          "protected",
+          "flexible",
+          "issues"
+        ],
+        "title": "ReadinessView"
+      },
       "ReadyData": {
         "properties": {
           "status": {
@@ -6262,6 +9242,285 @@
           "meta"
         ],
         "title": "ReadyResponse"
+      },
+      "RebalanceRequest": {
+        "properties": {
+          "stop_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Stop Id"
+          },
+          "delta_nights": {
+            "type": "integer",
+            "maximum": 30.0,
+            "minimum": -30.0,
+            "title": "Delta Nights"
+          },
+          "counterpart": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "string",
+                "const": "trip_length"
+              }
+            ],
+            "title": "Counterpart"
+          },
+          "drop_activity_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "maxItems": 200,
+            "title": "Drop Activity Ids"
+          },
+          "relocate": {
+            "items": {
+              "$ref": "#/components/schemas/Relocation"
+            },
+            "type": "array",
+            "maxItems": 200,
+            "title": "Relocate"
+          },
+          "apply": {
+            "type": "boolean",
+            "title": "Apply",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "stop_id",
+          "delta_nights",
+          "counterpart"
+        ],
+        "title": "RebalanceRequest"
+      },
+      "RecordRow": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "food",
+              "activity",
+              "accommodation",
+              "transport",
+              "taxes_fees",
+              "miscellaneous"
+            ],
+            "title": "Category"
+          },
+          "linked_to": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Linked To"
+          },
+          "link_removed": {
+            "type": "boolean",
+            "title": "Link Removed"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "per_person",
+              "per_group"
+            ],
+            "title": "Unit"
+          },
+          "quantity": {
+            "type": "integer",
+            "title": "Quantity"
+          },
+          "travelers": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Travelers"
+          },
+          "unit_amount": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit Amount"
+          },
+          "amount": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount"
+          },
+          "amount_status": {
+            "type": "string",
+            "enum": [
+              "estimated",
+              "paid",
+              "unknown"
+            ],
+            "title": "Amount Status"
+          },
+          "entered_status": {
+            "type": "string",
+            "enum": [
+              "estimated",
+              "paid"
+            ],
+            "title": "Entered Status"
+          },
+          "tax_status": {
+            "type": "string",
+            "enum": [
+              "included",
+              "excluded",
+              "unknown"
+            ],
+            "title": "Tax Status"
+          },
+          "tax_percent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tax Percent"
+          },
+          "tax_amount": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tax Amount"
+          },
+          "tax_known": {
+            "type": "boolean",
+            "title": "Tax Known"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency"
+          },
+          "original_amount": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Original Amount"
+          },
+          "conversion": {
+            "type": "string",
+            "enum": [
+              "none",
+              "converted",
+              "missing_rate"
+            ],
+            "title": "Conversion"
+          },
+          "conversion_rate": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conversion Rate"
+          },
+          "rate_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rate Note"
+          },
+          "rate_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rate Date"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "key",
+          "category",
+          "linked_to",
+          "link_removed",
+          "label",
+          "unit",
+          "quantity",
+          "travelers",
+          "unit_amount",
+          "amount",
+          "amount_status",
+          "entered_status",
+          "tax_status",
+          "tax_percent",
+          "tax_amount",
+          "tax_known",
+          "currency",
+          "original_amount",
+          "conversion",
+          "conversion_rate",
+          "rate_note",
+          "rate_date"
+        ],
+        "title": "RecordRow"
       },
       "ReferencedPlace": {
         "properties": {
@@ -6375,6 +9634,423 @@
         ],
         "title": "ReferencedSearch"
       },
+      "Relocation": {
+        "properties": {
+          "activity_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Activity Id"
+          },
+          "day_offset": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Day Offset"
+          },
+          "stop_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stop Id"
+          },
+          "local_start_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Local Start Time"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "activity_id",
+          "day_offset"
+        ],
+        "title": "Relocation",
+        "description": "Move a displaced flexible activity to a remaining day in the route."
+      },
+      "RemainingDayInput": {
+        "properties": {
+          "basis": {
+            "type": "string",
+            "enum": [
+              "accepted",
+              "draft"
+            ],
+            "title": "Basis"
+          },
+          "base_version_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Base Version Id"
+          },
+          "scope": {
+            "type": "string",
+            "const": "remaining_day",
+            "title": "Scope"
+          },
+          "stop_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Stop Id"
+          },
+          "local_day_offset": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Local Day Offset"
+          },
+          "local_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Local Date"
+          },
+          "local_time": {
+            "type": "string",
+            "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$",
+            "title": "Local Time"
+          },
+          "utc_offset_minutes": {
+            "type": "integer",
+            "maximum": 840.0,
+            "minimum": -840.0,
+            "title": "Utc Offset Minutes"
+          },
+          "current_location_place_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Current Location Place Id"
+          },
+          "confirmed": {
+            "type": "boolean",
+            "const": true,
+            "title": "Confirmed"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "WALK",
+              "DRIVE"
+            ],
+            "title": "Mode"
+          },
+          "buffer_minutes": {
+            "type": "integer",
+            "maximum": 120.0,
+            "minimum": 0.0,
+            "title": "Buffer Minutes",
+            "default": 10
+          },
+          "rest_minutes": {
+            "type": "integer",
+            "maximum": 240.0,
+            "minimum": 0.0,
+            "title": "Rest Minutes",
+            "default": 0
+          },
+          "skip_activity_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "maxItems": 12,
+            "title": "Skip Activity Ids"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "basis",
+          "base_version_id",
+          "scope",
+          "stop_id",
+          "local_day_offset",
+          "local_date",
+          "local_time",
+          "utc_offset_minutes",
+          "current_location_place_id",
+          "confirmed",
+          "mode"
+        ],
+        "title": "RemainingDayInput"
+      },
+      "RemainingHandoff": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "remaining_day",
+            "title": "Type",
+            "default": "remaining_day"
+          },
+          "stop_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Stop Id"
+          },
+          "local_day_offset": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Local Day Offset"
+          },
+          "base_etag": {
+            "type": "string",
+            "pattern": "^\"draft:[a-f0-9-]+:\\d+\"$",
+            "title": "Base Etag"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "stop_id",
+          "local_day_offset",
+          "base_etag"
+        ],
+        "title": "RemainingHandoff"
+      },
+      "RemainingPreview": {
+        "properties": {
+          "basis": {
+            "type": "string",
+            "enum": [
+              "accepted",
+              "draft"
+            ],
+            "title": "Basis"
+          },
+          "base_version_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Base Version Id"
+          },
+          "base_etag": {
+            "type": "string",
+            "title": "Base Etag"
+          },
+          "stop_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Stop Id"
+          },
+          "local_day_offset": {
+            "type": "integer",
+            "title": "Local Day Offset"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "WALK",
+              "DRIVE"
+            ],
+            "title": "Mode"
+          },
+          "checked_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Checked At"
+          },
+          "changes": {
+            "items": {
+              "$ref": "#/components/schemas/PreviewActivity"
+            },
+            "type": "array",
+            "title": "Changes"
+          },
+          "journeys": {
+            "items": {
+              "$ref": "#/components/schemas/PreviewJourney"
+            },
+            "type": "array",
+            "title": "Journeys"
+          },
+          "rest_minutes": {
+            "type": "integer",
+            "title": "Rest Minutes"
+          },
+          "skipped": {
+            "items": {
+              "$ref": "#/components/schemas/SkippedActivity"
+            },
+            "type": "array",
+            "title": "Skipped"
+          },
+          "unchanged": {
+            "type": "boolean",
+            "title": "Unchanged"
+          },
+          "notice": {
+            "type": "string",
+            "title": "Notice"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "basis",
+          "base_version_id",
+          "base_etag",
+          "stop_id",
+          "local_day_offset",
+          "mode",
+          "checked_at",
+          "changes",
+          "journeys",
+          "rest_minutes",
+          "skipped",
+          "unchanged",
+          "notice"
+        ],
+        "title": "RemainingPreview"
+      },
+      "ReplacementLookup": {
+        "properties": {
+          "visit_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Visit Date"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "museum",
+              "gallery"
+            ],
+            "title": "Category"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "visit_date",
+          "category"
+        ],
+        "title": "ReplacementLookup"
+      },
+      "ReplacementOption": {
+        "properties": {
+          "place": {
+            "$ref": "#/components/schemas/PlaceDetail"
+          },
+          "distance_meters": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Distance Meters"
+          },
+          "distance_basis": {
+            "type": "string",
+            "enum": [
+              "activity_location",
+              "destination_centre"
+            ],
+            "title": "Distance Basis"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "place",
+          "distance_meters",
+          "distance_basis"
+        ],
+        "title": "ReplacementOption"
+      },
+      "ReplacementOptions": {
+        "properties": {
+          "base_etag": {
+            "type": "string",
+            "title": "Base Etag"
+          },
+          "target": {
+            "$ref": "#/components/schemas/ReplacementTarget"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "museum",
+              "gallery"
+            ],
+            "title": "Category"
+          },
+          "forecast": {
+            "$ref": "#/components/schemas/WeatherView"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/ReplacementOption"
+            },
+            "type": "array",
+            "maxItems": 3,
+            "title": "Options"
+          },
+          "eligible_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Eligible Count"
+          },
+          "notice": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notice"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "base_etag",
+          "target",
+          "category",
+          "forecast",
+          "options",
+          "eligible_count"
+        ],
+        "title": "ReplacementOptions"
+      },
+      "ReplacementTarget": {
+        "properties": {
+          "activity_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Activity Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "start": {
+            "type": "string",
+            "title": "Start"
+          },
+          "duration_minutes": {
+            "type": "integer",
+            "title": "Duration Minutes"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "activity_id",
+          "label",
+          "start",
+          "duration_minutes"
+        ],
+        "title": "ReplacementTarget"
+      },
       "ResponseMeta": {
         "properties": {
           "request_id": {
@@ -6478,6 +10154,120 @@
         ],
         "title": "RevisionView"
       },
+      "SaveRemainingInput": {
+        "properties": {
+          "basis": {
+            "type": "string",
+            "enum": [
+              "accepted",
+              "draft"
+            ],
+            "title": "Basis"
+          },
+          "base_version_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Base Version Id"
+          },
+          "scope": {
+            "type": "string",
+            "const": "remaining_day",
+            "title": "Scope"
+          },
+          "stop_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Stop Id"
+          },
+          "local_day_offset": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Local Day Offset"
+          },
+          "local_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Local Date"
+          },
+          "local_time": {
+            "type": "string",
+            "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$",
+            "title": "Local Time"
+          },
+          "utc_offset_minutes": {
+            "type": "integer",
+            "maximum": 840.0,
+            "minimum": -840.0,
+            "title": "Utc Offset Minutes"
+          },
+          "current_location_place_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Current Location Place Id"
+          },
+          "confirmed": {
+            "type": "boolean",
+            "const": true,
+            "title": "Confirmed"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "WALK",
+              "DRIVE"
+            ],
+            "title": "Mode"
+          },
+          "buffer_minutes": {
+            "type": "integer",
+            "maximum": 120.0,
+            "minimum": 0.0,
+            "title": "Buffer Minutes",
+            "default": 10
+          },
+          "rest_minutes": {
+            "type": "integer",
+            "maximum": 240.0,
+            "minimum": 0.0,
+            "title": "Rest Minutes",
+            "default": 0
+          },
+          "skip_activity_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "maxItems": 12,
+            "title": "Skip Activity Ids"
+          },
+          "preview_changes": {
+            "items": {
+              "$ref": "#/components/schemas/PreviewActivity"
+            },
+            "type": "array",
+            "maxItems": 6,
+            "title": "Preview Changes"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "basis",
+          "base_version_id",
+          "scope",
+          "stop_id",
+          "local_day_offset",
+          "local_date",
+          "local_time",
+          "utc_offset_minutes",
+          "current_location_place_id",
+          "confirmed",
+          "mode",
+          "preview_changes"
+        ],
+        "title": "SaveRemainingInput"
+      },
       "SettingsCommand": {
         "properties": {
           "type": {
@@ -6496,6 +10286,36 @@
           "changes"
         ],
         "title": "SettingsCommand"
+      },
+      "SkippedActivity": {
+        "properties": {
+          "activity_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Activity Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "start": {
+            "type": "string",
+            "title": "Start"
+          },
+          "duration_minutes": {
+            "type": "integer",
+            "title": "Duration Minutes"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "activity_id",
+          "label",
+          "start",
+          "duration_minutes"
+        ],
+        "title": "SkippedActivity"
       },
       "StayPreference": {
         "properties": {
@@ -6932,6 +10752,36 @@
       },
       "TurnView": {
         "properties": {
+          "remaining_handoff": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RemainingHandoff"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "remaining_handoff_stale": {
+            "type": "boolean",
+            "title": "Remaining Handoff Stale",
+            "default": false
+          },
+          "weather_handoff": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WeatherHandoff"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "weather_handoff_stale": {
+            "type": "boolean",
+            "title": "Weather Handoff Stale",
+            "default": false
+          },
           "id": {
             "type": "string",
             "format": "uuid",
@@ -7200,6 +11050,14 @@
             "maxItems": 500,
             "title": "Stops"
           },
+          "costs": {
+            "items": {
+              "$ref": "#/components/schemas/CostInput"
+            },
+            "type": "array",
+            "maxItems": 500,
+            "title": "Costs"
+          },
           "place_details": {
             "additionalProperties": {
               "$ref": "#/components/schemas/PlaceDetail"
@@ -7257,6 +11115,290 @@
           "validation_report"
         ],
         "title": "VersionView"
+      },
+      "WeatherChangeInput": {
+        "properties": {
+          "activity_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Activity Id"
+          },
+          "visit_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Visit Date"
+          },
+          "intent": {
+            "type": "string",
+            "enum": [
+              "leave_time_open",
+              "replace_place"
+            ],
+            "title": "Intent"
+          },
+          "replacement_place_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Replacement Place Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "activity_id",
+          "visit_date",
+          "intent"
+        ],
+        "title": "WeatherChangeInput"
+      },
+      "WeatherDay": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "weather_code": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weather Code"
+          },
+          "temperature_min_c": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temperature Min C"
+          },
+          "temperature_max_c": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temperature Max C"
+          },
+          "precipitation_mm": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Precipitation Mm"
+          },
+          "precipitation_probability_percent": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Precipitation Probability Percent"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "date",
+          "weather_code",
+          "temperature_min_c",
+          "temperature_max_c",
+          "precipitation_mm",
+          "precipitation_probability_percent"
+        ],
+        "title": "WeatherDay"
+      },
+      "WeatherHandoff": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "weather_replacement",
+            "title": "Type",
+            "default": "weather_replacement"
+          },
+          "activity_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Activity Id"
+          },
+          "stop_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Stop Id"
+          },
+          "local_day_offset": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Local Day Offset"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "museum",
+              "gallery"
+            ],
+            "title": "Category"
+          },
+          "visit_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Visit Date"
+          },
+          "base_etag": {
+            "type": "string",
+            "pattern": "^\"draft:[a-f0-9-]+:\\d+\"$",
+            "title": "Base Etag"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "activity_id",
+          "stop_id",
+          "local_day_offset",
+          "category",
+          "visit_date",
+          "base_etag"
+        ],
+        "title": "WeatherHandoff"
+      },
+      "WeatherView": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "date_needed",
+              "outside_forecast_window",
+              "forecast",
+              "not_covered"
+            ],
+            "title": "Status"
+          },
+          "visit_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Visit Date"
+          },
+          "timezone": {
+            "type": "string",
+            "title": "Timezone"
+          },
+          "horizon_start": {
+            "type": "string",
+            "format": "date",
+            "title": "Horizon Start"
+          },
+          "horizon_end": {
+            "type": "string",
+            "format": "date",
+            "title": "Horizon End"
+          },
+          "coverage_start": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coverage Start"
+          },
+          "coverage_end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coverage End"
+          },
+          "day": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WeatherDay"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "retrieved_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retrieved At"
+          },
+          "cached": {
+            "type": "boolean",
+            "title": "Cached",
+            "default": false
+          },
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "default": "Open-Meteo"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "visit_date",
+          "timezone",
+          "horizon_start",
+          "horizon_end"
+        ],
+        "title": "WeatherView"
       }
     },
     "securitySchemes": {

@@ -1,8 +1,15 @@
 "use client";
+import CostCoverage from "./CostCoverage";
+import type { DelayEditHandler } from "../../lib/trips/delay-handoff";
+import DayDelayLiveCheck from "./DayDelayLiveCheck";
 import LiveAcceptanceCheck, { type LiveCheckChoice } from "./LiveAcceptanceCheck";
 import PlaceAttribution from "./PlaceAttribution";
-import { useEffect, useRef, useState } from "react";
+import { AccountError } from "../../lib/trips/account-adapter";
+import { describeDayCheck, type DayCheckDiagnostic } from "../../lib/trips/day-check-feedback";
+import { weatherCondition } from "../../lib/trips/weather";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { proposalAdapter, type Proposal } from "../../lib/trips/proposals";
+import { reviewSubmitKey, clearReviewSubmitKey } from "../../lib/trips/review-submit-retry";
 
 export default function ProposalReview({
   account,
@@ -10,24 +17,42 @@ export default function ProposalReview({
   onClose,
   onAccepted,
   onDiscarded,
+  onEditActivity,
+  onProposalReady,
+  onOpenPending,
 }: {
   account: { id: string; versionEtag: string };
   proposalId?: string;
   onClose: () => void;
-  onAccepted: () => Promise<void>;
-  onDiscarded?: () => void;
+  onAccepted: (confirmation?:string,acceptedProposal?:Proposal) => Promise<void>;
+  onDiscarded?: (proposal:Proposal) => void;
+  onEditActivity?: DelayEditHandler;
+  onProposalReady?: (proposal:Proposal)=>void;
+  onOpenPending?: () => void;
 }) {
+  const readyCallback=useRef(onProposalReady);
+  readyCallback.current=onProposalReady;
   const dialog = useRef<HTMLDialogElement>(null);
   const keys = useRef({
     submit: crypto.randomUUID(),
+    submitScope: "",
     accept: crypto.randomUUID(),
   });
+  const [dayCheck,setDayCheck] = useState<DayCheckDiagnostic>();
+  const errorFocus = useRef<HTMLDivElement>(null);
   const [liveChoice,setLiveChoice] = useState<LiveCheckChoice>({enabled:false,input:null});
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [acknowledged, setAcknowledged] = useState<string[]>([]);
   const [busy, setBusy] = useState(true);
   const [error, setError] = useState("");
   const [attempt, setAttempt] = useState(0);
+  const changeLiveChoice = useCallback((choice: LiveCheckChoice) => {
+    setLiveChoice(choice);
+    setDayCheck(undefined);
+    setError("");
+  }, []);
+  useEffect(() => { if (error) errorFocus.current?.focus(); }, [error, dayCheck]);
+
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null;
     const node = dialog.current;
@@ -39,19 +64,29 @@ export default function ProposalReview({
   }, []);
   useEffect(() => {
     let active = true;
+    const scope = JSON.stringify([account.id, account.versionEtag]);
+    if (!proposalId && keys.current.submitScope !== scope) {
+      const fallback = crypto.randomUUID();
+      try { keys.current.submit = reviewSubmitKey(sessionStorage, account.id, account.versionEtag, fallback); } catch { keys.current.submit = fallback; }
+      keys.current.submitScope = scope;
+    }
+    const submitKey = keys.current.submit;
     setLiveChoice({enabled:false,input:null});
     setBusy(true);
     setError("");
+    setDayCheck(undefined);
     (proposalId
       ? proposalAdapter.get(account.id, proposalId)
       : proposalAdapter.submit(
           account.id,
           account.versionEtag,
-          keys.current.submit,
+          submitKey,
         )
     )
       .then((result) => {
         if (active) {
+          if (!proposalId) { try { clearReviewSubmitKey(sessionStorage, account.id, account.versionEtag, submitKey); } catch { /* Storage is optional. */ } }
+          readyCallback.current?.(result);
           setProposal(result);
           if (result.status === "accepted")
             setAcknowledged(
@@ -64,9 +99,11 @@ export default function ProposalReview({
       .catch((failure) => {
         if (active)
           setError(
-            failure instanceof Error
+            failure instanceof TypeError
+              ? "Couldn’t connect to the trip service. Check your connection and try again."
+              : failure instanceof Error && failure.name !== "TimeoutError"
               ? failure.message
-              : "Could not prepare this review.",
+              : "The review request took too long. It may still have been saved.",
           );
       })
       .finally(() => {
@@ -76,13 +113,19 @@ export default function ProposalReview({
       active = false;
     };
   }, [account.id, account.versionEtag, attempt, proposalId]);
+  const budgetIssue = proposal?.validation.issues.find(i => i.code.startsWith("STRICT_BUDGET"));
   const blocked = proposal?.stale || proposal?.validation.issues.some((i) => i.blocking);
   const advisories =
     proposal?.validation.issues.filter((i) => i.acknowledgeable) ?? [];
   async function act(accept: boolean) {
     if (!proposal || busy) return;
+    if (accept && liveChoice.enabled && !liveChoice.input) {
+      setError("Complete the live-check choices before accepting. Nothing has changed.");
+      return;
+    }
     setBusy(true);
     setError("");
+    setDayCheck(undefined);
     try {
       if (accept) {
         const result = await proposalAdapter.accept(
@@ -93,13 +136,14 @@ export default function ProposalReview({
           liveChoice.enabled ? liveChoice.input : null,
         );
         setProposal(result);
-        await onAccepted();
+        await onAccepted(liveChoice.enabled && liveChoice.input ? "Accepted after the requested fresh Google Maps checks for the displayed visits and journeys. Estimates do not confirm tickets, accessibility or the whole trip." : undefined, result);
       } else {
         await proposalAdapter.discard(account.id, proposal);
-        onDiscarded?.();
+        onDiscarded?.(proposal);
         onClose();
       }
     } catch (failure) {
+      setDayCheck(failure instanceof AccountError ? failure.dayCheck : undefined);
       setError(
         failure instanceof Error
           ? failure.message
@@ -109,6 +153,11 @@ export default function ProposalReview({
       setBusy(false);
     }
   }
+  function editMap(activityId: string) {
+    if (!proposal || busy || !onEditActivity) return;
+    if (!onEditActivity(proposal, activityId)) setError("This activity or saved day changed. Close this review and open the latest day before editing its map location.");
+  }
+  const checkFeedback = proposal ? describeDayCheck(dayCheck, proposal) : undefined;
   const points = proposal ? [
     { id: `origin:${proposal.plan.origin?.label ?? ""}`, label: proposal.plan.origin?.label || "Starting location" },
     ...proposal.plan.stops.map(stop => ({ id: stop.client_id, label: stop.name })),
@@ -143,18 +192,24 @@ export default function ProposalReview({
         Accepting keeps a separate snapshot and applies approved changes to
         your editable draft. No reservations are made.
       </p>
+      {proposal?.plan.budget && <section className="proposal-budget" aria-label="Budget policy"><strong>{proposal.plan.budget.mode === "strict" ? "Strict whole-trip limit" : "Whole-trip budget target"}: {proposal.plan.display_currency} {Number(proposal.plan.budget.amount).toLocaleString(undefined,{maximumFractionDigits:2})}</strong><p>{proposal.plan.budget.mode === "strict" ? (budgetIssue?.code === "STRICT_BUDGET_EXCEEDED" ? "Your entered total exceeds this limit. Reduce the costs or explicitly change the budget before accepting." : budgetIssue?.code === "STRICT_BUDGET_FROM_ENTRIES" ? "Your confirmed entries fit this limit. Acknowledge that the check uses your own entries and rates before accepting." : "Complete cost coverage is unavailable. This strict-budget review cannot be accepted; your existing accepted plan stays unchanged.") : "This is a target, not a verified total. Stay and travel allowances do not cover every trip expense."}</p></section>}
+      {proposal&&<CostCoverage source={{tripId:account.id,versionId:proposal.candidate_version_id}}/>}
       {busy && (
         <p role="status">
           {proposal ? "Updating your plan…" : "Checking your saved draft…"}
         </p>
       )}
       {error && (
-        <div role="alert" className="editor-error">
-          <p>{error}</p>
+        <div role="alert" className="editor-error" tabIndex={-1} ref={errorFocus}>
+          {checkFeedback ? <><h3>{checkFeedback.subject}</h3><p>{checkFeedback.explanation}</p><p>{checkFeedback.nextStep}</p><p>Stopped at the first problem. Other visits or journeys may not have been checked. This review is still pending; your itinerary is unchanged.</p><details><summary>Service message</summary><p>{error}</p></details></> : <p>{error}</p>}
           {!proposal && (
-            <button onClick={() => setAttempt((n) => n + 1)} disabled={busy}>
-              Retry review
-            </button>
+            <>
+              {!proposalId && <p>The review may have been saved even if its response was interrupted. Retrying here uses the same request. Preparing a review does not accept your plan.</p>}
+              <button onClick={() => setAttempt((n) => n + 1)} disabled={busy}>
+                Retry review
+              </button>
+              {!proposalId && onOpenPending && <button type="button" disabled={busy} onClick={onOpenPending}>Check pending reviews</button>}
+            </>
           )}
         </div>
       )}
@@ -169,10 +224,10 @@ export default function ProposalReview({
                 : proposal.source === "fixture"
                   ? "Test fixture proposal · no AI or live data"
                   : proposal.source === "ai"
-                    ? ["move_activity", "resize_activity", "remove_activity"].includes(proposal.generation?.operation ?? "")
+                    ? ["move_activity", "resize_activity", "remove_activity", "replace_activity"].includes(proposal.generation?.operation ?? "")
                       ? "Requested schedule change · local time"
                       : proposal.generation?.evidence === "mapped_places" ? "AI proposal · mapped places, estimated timing" : "AI-generated proposal · sample evidence"
-                    : proposal.source === "restore" ? "Restoration proposal · provisional" : proposal.generation?.operation === "move_activity" ? "Requested time change · saved draft" : "Provisional manual plan"}
+                    : proposal.source === "restore" ? "Restoration proposal · provisional" : proposal.generation?.operation === "move_activity" ? "Requested time change · saved draft" : proposal.generation?.operation === "remaining_day" ? "Remaining-day timing · fresh context required" : proposal.generation?.operation === "delay_day" ? "User-reported delay · proposed day adjustment" : proposal.generation?.weather ? "Your requested change · daily forecast context" : "Provisional manual plan"}
           </p>
           {proposal.generation?.restoration && <section className="proposal-time-change" aria-label="Restoration summary">
             <h3>Restore version {proposal.generation.restoration.version_number}?</h3>
@@ -192,6 +247,14 @@ export default function ProposalReview({
               <p>Finish: {proposal.plan.preferences?.return_to_origin ? "return to starting location" : proposal.plan.return_location?.label || "left open"}. Allowances are not live prices or reservations.</p>
             </details>
           </section>}
+          {proposal.generation?.weather && <section className="proposal-time-change" aria-label="Forecast context for this change">
+            <h3>The outlook you’re planning around</h3>
+            <p>{proposal.generation.weather.visit_date} · {proposal.generation.weather.timezone} · {weatherCondition(proposal.generation.weather.day.weather_code)}</p>
+            <p>{proposal.generation.weather.day.temperature_min_c === null || proposal.generation.weather.day.temperature_max_c === null ? "Temperature range not fully reported" : `${proposal.generation.weather.day.temperature_min_c}–${proposal.generation.weather.day.temperature_max_c} °C`}. Precipitation: {proposal.generation.weather.day.precipitation_mm === null ? "not reported" : `${proposal.generation.weather.day.precipitation_mm} mm`}; chance: {proposal.generation.weather.day.precipitation_probability_percent === null ? "not reported" : `${proposal.generation.weather.day.precipitation_probability_percent}%`}.</p>
+            <p>{proposal.generation.weather.date_basis === "check_only" ? "Check-only date: your flexible trip dates stay unchanged." : "Date from the saved trip schedule."} You chose this change; the forecast does not establish that an activity is unsafe or unsuitable.</p>
+            <p>Daily destination forecast from <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">Open-Meteo</a>, retrieved {new Date(proposal.generation.weather.retrieved_at).toLocaleString()}{proposal.generation.weather.cached ? " (cached)" : ""}. Review expires 15 minutes after retrieval. Refresh and prepare a new proposal after that.</p>
+          </section>}
+          {proposal.generation?.replacement && <section className="proposal-time-change" aria-label="Proposed replacement"><h3>{proposal.generation.replacement.before} → {proposal.generation.replacement.after}</h3><p>{proposal.generation.replacement.destination} · day {proposal.generation.replacement.day} · {proposal.generation.replacement.start} for {proposal.generation.replacement.duration_minutes} minutes</p><p>Same time slot. Every other activity stays in place. This map category does not confirm indoor access, admission, prices or availability. No reservation is changed.</p>{proposal.place_details?.[proposal.generation.replacement.place_id] && <PlaceAttribution place={proposal.place_details[proposal.generation.replacement.place_id]}/>}</section>}
           {proposal.generation?.removal && (
             <section className="proposal-time-change" aria-label="Activity proposed for removal">
               <h3>Remove {proposal.generation.removal.label}?</h3>
@@ -200,6 +263,8 @@ export default function ProposalReview({
               <p>This activity will leave your itinerary. Everything else stays in place. No reservation is cancelled.</p>
             </section>
           )}
+          {proposal.generation?.operation === "remaining_day" && <section className="proposal-time-change"><h3>Review the rest of day {proposal.generation.day}</h3>{proposal.generation.remaining_context&&<p>Reported start: {proposal.generation.remaining_context.location_name}, {proposal.generation.remaining_context.local_time} on {proposal.generation.remaining_context.local_date} ({proposal.generation.remaining_context.timezone}). {proposal.generation.remaining_context.mode==="DRIVE"?"Driving without traffic":"Walking"}, {proposal.generation.remaining_context.buffer_minutes}-minute arrival buffer.</p>}<p>Flexible start times only. Order, durations and commitments are preserved. Acceptance rechecks journeys from your reported starting point. Venue hours are provisional unless you enable the checks below; weather and reservations remain unverified. Your reported context must still be within five minutes.</p><ul>{proposal.generation.changes?.map(c=><li key={c.activity_id}>{c.label}: {c.before} → {c.after}</li>)}</ul></section>}
+          {proposal.generation?.operation === "delay_day" && <section className="proposal-time-change" aria-label="Proposed day adjustment"><h3>Day {proposal.generation.day} in {proposal.generation.destination}</h3><p>Only these flexible start times change. Durations and existing gaps stay the same; other days and protected commitments are untouched.</p><ul className="delay-change-list">{proposal.generation.changes?.map(change=><li key={change.activity_id}><strong>{change.label}</strong><span>{change.before} → {change.after} · {change.minutes} minutes</span></li>)}</ul><p>Reported delay, not live disruption data. Venue hours, actual travel time, costs and reservations need separate checks.</p></section>}
           {proposal.generation?.change && (
             <section className="proposal-time-change" aria-label="Proposed schedule change">
               <h3>{proposal.generation.change.label}</h3>
@@ -211,9 +276,9 @@ export default function ProposalReview({
               <p>{proposal.generation.operation === "resize_activity" ? `Starts at ${proposal.generation.change.start} as before. Everything else stays in place.` : "Same duration. Everything else stays in place."}</p>
             </section>
           )}
-          {proposal.generation?.summary && !["move_activity", "resize_activity", "remove_activity"].includes(proposal.generation.operation ?? "") && (
+          {proposal.generation?.summary && !["remaining_day", "move_activity", "resize_activity", "remove_activity", "replace_activity"].includes(proposal.generation.operation ?? "") && (
             <section className="planning-progress">
-              <h3>{proposal.generation.operation === "move_activity" ? "What changes" : "Why this shape works"}</h3>
+              <h3>{["move_activity","delay_day"].includes(proposal.generation.operation ?? "") ? "What changes" : "Why this shape works"}</h3>
               <p>{proposal.generation.summary}</p>
               {!!proposal.generation.additions?.length && <details>
                 <summary>Reasons for each addition</summary>
@@ -225,7 +290,7 @@ export default function ProposalReview({
               </details>}
             </section>
           )}
-          <details open={!["move_activity", "resize_activity", "remove_activity"].includes(proposal.generation?.operation ?? "")}>
+          <details open={!["remaining_day", "delay_day", "move_activity", "resize_activity", "remove_activity", "replace_activity"].includes(proposal.generation?.operation ?? "")}>
             <summary>Complete itinerary</summary>
           <div className="proposal-route">
             {proposal.plan.stops.map((stop) => (
@@ -247,9 +312,10 @@ export default function ProposalReview({
                       <small>
                         ({a.duration_minutes} min{a.fixed ? ", fixed" : ""}
                         {a.completed ? ", completed" : ""}
+                        {a.skipped ? ", didn’t happen" : ""}
                         {a.booked ? ", booked elsewhere" : ""})
                       </small>
-                      {a.place_id && proposal.place_details?.[a.place_id] && <PlaceAttribution place={proposal.place_details[a.place_id]} />}
+                      {a.place_id && proposal.place_details?.[a.place_id] && <>{a.user_label !== proposal.place_details[a.place_id].name && <small>Map location: {proposal.place_details[a.place_id].name}</small>}<PlaceAttribution place={proposal.place_details[a.place_id]} /></>}
                     </p>
                   ))}
               </section>
@@ -263,7 +329,9 @@ export default function ProposalReview({
                 {issue.detail}
               </p>
             ))}
-          {!proposal.stale && proposal.source === "user" && proposal.generation?.request && proposal.status === "pending" && <LiveAcceptanceCheck key={proposal.id} proposal={proposal} disabled={busy} onChange={setLiveChoice} />}
+          {!proposal.stale && proposal.generation?.operation === "remaining_day" && proposal.status === "pending" && <DayDelayLiveCheck key={proposal.id} proposal={proposal} disabled={busy} onChange={changeLiveChoice} />}
+          {!proposal.stale && proposal.generation?.operation === "delay_day" && proposal.status === "pending" && <DayDelayLiveCheck key={proposal.id} proposal={proposal} disabled={busy} onChange={changeLiveChoice} onEditActivity={onEditActivity ? editMap : undefined} />}
+          {!proposal.stale && proposal.source === "user" && (proposal.generation?.operation === "move_activity" || proposal.generation?.operation === "replace_activity") && proposal.generation?.request && proposal.status === "pending" && <LiveAcceptanceCheck key={proposal.id} proposal={proposal} disabled={busy} onChange={changeLiveChoice} />}
           {advisories.map((issue) => (
             <label className="proposal-ack" key={issue.id}>
               <input
@@ -303,7 +371,7 @@ export default function ProposalReview({
                 }
                 onClick={() => void act(true)}
               >
-                {proposal.source === "restore" ? "Accept restoration" : proposal.generation?.operation === "remove_activity" ? "Accept removal" : proposal.generation?.operation === "move_activity" ? "Accept time change" : "Accept provisional plan"}
+                {proposal.source === "restore" ? "Accept restoration" : proposal.generation?.operation === "remove_activity" ? "Accept removal" : proposal.generation?.operation === "replace_activity" ? "Accept replacement" : proposal.generation?.operation === "move_activity" ? "Accept time change" : proposal.generation?.operation === "remaining_day" ? (liveChoice.enabled?"Check hours and routes, then accept":"Check routes and accept timing") : proposal.generation?.operation === "delay_day" ? "Accept day adjustment" : "Accept provisional plan"}
               </button>
             )}
           </footer>

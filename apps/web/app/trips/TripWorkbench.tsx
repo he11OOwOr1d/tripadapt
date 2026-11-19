@@ -1,4 +1,6 @@
 "use client";
+import { delayEditTarget, type DelayReturn } from "../../lib/trips/delay-handoff";
+import { proposalAdapter, type Proposal } from "../../lib/trips/proposals";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
@@ -25,7 +27,18 @@ import ProposalReview from "./ProposalReview";
 import PendingReviews from "./PendingReviews";
 import PlanHistory from "./PlanHistory";
 import DayPlanning from "./DayPlanning";
+import { recoveryStorageKey, storeRecovery, recoverRecovery, bindRecoveryReview, discardRecoveryReview, sameRecoveryAttempt } from "../../lib/trips/recovery-storage";
+import { reviewSubmitRetryKey } from "../../lib/trips/review-submit-retry";
+import { acceptedRecoveryReturn, readinessEditTarget, type ReadinessReturn } from "../../lib/trips/readiness-edit";
+import type { ReadinessContext, ReadinessReport } from "../../lib/trips/replanning";
+import { canOpenRemaining } from "../../lib/trips/remaining-handoff";
+import { weatherHandoffSeed, type WeatherSeed } from "../../lib/trips/weather-handoff";
 import TripChat from "./TripChat";
+import MovedPlaceRepairs from "./MovedPlaceRepairs";
+import { movedPlaceTarget, movedPlaceStorageKey, advanceMovedPlaceRepairs, reconcileMovedPlaceRepairs, restoreMovedPlaceRepair, storeMovedPlaceRepair, type MovedPlaceRepair } from "../../lib/trips/moved-place-repair";
+import TripLifecycle from "./TripLifecycle";
+import { type RecoveryChoice } from "../../lib/trips/activity-recovery";
+import { tripCapabilities } from "../../lib/trips/lifecycle";
 import "./chat.css";
 import { tripUrl } from "../../lib/trips/itinerary";
 import { useTripAutosave } from "../../lib/trips/use-trip-autosave";
@@ -53,6 +66,8 @@ export default function TripWorkbench({
   const adapter = initialView === "setup" ? mockTripAdapter : mockSampleAdapter;
   const [account, setAccount] = useState<{
     id: string;
+    lifecycle?: string;
+  currentVersionId?: string | null;
     tripEtag: string;
     versionEtag: string;
   } | null>(null);
@@ -61,14 +76,26 @@ export default function TripWorkbench({
   >(null);
   const [accountCursor, setAccountCursor] = useState<string | null>(null);
   const [signedIn, setSignedIn] = useState(false);
+  const recoveryOwner=useRef<string|null>(null);
   const [accountLoading, setAccountLoading] = useState(false);
+  const requestedAccountId=useRef<string|null>(null);
   const [selected, setSelected] = useState("jaipur");
   const [day, setDay] = useState(1);
   const [notice, setNotice] = useState("");
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [mapRepair,setMapRepair]=useState<MovedPlaceRepair|null>(null);
   const [editing, setEditing] = useState<Activity | null>(null);
+  const [editMapFirst, setEditMapFirst] = useState(false);
+  const [editStatusFirst,setEditStatusFirst]=useState(false);
+  const [recoveryChoice,setRecoveryChoice]=useState<RecoveryChoice>();
+  const [readinessReturn,setReadinessReturn]=useState<ReadinessReturn|null>(null);
+  const [recoveryStatusBusy,setRecoveryStatusBusy]=useState(false);
+  const recoveryAttempt=useRef(0);
+  const [delayReturn, setDelayReturn] = useState<DelayReturn | null>(null);
   const [removing, setRemoving] = useState<string | null>(null);
+  const [remainingRequest,setRemainingRequest]=useState<{key:string;tripId:string;baseEtag:string;stopId:string;day:number}|null>(null);
+  const [weatherSeed,setWeatherSeed]=useState<(WeatherSeed & {tripId:string;baseEtag:string})|null>(null);
   const [chatOpen, setChatOpen] = useState(false);
   const [planningOpen, setPlanningOpen] = useState(false);
   const [generatedProposalId, setGeneratedProposalId] = useState<
@@ -132,6 +159,7 @@ export default function TripWorkbench({
       try {
         const params = new URLSearchParams(window.location.search);
         const id = params.get("trip");
+        requestedAccountId.current=id;
         if (params.get("view") === "itinerary") {
           setView("itinerary");
           const destination = params.get("stop");
@@ -202,7 +230,7 @@ export default function TripWorkbench({
         if (authConfigured) {
           try {
             const { data } = await authClient().auth.getUser();
-            if (active) setSignedIn(!!data.user);
+            if (active) {setSignedIn(!!data.user);recoveryOwner.current=data.user?.id??null;}
           } catch {
             if (active) setSignedIn(false);
           }
@@ -210,9 +238,14 @@ export default function TripWorkbench({
         if (id && !pending) {
           if (active) setAccountLoading(true);
           try {
-            const saved = await accountTripAdapter.load(id);
+            let saved = await accountTripAdapter.load(id);
+            const owner=recoveryOwner.current;
+            let reminder:ReadinessReturn|null=null;
+            if(owner){try{reminder=await recoverRecovery(sessionStorage.getItem(recoveryStorageKey),owner,saved.trip,saved,proposalId=>proposalAdapter.get(saved.id,proposalId,AbortSignal.timeout(10000)),Date.now(),async()=>{saved=await accountTripAdapter.load(id);return {account:saved,trip:saved.trip};});}catch{}}
             if (active) {
               setTrip(saved.trip);
+              setReadinessReturn(recoveryOwner.current===owner?reminder:null);
+              try { setMapRepair(owner&&recoveryOwner.current===owner?restoreMovedPlaceRepair(sessionStorage.getItem(movedPlaceStorageKey),owner,saved.trip,saved.id):null); } catch { setMapRepair(null); }
               setAccount(saved);
               setDirty(false);
               setLoadGeneration((n) => n + 1);
@@ -262,12 +295,22 @@ export default function TripWorkbench({
       if (
         (!signedIn || synced) &&
         JSON.stringify(snapshot) === JSON.stringify(trip)
-      )
+      ) {
         setDirty(false);
+        if (synced && reference) {
+          if(mapRepair?.tripId===reference.id&&recoveryOwner.current){
+            const repair=reconcileMovedPlaceRepairs(snapshot,reference.id,mapRepair);
+            setMapRepair(repair);
+            try{if(repair)sessionStorage.setItem(movedPlaceStorageKey,storeMovedPlaceRepair(repair,recoveryOwner.current));else sessionStorage.removeItem(movedPlaceStorageKey);}catch{}
+          }
+          setReadinessReturn(current => current?.edited && current.tripId === reference.id && !current.boundEtag
+            ? { ...current, boundEtag: reference.versionEtag } : current);
+        }
+      }
     },
   });
   useEffect(() => {
-    if (initialView !== "setup" || !ready || accountLoading) return;
+    if (initialView !== "setup" || !ready || accountLoading || (!account&&requestedAccountId.current)) return;
     const current = trip.stops.find((s) => s.id === selected) ?? trip.stops[0];
     if (view === "itinerary" && current) {
       if (selected !== current.id) setSelected(current.id);
@@ -313,6 +356,46 @@ export default function TripWorkbench({
       );
     }
   }
+  useEffect(()=>{
+    if(!ready||accountLoading||!signedIn||!account||dirty||autosave.saving||autosave.error||!recoveryOwner.current)return;
+    try {
+      const value=readinessReturn?storeRecovery(readinessReturn,recoveryOwner.current,account):null;
+      if(value)sessionStorage.setItem(recoveryStorageKey,value);else sessionStorage.removeItem(recoveryStorageKey);
+      if(readinessReturn?.boundEtag&&readinessReturn.boundEtag!==account.versionEtag)setReadinessReturn(null);
+    } catch { /* Storage is optional; keep the in-memory return path. */ }
+  },[ready,accountLoading,signedIn,account,dirty,autosave.saving,autosave.error,readinessReturn]);
+  useEffect(()=>{
+    if(!authConfigured)return;
+    const {data}=authClient().auth.onAuthStateChange((event,session)=>{
+      if(event==="SIGNED_OUT"||(recoveryOwner.current&&session?.user.id&&recoveryOwner.current!==session.user.id)){
+        requestedAccountId.current=null;
+        setMapRepair(null);
+        recoveryOwner.current=null;setReadinessReturn(null);
+        try{sessionStorage.removeItem(recoveryStorageKey);sessionStorage.removeItem(movedPlaceStorageKey);sessionStorage.removeItem(reviewSubmitRetryKey);}catch{}
+      }
+    });
+    return ()=>data.subscription.unsubscribe();
+  },[]);
+  const recoveryLatest=useRef({owner:recoveryOwner.current,account,marker:readinessReturn,dirty,editing:!!editing,saving:autosave.saving});
+  recoveryLatest.current={owner:recoveryOwner.current,account,marker:readinessReturn,dirty,editing:!!editing,saving:autosave.saving};
+  useEffect(()=>()=>{recoveryAttempt.current++;},[]);
+  async function refreshRecoveryStatus(){
+    const owner=recoveryOwner.current,marker=readinessReturn;
+    if(!owner||!account||!marker?.proposalId||dirty||editing||autosave.saving||autosave.error||recoveryStatusBusy)return;
+    const start={owner,tripId:account.id,tripEtag:account.tripEtag,draftEtag:account.versionEtag,marker};
+    const attempt=++recoveryAttempt.current;
+    setRecoveryStatusBusy(true);
+    try {
+      const raw=storeRecovery(marker,owner,account);
+      let saved=await accountTripAdapter.load(account.id,AbortSignal.timeout(10000));
+      const next=await recoverRecovery(raw,owner,saved.trip,saved,id=>proposalAdapter.get(saved.id,id,AbortSignal.timeout(10000)),Date.now(),async()=>{saved=await accountTripAdapter.load(start.tripId,AbortSignal.timeout(10000));return {account:saved,trip:saved.trip};});
+      if(attempt!==recoveryAttempt.current||!sameRecoveryAttempt(start,{...recoveryLatest.current,owner:recoveryOwner.current}))return;
+      setAccount(saved);setTrip(saved.trip);setReadinessReturn(next);setLoadGeneration(n=>n+1);
+      if(!next)setNotice("This review no longer matches the saved plan. Your plan is available; open plan history or begin a fresh day check.");
+    } catch {
+      if(attempt===recoveryAttempt.current&&sameRecoveryAttempt(start,{...recoveryLatest.current,owner:recoveryOwner.current}))setReadinessReturn({...marker,receiptUnavailable:true});
+    } finally {if(attempt===recoveryAttempt.current)setRecoveryStatusBusy(false);}
+  }
   async function newTrip() {
     try {
       await autosave.flush();
@@ -322,6 +405,10 @@ export default function TripWorkbench({
       );
       return;
     }
+    requestedAccountId.current=null;
+    setMapRepair(null);
+    setReadinessReturn(null);
+    try{sessionStorage.removeItem(recoveryStorageKey);sessionStorage.removeItem(movedPlaceStorageKey);sessionStorage.removeItem(reviewSubmitRetryKey);}catch{}
     setRemovedActivity(null);
     setLibraryOpen(false);
     setAccount(null);
@@ -338,6 +425,8 @@ export default function TripWorkbench({
       await autosave.flush();
       const { error } = await authClient().auth.signOut();
       if (error) throw error;
+      recoveryOwner.current=null;setReadinessReturn(null);
+      try{sessionStorage.removeItem(recoveryStorageKey);sessionStorage.removeItem(movedPlaceStorageKey);sessionStorage.removeItem(reviewSubmitRetryKey);}catch{}
       setSignedIn(false);
       setAccount(null);
       setAccountRows(null);
@@ -396,7 +485,12 @@ export default function TripWorkbench({
     }
     setAccountLoading(true);
     try {
-      const saved = await accountTripAdapter.load(id);
+      let saved = await accountTripAdapter.load(id);
+      const owner=recoveryOwner.current;
+      let reminder:ReadinessReturn|null=null;
+      if(owner){try{reminder=await recoverRecovery(sessionStorage.getItem(recoveryStorageKey),owner,saved.trip,saved,proposalId=>proposalAdapter.get(saved.id,proposalId,AbortSignal.timeout(10000)),Date.now(),async()=>{saved=await accountTripAdapter.load(id);return {account:saved,trip:saved.trip};});}catch{}}
+      setReadinessReturn(recoveryOwner.current===owner?reminder:null);
+      try { setMapRepair(owner&&recoveryOwner.current===owner?restoreMovedPlaceRepair(sessionStorage.getItem(movedPlaceStorageKey),owner,saved.trip,saved.id):null); } catch { setMapRepair(null); }
       setRemovedActivity(null);
       setTrip(saved.trip);
       setAccount(saved);
@@ -419,6 +513,23 @@ export default function TripWorkbench({
     }
   }
   const nights = trip.stops.reduce((n, s) => n + s.nights, 0);
+  function editReadinessActivity(context:ReadinessContext,report:ReadinessReport,activityId:string,choice?:RecoveryChoice){
+    if(!account||dirty||autosave.saving||autosave.error||editing)return false;
+    const activity=readinessEditTarget(trip,account,context,report,activityId,selected,day);
+    if(!activity)return false;
+    setReadinessReturn({tripId:account.id,stopId:selected,day,activityId});
+    setRecoveryChoice(choice);setEditMapFirst(false);setEditStatusFirst(true);setEditing(activity);return true;
+  }
+  function editDelayActivity(proposal: Proposal, activityId: string) {
+    if (!account || dirty || autosave.saving || autosave.error) return false;
+    const target = delayEditTarget(trip, proposal, activityId);
+    if (!target) return false;
+    setDelayReturn({tripId: account.id, reviewId: proposal.id, editedActivityId: activityId, seed: target.seed});
+    setReviewOpen(false); setPendingOpen(false); setHistoryOpen(false);
+    setView("itinerary"); setSelected(target.activity.stopId); setDay(target.activity.day);
+    setEditStatusFirst(false);setEditMapFirst(true); setEditing(target.activity);
+    return true;
+  }
   function update(patch: Partial<Trip>) {
     setTrip((t) => ({ ...t, ...patch }));
     setDirty(true);
@@ -641,6 +752,14 @@ export default function TripWorkbench({
             {notice}
           </div>
         )}
+        {view === "itinerary" && account && <TripLifecycle key={account.id} account={account} disabled={recoveryStatusBusy||dirty||autosave.saving||!!autosave.error||!!editing||planningOpen||reviewOpen||pendingOpen||historyOpen} onChanged={metadata=>{setAccount(current=>current?.id===metadata.id?{...current,...metadata}:current);setLoadGeneration(n=>n+1);setRemainingRequest(null);setWeatherSeed(null);setDelayReturn(null);setReadinessReturn(null);}} />}
+        {mapRepair&&account?.id===mapRepair.tripId&&<MovedPlaceRepairs trip={trip} accountId={account.id} repair={mapRepair} busy={dirty||autosave.saving||!!autosave.error} editing={!!editing} onDismiss={()=>{setMapRepair(null);try{sessionStorage.removeItem(movedPlaceStorageKey);}catch{}}} onChoose={id=>{
+          if(dirty||autosave.saving||autosave.error||editing)return;
+          const activity=movedPlaceTarget(trip,account.id,mapRepair,id);
+          if(!activity){setNotice("This activity has changed. Review its current day in the planner.");return;}
+          setSelected(activity.stopId);setDay(activity.day);setView("itinerary");setEditStatusFirst(false);setEditMapFirst(true);setEditing(activity);
+        }}/>}
+        {view === "itinerary" && account?.lifecycle === "completed" && <section className="trip-outcome-recap" aria-label="Activity outcome recap"><h2>Your trip, as recorded</h2><p>Based on your editable draft. Changes to the draft may differ from your accepted plan.</p><ul><li>{trip.activities.filter(a=>a.completed).length} completed</li><li>{trip.activities.filter(a=>a.skipped).length} didn’t happen</li><li>{trip.activities.filter(a=>!a.completed&&!a.skipped).length} still planned</li></ul><p>These are the outcomes you recorded. Finishing a trip does not mark activities done or cancel reservations.</p></section>}
         {view === "itinerary" && (
           <nav className="trip-tabs" aria-label="Trip workspace">
             <button
@@ -690,6 +809,7 @@ export default function TripWorkbench({
             key={loadGeneration}
             trip={trip}
             accountSavingAvailable={initialView === "setup"}
+            costAccount={account&&!dirty&&!autosave.saving&&!autosave.error?account:undefined}
             initialStep={creationStep}
             onStepChange={setCreationStep}
             update={update}
@@ -707,14 +827,28 @@ export default function TripWorkbench({
           >
             <div className="trip-plan-surface">
               <ItineraryWorkspace
+                onRebalanced={result=>{if(account){const repair=advanceMovedPlaceRepairs(account.id,mapRepair,result);setMapRepair(repair);try{if(repair&&recoveryOwner.current)sessionStorage.setItem(movedPlaceStorageKey,storeMovedPlaceRepair(repair,recoveryOwner.current));else sessionStorage.removeItem(movedPlaceStorageKey);}catch{}}}}
+                onReadinessEdit={editReadinessActivity}
+                readinessReturn={readinessReturn?.tripId===account?.id&&readinessReturn?.stopId===selected&&readinessReturn?.day===day?readinessReturn:undefined}
+                onDismissReadinessReturn={()=>setReadinessReturn(null)}
+                recoveryStatusBusy={recoveryStatusBusy}
+                onRefreshReviewStatus={()=>void refreshRecoveryStatus()}
+                onReviewCorrections={()=>{if(!account||dirty||autosave.saving||autosave.error)return;setReadinessReturn(current=>current?{...current,reviewEtag:account.versionEtag}:null);setGeneratedProposalId(readinessReturn?.proposalId);setReviewOpen(true);}}
+                readinessRequest={remainingRequest?.tripId===account?.id&&remainingRequest?.baseEtag===account?.versionEtag&&remainingRequest?.stopId===selected&&remainingRequest?.day===day?remainingRequest:undefined}
+                onReadinessRequestHandled={()=>setRemainingRequest(null)}
+                weatherSeed={weatherSeed?.tripId===account?.id&&weatherSeed?.baseEtag===account?.versionEtag&&weatherSeed?.stopId===selected&&weatherSeed?.day===day?weatherSeed:undefined}
+                lifecycle={account?.lifecycle}
                 trip={trip}
                 selected={selected}
                 day={day}
-                onSelect={setSelected}
-                onDay={setDay}
-                timeChangeReview={account && !dirty && !autosave.saving && !autosave.error ? {account, onAccepted: async () => {const saved = await accountTripAdapter.load(account.id);setAccount(saved);setTrip(saved.trip);setDirty(false);setLoadGeneration(n=>n+1);setNotice("Time change accepted. Recheck hours and onward travel for the updated day.");}} : undefined}
-                onEdit={setEditing}
-                onAdd={setEditing}
+                onSelect={id=>{setRemainingRequest(null);setWeatherSeed(null);setSelected(id);}}
+                onDay={value=>{setRemainingRequest(null);setWeatherSeed(null);setDay(value);}}
+                timeChangeReview={account && tripCapabilities(account.lifecycle).remaining && !dirty && !autosave.saving && !autosave.error ? {account, onEditActivity: editDelayActivity, onAccepted: async (message?:string) => {const saved = await accountTripAdapter.load(account.id);setAccount(saved);setTrip(saved.trip);setDirty(false);setLoadGeneration(n=>n+1);setDelayReturn(null);setNotice(message ?? "Time change accepted. Recheck hours and onward travel for the updated day.");}} : undefined}
+                delayReturn={delayReturn?.tripId === account?.id ? delayReturn : null}
+                onDismissDelayReturn={() => setDelayReturn(null)}
+                editorOpen={!!editing}
+                onEdit={activity => {setEditStatusFirst(false);setEditMapFirst(false);setEditing(activity);}}
+                onAdd={activity => {setEditStatusFirst(false);setEditMapFirst(false);setEditing(activity);}}
                 planningMode={
                   process.env.NEXT_PUBLIC_PLANNING_AI_ENABLED === "true"
                     ? "groq"
@@ -725,6 +859,7 @@ export default function TripWorkbench({
                     process.env.NEXT_PUBLIC_PLANNING_FIXTURES_ENABLED ===
                       "true") &&
                   account &&
+                  tripCapabilities(account.lifecycle).generate &&
                   !dirty &&
                   !autosave.saving &&
                   !autosave.error
@@ -733,6 +868,7 @@ export default function TripWorkbench({
                 }
                 onUpdate={update}
                 onSetup={(step = 5) => {
+                  setWeatherSeed(null);
                   setCreationStep(step);
                   setLoadGeneration((n) => n + 1);
                   setView("setup");
@@ -742,6 +878,7 @@ export default function TripWorkbench({
             {chatOpen && account && (
               <TripChat
                 key={account.id}
+                lifecycle={account.lifecycle}
                 account={account}
                 stopId={selected}
                 day={day}
@@ -749,7 +886,16 @@ export default function TripWorkbench({
                   trip.stops.find((s) => s.id === selected)?.name ??
                   "Selected destination"
                 }
+                exactDates={trip.mode==="exact"}
                 canSend={!dirty && !autosave.saving && !autosave.error}
+                canOpenRemainingRequest={turn=>!editing&&canOpenRemaining(trip,account,turn,selected,day)}
+                onRemainingRequest={turn=>{if(dirty||autosave.saving||autosave.error||editing||!canOpenRemaining(trip,account,turn,selected,day)){setNotice("This request no longer matches your saved day. Finish saving, then ask again.");return;}setRemainingRequest({key:crypto.randomUUID(),tripId:account.id,baseEtag:account.versionEtag,stopId:selected,day});setView("itinerary");setChatOpen(false);}}
+                canOpenWeatherRequest={turn=>!!weatherHandoffSeed(trip,account,turn,selected,day)}
+                onWeatherRequest={turn=>{
+                  const seed=!dirty&&!autosave.saving&&!autosave.error?weatherHandoffSeed(trip,account,turn,selected,day):undefined;
+                  if(!seed){setNotice("This replacement request no longer matches your saved day. Ask again from the latest plan.");return;}
+                  setWeatherSeed({...seed,key:crypto.randomUUID(),tripId:account.id,baseEtag:account.versionEtag});setChatOpen(false);
+                }}
                 onClose={() => setChatOpen(false)}
                 onReview={(id) => {
                   setGeneratedProposalId(id);
@@ -823,16 +969,27 @@ export default function TripWorkbench({
           <ProposalReview
             account={account}
             proposalId={generatedProposalId}
+            onOpenPending={()=>{setReviewOpen(false);setPendingOpen(true);}}
+            onProposalReady={proposal=>{
+              const marker=bindRecoveryReview(readinessReturn,account,proposal);
+              if(!marker)return;
+              if(recoveryOwner.current){try{const raw=storeRecovery(marker,recoveryOwner.current,account);if(raw)sessionStorage.setItem(recoveryStorageKey,raw);}catch{}}
+              setReadinessReturn(marker);
+            }}
+            onDiscarded={proposal=>setReadinessReturn(current=>discardRecoveryReview(current,proposal.id))}
+            onEditActivity={editDelayActivity}
             onClose={() => setReviewOpen(false)}
-            onAccepted={async () => {
+            onAccepted={async (confirmation,acceptedProposal) => {
               const saved = await accountTripAdapter.load(account.id);
+              setReadinessReturn(current=>acceptedRecoveryReturn(current,saved,acceptedProposal)??current);
               setAccount(saved);
               setTrip(saved.trip);
               setDirty(false);
               setLoadGeneration((n) => n + 1);
               setReviewOpen(false);
+              setDelayReturn(null);
               setNotice(
-                "Provisional plan accepted. You can keep editing your draft; later edits do not change the accepted snapshot.",
+                confirmation??"Provisional plan accepted. You can keep editing your draft; later edits do not change the accepted snapshot.",
               );
             }}
           />
@@ -841,6 +998,9 @@ export default function TripWorkbench({
           <ActivityEditor
             key={editing.id}
             initial={editing}
+            focusLocation={editMapFirst}
+            focusStatus={editStatusFirst && (!recoveryChoice || recoveryChoice === "finished")}
+            recoveryChoice={editStatusFirst ? recoveryChoice : undefined}
             trip={trip}
             onClose={() => setEditing(null)}
             onSave={(activity) => {
@@ -850,8 +1010,11 @@ export default function TripWorkbench({
                   activity,
                 ],
               });
-              setSelected(activity.stopId);
-              setDay(activity.day);
+              const checkReturn=editStatusFirst&&readinessReturn?.tripId===account?.id&&readinessReturn?.activityId===activity.id?readinessReturn:null;
+              if(checkReturn&&JSON.stringify(activity)!==JSON.stringify(editing))setReadinessReturn({...checkReturn,edited:true,boundEtag:undefined,proposalId:undefined,receiptUnavailable:undefined,reviewEtag:undefined,acceptedVersionId:undefined,acceptedDraftEtag:undefined});
+              setSelected(checkReturn?.stopId??activity.stopId);
+              setDay(checkReturn?.day??activity.day);
+              setEditStatusFirst(false);
               setEditing(null);
             }}
             onRemove={() => {
@@ -862,6 +1025,7 @@ export default function TripWorkbench({
                 )
               )
                 return;
+              if(editStatusFirst&&readinessReturn?.activityId===editing.id)setReadinessReturn({...readinessReturn,edited:true,boundEtag:undefined,proposalId:undefined,receiptUnavailable:undefined,reviewEtag:undefined,acceptedVersionId:undefined,acceptedDraftEtag:undefined});
               setRemovedActivity({ ...editing });
               update({
                 activities: trip.activities.filter((a) => a.id !== editing.id),

@@ -1,9 +1,10 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import type { DelayEditHandler } from "../../lib/trips/delay-handoff";
 import type { Activity } from "../../lib/trips/adapter";
 import { proposalAdapter } from "../../lib/trips/proposals";
 import ProposalReview from "./ProposalReview";
-export type TimeChangeAccount = {account:{id:string;versionEtag:string};onAccepted:()=>Promise<void>};
+export type TimeChangeAccount = {account:{id:string;versionEtag:string;currentVersionId?:string|null};onAccepted:(message?:string)=>Promise<void>;onEditActivity?:DelayEditHandler};
 export default function TimeChangeReview({activity,review}:{activity:Activity;review:TimeChangeAccount}) {
   const key=useRef(crypto.randomUUID()),controller=useRef<AbortController|null>(null),active=useRef(true);
   const [proposalId,setProposalId]=useState<string>();

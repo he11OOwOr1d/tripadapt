@@ -266,3 +266,62 @@ def test_other_proposal_operations_cannot_silently_ignore_live_check(context):
         client.get(base + f"/proposals/{proposed['id']}").json()["data"]["status"]
         == "pending"
     )
+
+
+def test_single_visit_failure_identifies_the_proposed_activity(monkeypatch):
+    from app.planning.live_acceptance import DayCheckFailure
+
+    value, metadata = plan()
+    providers(monkeypatch, status="reported_closed")
+    with pytest.raises(DayCheckFailure) as caught:
+        recheck_move(None, None, None, value, metadata, checks())
+    diagnostic = caught.value.diagnostic
+    target = next(
+        a
+        for a in value.activities
+        if str(a.logical_id) == metadata["command"]["activity_id"]
+    )
+    assert diagnostic.kind == "visit" and diagnostic.activity_id == target.logical_id
+    assert diagnostic.reason == "closed" and diagnostic.from_activity_id is None
+
+
+def test_outgoing_route_failure_names_the_exact_edge_without_provider_text(monkeypatch):
+    from app.planning.live_acceptance import DayCheckFailure
+
+    value, metadata = plan()
+    providers(monkeypatch)
+    calls = []
+
+    def route(body, *args):
+        calls.append(body)
+        if len(calls) == 2:
+            raise HTTPException(503, "private upstream payload must not escape")
+        return {"data": SimpleNamespace(spare_minutes=20, warnings=[])}
+
+    monkeypatch.setattr(journeys, "check_journey", route)
+    original = value.model_dump()
+    with pytest.raises(DayCheckFailure) as caught:
+        recheck_move(None, None, None, value, metadata, checks())
+    diagnostic = caught.value.diagnostic
+    assert (
+        caught.value.detail == "GOOGLE_ROUTES_UNAVAILABLE"
+        and caught.value.status_code == 503
+    )
+    assert diagnostic.kind == "journey" and diagnostic.reason == "provider_error"
+    assert diagnostic.from_activity_id == value.activities[1].logical_id
+    assert diagnostic.activity_id == value.activities[2].logical_id
+    assert "private" not in str(diagnostic.model_dump())
+    assert value.model_dump() == original and len(calls) == 2
+
+
+def test_missing_predecessor_is_named_before_any_live_calls(monkeypatch):
+    from app.planning.live_acceptance import DayCheckFailure
+
+    value, metadata = plan()
+    calls = providers(monkeypatch)
+    value.activities[0].place_id = None
+    with pytest.raises(DayCheckFailure) as caught:
+        recheck_move(None, None, None, value, metadata, checks())
+    assert caught.value.diagnostic.from_activity_id == value.activities[0].logical_id
+    assert caught.value.diagnostic.activity_id == value.activities[1].logical_id
+    assert caught.value.diagnostic.reason == "location_missing" and calls == []

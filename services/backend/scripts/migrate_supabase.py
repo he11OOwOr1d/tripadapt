@@ -13,6 +13,10 @@ from app.persistence import models  # noqa: F401
 from app.persistence.database import Base, engine
 
 
+class BrowserGrantError(RuntimeError):
+    """An application table still has effective browser-role grants."""
+
+
 def migrate():
     with engine.begin() as connection:
         config = Config("alembic.ini")
@@ -20,7 +24,9 @@ def migrate():
         command.upgrade(config, "head")
         roles = list(
             connection.scalars(
-                text("SELECT rolname FROM pg_roles WHERE rolname IN ('anon','authenticated')")
+                text(
+                    "SELECT rolname FROM pg_roles WHERE rolname IN ('anon','authenticated')"
+                )
             )
         )
         targets = ["PUBLIC", *roles]
@@ -28,23 +34,42 @@ def migrate():
         table_names = sorted({*Base.metadata.tables, "alembic_version", "system_probe"})
         for table_name in table_names:
             table = f"public.{quote(table_name)}"
-            role_sql = ", ".join("PUBLIC" if role == "PUBLIC" else quote(role) for role in targets)
-            connection.exec_driver_sql(f"REVOKE ALL PRIVILEGES ON TABLE {table} FROM {role_sql}")
+            role_sql = ", ".join(
+                "PUBLIC" if role == "PUBLIC" else quote(role) for role in targets
+            )
+            connection.exec_driver_sql(
+                f"REVOKE ALL PRIVILEGES ON TABLE {table} FROM {role_sql}"
+            )
         for role in roles:
             for table_name in table_names:
                 allowed = connection.scalar(
-                    text("SELECT has_table_privilege(:role, :table, 'SELECT,INSERT,UPDATE,DELETE')"),
+                    text(
+                        "SELECT has_table_privilege(:role, :table,"
+                        " 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')"
+                        " OR has_any_column_privilege(:role, :table,"
+                        " 'SELECT,INSERT,UPDATE,REFERENCES')"
+                    ),
                     {"role": role, "table": f"public.{table_name}"},
                 )
                 if allowed:
-                    raise RuntimeError("Browser role still has application table access")
-    print("Migrations committed; application tables are not accessible to browser API roles.")
+                    raise BrowserGrantError(
+                        f"Role {role} still has privileges on public.{table_name}. "
+                        "Check grants inherited from other roles."
+                    )
+    print(
+        "Migrations committed; application tables are not accessible to browser API roles."
+    )
 
 
 if __name__ == "__main__":
     try:
         migrate()
+    except BrowserGrantError as exc:
+        print(f"Migration rolled back. {exc}")
+        raise SystemExit(1) from None
     except Exception as exc:
         # Do not print a DSN, credentials, SQL parameters or authentication claims.
-        print(f"Migration rolled back ({type(exc).__name__}). Inspect configuration locally.")
+        print(
+            f"Migration rolled back ({type(exc).__name__}). Inspect configuration locally."
+        )
         raise SystemExit(1) from None

@@ -36,3 +36,12 @@ test('Google identifiers are safely encoded into a Google source link',()=>{
  assert.equal(harness().googleMapLink('ChIJ_test'),'https://www.google.com/maps/search/?api=1&query=Place&query_place_id=ChIJ_test');
  assert.match(harness().googleMapLink('id&x=y'),/id%26x%3Dy$/);
 });
+
+test('explicit matching refinement sends only the trimmed venue query and existing source reference',async()=>{
+ const h=harness(),signal=new AbortController().signal;
+ await h.googlePlacesAdapter.matches('source-ref',signal,'  Alternate venue spelling  ');
+ assert.deepEqual(JSON.parse(h.calls[0].options.body),{source_place_id:'source-ref',query:'Alternate venue spelling'});
+ await h.googlePlacesAdapter.matches('source-ref',signal,'   ');
+ assert.deepEqual(JSON.parse(h.calls[1].options.body),{source_place_id:'source-ref'});
+ assert.equal(h.calls[0].options.signal.aborted,false);
+});

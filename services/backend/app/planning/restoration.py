@@ -20,7 +20,7 @@ def restoration_report(current, candidate):
         )
     )
     for activity in current.activities:
-        if (activity.fixed or activity.booked or activity.completed) and (
+        if (activity.fixed or activity.booked or activity.resolved) and (
             items.get(str(activity.logical_id)) != activity
             or dates_changed
             or current_stops.get(str(activity.stop_logical_id))
@@ -36,6 +36,40 @@ def restoration_report(current, candidate):
                     "acknowledgeable": False,
                 }
             )
+    restored_costs = {cost.id: cost for cost in candidate.costs}
+    affected_payments = [
+        cost
+        for cost in current.costs
+        if cost.status == "paid"
+        and (
+            restored_costs.get(cost.id) != cost
+            or (
+                current.display_currency != candidate.display_currency
+                and (cost.currency is None or cost.conversion_rate is not None)
+            )
+            or (
+                cost.unit == "per_person"
+                and current.traveler_count != candidate.traveler_count
+            )
+        )
+    ]
+    if affected_payments:
+        labels = ", ".join(f"‘{cost.label}’" for cost in affected_payments[:3])
+        if len(affected_payments) > 3:
+            labels += f" and {len(affected_payments) - 3} more"
+        report["issues"].append(
+            {
+                "id": "RESTORE_PAID_COSTS",
+                "code": "RESTORE_PAID_COSTS",
+                "activity_id": None,
+                "detail": (
+                    f"Restoring this version changes or removes recorded payments: {labels}. "
+                    "This only changes the trip record. It does not issue a refund."
+                ),
+                "blocking": False,
+                "acknowledgeable": True,
+            }
+        )
     if any(i["blocking"] for i in report["issues"]):
         report["status"] = "conflicted"
     return report

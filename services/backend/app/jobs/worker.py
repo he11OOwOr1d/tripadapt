@@ -14,6 +14,7 @@ from app.agents.day_graph import run_day_graph
 from app.agents.groq_provider import GroqProvider, PlanningFailure
 from app.api.proposals import persist_candidate
 from app.config import settings
+from app.jobs.policy import lifecycle_allows_job, readonly_reply
 from app.persistence.database import engine
 from app.persistence.models import ConversationTurn, PlanningJob, PlanVersion, Trip
 from app.planning.candidate import validate_job_candidate
@@ -115,6 +116,12 @@ def fresh_base(db, job):
         trip is None
         or trip.deleted_at is not None
         or trip.owner_id != job.owner_id
+        or trip.lifecycle != original.get("trip_lifecycle", "planning")
+        or (
+            "trip_lock_version" in original
+            and trip.lock_version != original["trip_lock_version"]
+        )
+        or not lifecycle_allows_job(trip.lifecycle, original["request"]["operation"])
         or draft is None
         or str(draft.id) != original["request"]["base_version_id"]
         or draft.edit_sequence != original["base_edit_sequence"]
@@ -142,8 +149,47 @@ def publish_reply(db, ident, token, reply):
     if job.cancel_requested:
         finish(job, "cancelled", "Cancelled")
         return False
-    if fresh_base(db, job) is None:
+    pair = fresh_base(db, job)
+    if pair is None:
         return False
+    if pair[0].lifecycle == "active" and not readonly_reply(reply):
+        job.error_code = "ACTIVE_CHAT_READ_ONLY"
+        finish(job, "failed", "Active-trip chat can only explain or open confirmation")
+        return False
+    if reply.get("weather_focus"):
+        from app.planning.weather_handoff import validate_handoff
+
+        focus = reply["weather_focus"]
+        scope = job.input["request"]["scope"]
+        etag = f'"draft:{job.input["request"]["base_version_id"]}:{job.input["base_edit_sequence"]}"'
+        action = validate_handoff(
+            PlanInput.model_validate(job.input["plan"]),
+            scope,
+            {
+                **focus,
+                "stop_id": scope["stop_logical_id"],
+                "local_day_offset": scope["local_day_offset"],
+                "base_etag": etag,
+            },
+            etag,
+        )
+        job.result_metadata = {"weather_handoff": action.model_dump(mode="json")}
+    if reply.get("kind") == "remaining_handoff":
+        from app.planning.remaining_handoff import validate_remaining_handoff
+
+        scope = job.input["request"]["scope"]
+        etag = f'"draft:{job.input["request"]["base_version_id"]}:{job.input["base_edit_sequence"]}"'
+        action = validate_remaining_handoff(
+            PlanInput.model_validate(job.input["plan"]),
+            scope,
+            {
+                "stop_id": scope["stop_logical_id"],
+                "local_day_offset": scope["local_day_offset"],
+                "base_etag": etag,
+            },
+            etag,
+        )
+        job.result_metadata = {"remaining_handoff": action.model_dump(mode="json")}
     save_reply(db, job, reply)
     finish(job, "succeeded", "Your reply is ready")
     db.flush()
@@ -161,6 +207,10 @@ def publish(db, ident, token, candidate, metadata=None):
     if pair is None:
         return False
     trip, draft = pair
+    if trip.lifecycle != "planning":
+        job.error_code = "AGENT_PLANNING_ONLY"
+        finish(job, "failed", "Active-trip chat cannot publish itinerary changes")
+        return False
     original = job.input
     report = validate_plan(candidate)
     report["issues"].append(
@@ -215,6 +265,8 @@ def run_once():
         job = claim(db)
         if job is None:
             return False
+        if fresh_base(db, job) is None:
+            return True
         ident, token, payload = job.id, job.lease_token, job.input
     stopped = threading.Event()
     lost = threading.Event()
@@ -260,7 +312,12 @@ def run_once():
                         payload.get("conversation", []),
                         provider,
                         evidence=payload["request"].get("evidence", "sample"),
+                        lifecycle=payload.get("trip_lifecycle", "planning"),
                     )
+                if payload.get(
+                    "trip_lifecycle", "planning"
+                ) == "active" and not readonly_reply(reply):
+                    raise PlanningFailure("ACTIVE_CHAT_READ_ONLY")
                 if reply is not None and "candidate" in reply:
                     progress("Checking the requested time change")
                     candidate, metadata = reply.pop("candidate"), reply.pop("metadata")

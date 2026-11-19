@@ -1,0 +1,4 @@
+import type { Trip } from "./adapter";
+import type { ConversationTurn } from "./conversation";
+export type RemainingHandoff={type:"remaining_day";stop_id:string;local_day_offset:number;base_etag:string};
+export function canOpenRemaining(trip:Trip,account:{id:string;versionEtag:string},turn:ConversationTurn,stopId:string,day:number){const action=turn.remaining_handoff;if(!action||action.type!=="remaining_day"||turn.kind!=="remaining_handoff"||turn.remaining_handoff_stale||turn.job.status!=="succeeded"||turn.job.proposal_id||turn.job.trip_id!==account.id||action.base_etag!==account.versionEtag||action.stop_id!==stopId||!Number.isInteger(action.local_day_offset)||action.local_day_offset!==day-1||!Number.isInteger(day)||day<1)return false;const stop=trip.stops.find(s=>s.id===stopId);return !!stop&&day<=stop.nights+1;}

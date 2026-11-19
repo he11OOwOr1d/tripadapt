@@ -17,6 +17,10 @@ from app.persistence.models import AppUser, Trip
 def context():
     # Real PostgreSQL, outer rollback keeps all test data isolated.
     with engine.connect() as connection:
+        # TestClient shutdown disposes the app pool while this outer transaction
+        # is still open. Detach so closing this fixture closes its DB connection
+        # rather than returning it to a retired pool until garbage collection.
+        connection.detach()
         transaction = connection.begin()
         with Session(bind=connection, join_transaction_mode="create_savepoint") as db:
 

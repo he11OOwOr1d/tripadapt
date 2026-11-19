@@ -27,7 +27,10 @@ class WebServiceWorker:
     def start(self):
         if not (settings.planning_ai_enabled or settings.planning_fixtures_enabled):
             raise RuntimeError("Enable a planning engine before starting the worker.")
-        if settings.planning_ai_enabled and not settings.groq_api_key.get_secret_value():
+        if (
+            settings.planning_ai_enabled
+            and not settings.groq_api_key.get_secret_value()
+        ):
             raise RuntimeError("AI planning requires GROQ_API_KEY.")
         self.thread.start()
         logger.info("Planning worker ready inside the web service.")

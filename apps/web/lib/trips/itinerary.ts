@@ -1,5 +1,14 @@
 import type { Activity, Trip } from "./adapter";
 import { routeLegs, timeAllocation } from "./planning";
+/** Describe editable activity records without counting recorded outcomes as plans. */
+export function activityOutcomeLabel(activities: Activity[]): string {
+  const planned=activities.filter(a=>!a.completed&&!a.skipped).length;
+  const completed=activities.filter(a=>a.completed).length;
+  const skipped=activities.filter(a=>a.skipped).length;
+  return [`${planned} planned ${planned===1?"item":"items"}`,
+    ...(completed?[`${completed} completed`]:[]),
+    ...(skipped?[`${skipped} didn’t happen`]:[])].join(" · ");
+}
 export const clockMinutes = (value: string) => {
   const [hours, minutes] = value.split(":").map(Number);
   return hours * 60 + minutes;
@@ -61,8 +70,11 @@ export function dayConflicts(trip: Trip, stopId: string, day: number) {
     if (end > 1440)
       issues.push("Ends after midnight. Split this into two day blocks.");
     for (const other of activities) {
+      // A skipped activity held no time, so neither side of a pair can clash.
       if (
         other.id !== item.id &&
+        !item.skipped &&
+        !other.skipped &&
         clockMinutes(other.start) < end &&
         clockMinutes(other.start) + other.minutes > start
       )
@@ -75,23 +87,33 @@ export function dayConflicts(trip: Trip, stopId: string, day: number) {
 export type DayEntry =
   | { type: "activity"; activity: Activity }
   | { type: "gap"; start: number; end: number };
+/** Filter presentation after calculating occupancy; completed time stays occupied. */
+export function visibleDayEntries(entries: DayEntry[], showRecorded: boolean): DayEntry[] {
+  return showRecorded ? entries : entries.filter(entry => entry.type === "gap" || (!entry.activity.completed && !entry.activity.skipped));
+}
 export function dayTimeline(activities: Activity[]): DayEntry[] {
   const sorted = [...activities].sort(
     (a, b) => a.start.localeCompare(b.start) || a.id.localeCompare(b.id),
   );
-  const start = Math.min(480, ...sorted.map((a) => clockMinutes(a.start)));
+  const occupied = sorted.filter((a) => !a.skipped);
+  const start = Math.min(480, ...occupied.map((a) => clockMinutes(a.start)));
   const end = Math.min(
     1440,
-    Math.max(1320, ...sorted.map((a) => clockMinutes(a.start) + a.minutes)),
+    Math.max(1320, ...occupied.map((a) => clockMinutes(a.start) + a.minutes)),
   );
   const entries: DayEntry[] = [];
   let cursor = start;
   for (const activity of sorted) {
     const begins = clockMinutes(activity.start);
-    if (begins > cursor)
-      entries.push({ type: "gap", start: cursor, end: begins });
+    const gapEnd = Math.min(end, begins);
+    if (gapEnd > cursor) {
+      entries.push({ type: "gap", start: cursor, end: gapEnd });
+      cursor = gapEnd;
+    }
     entries.push({ type: "activity", activity });
-    cursor = Math.max(cursor, Math.min(1440, begins + activity.minutes));
+    // Retain the historical card without reserving its former time.
+    if (!activity.skipped)
+      cursor = Math.max(cursor, Math.min(1440, begins + activity.minutes));
   }
   if (cursor < end) entries.push({ type: "gap", start: cursor, end });
   return entries;
