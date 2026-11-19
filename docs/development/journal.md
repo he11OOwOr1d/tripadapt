@@ -816,3 +816,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026. Audited the creation form with axe at first load and with each step opened: about 50 contrast failures (muted green text at 2.8 to 4.4:1). Darkened 21 declarations in four trip stylesheets to at least 4.6:1 keeping each hue; axe now reports none there. Chat, history and review screens were not audited; no screenshots, so not seen by eye. 210 frontend tests and the build pass. Committed locally; not pushed. See [the learning note](../lodging-learning.md).
 
+## 174. Audit chat, review and history; make the chat log keyboard-reachable
+
+20 November 2026. Extended the axe audit to the chat, review plan and plan history screens: one muted chat color and one dialog-header color failed contrast (now darkened with the same hue), and the scrollable chat log was not keyboard-focusable (now `tabIndex={0}` with a focus outline). Axe reports none afterwards. No data changed; not seen by eye. 210 tests and the build pass. Committed locally; not pushed.
+

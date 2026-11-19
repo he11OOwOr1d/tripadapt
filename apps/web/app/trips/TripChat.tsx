@@ -224,6 +224,7 @@ export default function TripChat({
       <div
         className="chat-log"
         ref={log}
+        tabIndex={0}
         role="log"
         aria-label="Trip conversation"
         aria-relevant="additions text"
