@@ -5,7 +5,13 @@ import pytest
 
 from app.agents.day_graph import DayCandidate, run_day_graph
 from app.agents.groq_provider import PlanningFailure
-from app.trips.schemas import Lodging, PlanInput, StayPreference
+from app.trips.schemas import (
+    Lodging,
+    PlanInput,
+    StayPreference,
+    TravelPreference,
+    plan_legs,
+)
 
 
 class FakeProvider:
@@ -188,3 +194,48 @@ def test_no_stay_means_no_stay_context():
     provider = RecordingProvider([answer()])
     run_day_graph(plan, stop, 15, uuid4(), provider)
     assert "has_map_location" not in "".join(provider.seen)
+
+
+def with_journey(plan, index, **times):
+    key = plan_legs(plan)[index]["key"]
+    plan.preferences.travel_preferences[key] = TravelPreference(
+        mode="Rail", hours="", overnight=0, rate="", basis="person", **times
+    )
+
+
+def test_recorded_arrival_narrows_the_first_day_and_a_clash_is_repaired():
+    plan, stop = base()
+    with_journey(plan, 0, arrival="11:00")
+    provider = RecordingProvider([answer("09:30"), answer("11:30")])
+    result, _ = run_day_graph(plan, stop, 0, uuid4(), provider)
+    assert provider.schema_calls == 2
+    assert result.activities[-1].local_start_time.hour == 11
+    text = "".join(provider.seen)
+    assert "traveler_recorded_arrival" in text
+    # The repair feedback names the narrowed window (the dash is JSON-escaped).
+    assert "keep added blocks inside 11:00" in text
+
+
+def test_recorded_departure_narrows_the_last_day_only():
+    plan, stop = base()
+    with_journey(plan, 1, departure="14:00")
+    last = RecordingProvider([answer("13:30"), answer("12:30")])
+    result, _ = run_day_graph(plan, stop, 20, uuid4(), last)
+    assert last.schema_calls == 2
+    assert result.activities[-1].local_start_time.hour == 12
+    assert "traveler_recorded_departure" in "".join(last.seen)
+    middle = RecordingProvider([answer("17:00")])
+    run_day_graph(plan, stop, 15, uuid4(), middle)
+    assert middle.schema_calls == 1
+    assert "traveler_recorded_departure" not in "".join(middle.seen)
+
+
+def test_without_recorded_journeys_the_window_is_unchanged():
+    plan, stop = base()
+    assert "traveler_recorded" not in _run_text(plan, stop, 0)
+
+
+def _run_text(plan, stop, day):
+    provider = RecordingProvider([answer("10:00")])
+    run_day_graph(plan, stop, day, uuid4(), provider)
+    return "".join(provider.seen)

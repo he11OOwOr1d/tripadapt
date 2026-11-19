@@ -880,3 +880,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026. PRD FR-05 asks for an "Add existing transport booking" form. Added four optional fields to the per-journey entry (departure, arrival, reference, booked), a form on each arrival and departure card, summaries that say the times are as entered, and day-view flags for activities that start before the recorded arrival or run past the recorded departure. No migration; older plans still load. 607 backend and 232 frontend tests pass; verified live and signed in on the disposable QA trip (flags, persistence, removal), axe and 390 px clean after darkening one existing conflict color. Not built: buffers, overnight arrivals, use by the AI planner and chat. Committed locally; not pushed. See [the learning note](../transfer-bookings-learning.md).
 
+## 190. Make the AI planner respect recorded arrival and departure times
+
+20 November 2026. The day graph narrows its planning window to the traveler's recorded arrival (first day at a stop) and departure (last day), passes it to the model, and enforces it after the answer so a clash is repaired rather than trusted. 3 backend tests (610 pass); live with real Groq on the disposable trip: with arrival 11:00 the proposal started at 11:15. Proposal discarded, details removed. Committed locally; not pushed. See [the booking note](../transfer-bookings-learning.md).
+
