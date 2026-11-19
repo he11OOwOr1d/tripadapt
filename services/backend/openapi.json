@@ -5802,18 +5802,6 @@
       },
       "ActivityInput": {
         "properties": {
-          "google_place_id": {
-            "anyOf": [
-              {
-                "type": "string",
-                "pattern": "^[A-Za-z0-9_-]{1,200}$"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Google Place Id"
-          },
           "place_id": {
             "anyOf": [
               {

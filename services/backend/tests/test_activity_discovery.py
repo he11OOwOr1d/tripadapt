@@ -413,7 +413,6 @@ def test_existing_manual_activity_can_link_rename_and_detach_without_schedule_lo
     renamed = {
         **linked,
         "user_label": "My personal museum break",
-        "google_place_id": "ChIJ_test",
     }
     response = client.post(
         base + "/draft/commands",
@@ -442,7 +441,7 @@ def test_existing_manual_activity_can_link_rename_and_detach_without_schedule_lo
     assert response.status_code == 200, response.text
     read = client.get(path).json()["data"]
     assert read["activities"][0]["place_id"] is None
-    assert read["activities"][0]["google_place_id"] is None
+    assert "google_place_id" not in read["activities"][0]
     assert read["activities"][0]["logical_id"] == activity["logical_id"]
     assert (
         read["activities"][0]["fixed"]

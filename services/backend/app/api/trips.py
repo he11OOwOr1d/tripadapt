@@ -416,7 +416,6 @@ def activity_inputs(db, row):
     }
     return [
         ActivityInput(
-            google_place_id=a.google_place_id,
             place_id=a.place_id,
             kind=a.kind,
             logical_id=a.logical_item_id,
@@ -591,7 +590,6 @@ def sync_route(db, version, stops, activities, cascade=False, costs=None):
     for activity in activities:
         db.add(
             Activity(
-                google_place_id=activity.google_place_id,
                 place_id=activity.place_id,
                 kind=activity.kind,
                 version_id=version.id,

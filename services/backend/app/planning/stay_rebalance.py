@@ -166,7 +166,6 @@ def rebalance_stays(plan: PlanInput, body: RebalanceInput):
                 # A mapped place belongs to its old destination; never carry it.
                 a["stop_logical_id"] = new_stop
                 a["place_id"] = None
-                a["google_place_id"] = None
             if UUID(a["logical_id"]) in times:
                 a["local_start_time"] = times[UUID(a["logical_id"])]
     days_before = plan.desired_days
@@ -285,7 +284,7 @@ def rebalance_stays(plan: PlanInput, body: RebalanceInput):
                 ].name,
                 "map_cleared": a.logical_id in targets
                 and targets[a.logical_id] != str(a.stop_logical_id)
-                and bool(a.place_id or a.google_place_id),
+                and bool(a.place_id),
                 "to_start": times.get(a.logical_id)
                 or a.local_start_time.strftime("%H:%M"),
             }

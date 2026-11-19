@@ -45,13 +45,6 @@ def setup(client, db, monkeypatch, **kwargs):
 def test_replacement_is_frozen_then_changes_only_one_place(context, monkeypatch):
     client, db, _ = context
     (base, version, trip, tag, body, _, _), place = setup(client, db, monkeypatch)
-    target = db.scalar(
-        select(Activity).where(
-            Activity.version_id == UUID(trip["draft_version_id"]),
-            Activity.logical_item_id == UUID(body["activity_id"]),
-        )
-    )
-    target.google_place_id = "old_listing"
     db.commit()
     original = client.get(version).json()["data"]
     key = str(uuid4())
@@ -85,7 +78,6 @@ def test_replacement_is_frozen_then_changes_only_one_place(context, monkeypatch)
     item.update(
         user_label="Gallery alternative",
         place_id=str(place.id),
-        google_place_id=None,
         kind="custom",
     )
     assert sorted(current["activities"], key=lambda a: a["logical_id"]) == sorted(

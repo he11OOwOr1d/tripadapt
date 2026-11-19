@@ -108,7 +108,6 @@ def weather_candidate(db, base, scope, body, now):
     before = target.user_label
     target.user_label = place.name
     target.place_id = place.id
-    target.google_place_id = None
     target.kind = "custom"
     if any(i["blocking"] for i in validate_plan(candidate)["issues"]):
         raise ValueError("PLAN_CONFLICT")

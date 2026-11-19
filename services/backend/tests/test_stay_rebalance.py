@@ -286,7 +286,7 @@ def test_a_moved_activity_can_take_a_new_time_on_its_new_day():
 def test_moving_to_another_stay_clears_the_map_link_but_keeps_costs():
     p, one, two, acts = plan()
     data = p.model_dump(mode="json")
-    data["activities"][1]["google_place_id"] = "ChIJ_palace"
+    data["activities"][1]["place_id"] = str(uuid4())
     p = PlanInput.model_validate(data)
     palace = acts[1]["logical_id"]
     body = dict(stop_id=one, delta_nights=1, counterpart=two)
@@ -299,7 +299,7 @@ def test_moving_to_another_stay_clears_the_map_link_but_keeps_costs():
     )
     moved = next(a for a in candidate.activities if str(a.logical_id) == palace)
     assert str(moved.stop_logical_id) == one and moved.local_day_offset == 5
-    assert moved.google_place_id is None and moved.place_id is None
+    assert moved.place_id is None
     entry = summary["moved"][0]
     assert entry["to_destination"] == "Jaipur" and entry["map_cleared"] is True
     assert all(not c.link_removed for c in candidate.costs)
