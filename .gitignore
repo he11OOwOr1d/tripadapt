@@ -10,6 +10,9 @@ __pycache__/
 .ruff_cache/
 .local/
 
+# Copied from node_modules at dev/build time
+apps/web/public/maplibre/
+
 # Local deployment state and scratch exports
 .vercel/
 .vercel*.json

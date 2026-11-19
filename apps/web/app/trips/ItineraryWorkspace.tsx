@@ -26,6 +26,8 @@ import {
   activityOutcomeLabel,
 } from "../../lib/trips/itinerary";
 import { planningCosts, planningProblems } from "../../lib/trips/planning";
+import { validCoordinates } from "../../lib/trips/day-map";
+import DayMapPanel from "./DayMapPanel";
 const kindName = {
   custom: "Activity",
   meal: "Meal",
@@ -105,6 +107,13 @@ export default function ItineraryWorkspace({
   useEffect(() => { if(wasEditing.current && !editorOpen) (readinessReturn?readinessReturnFocus:returnFocus).current?.focus(); wasEditing.current=editorOpen; }, [editorOpen,readinessReturn]);
   const [overview, setOverview] = useState(false);
   const [showRecorded, setShowRecorded] = useState(true);
+  const [mapOpen, setMapOpen] = useState(false);
+  const [mapSelected, setMapSelected] = useState<string | undefined>();
+  // A marker click highlights its timeline row and brings it into view; the row button does the reverse.
+  const selectOnMap = (id: string) => {
+    setMapSelected(id);
+    document.getElementById(`day-activity-${id}`)?.scrollIntoView({ block: "nearest" });
+  };
   const readinessTrigger=useRef<HTMLButtonElement>(null),readinessWasOpen=useRef(false);
   useEffect(()=>{if(readinessRequest&&timeChangeReview&&!editorOpen){setOverview(false);setReadinessBasis("accepted");setReadinessOpen(true);onReadinessRequestHandled?.();}},[readinessRequest,timeChangeReview,editorOpen,onReadinessRequestHandled]);
   useEffect(()=>{if(readinessWasOpen.current&&!readinessOpen)readinessTrigger.current?.focus();readinessWasOpen.current=readinessOpen;},[readinessOpen]);
@@ -457,6 +466,7 @@ export default function ItineraryWorkspace({
             </div>}
             {readinessOpen && timeChangeReview && <ReplanningReadiness key={`${current.stop.id}:${localDay}`} tripId={timeChangeReview.account.id} onEditActivity={onReadinessEdit} initialBasis={readinessBasis} onAccepted={timeChangeReview.onAccepted} stopId={current.stop.id} day={localDay-1} onClose={()=>setReadinessOpen(false)} />}
             {delayOpen && timeChangeReview && <DayDelayReview key={`${current.stop.id}:${localDay}`} activities={activities} place={current.stop.name} timezone={current.stop.timezone} review={timeChangeReview} initial={delaySeed} onEditActivity={timeChangeReview.onEditActivity ? (proposal,id)=>{const opened=timeChangeReview.onEditActivity!(proposal,id);if(opened)setDelayOpen(false);return opened;} : undefined} onClose={()=>setDelayOpen(false)} />}
+            <DayMapPanel key={`${current.stop.id}:${localDay}`} stop={current.stop} stops={schedule.map((s) => s.stop)} activities={activities} open={mapOpen} onOpenChange={setMapOpen} selectedId={mapSelected} onSelect={selectOnMap} />
             <p className="day-window">
               Local times · open gaps shown around an 08:00–22:00 planning day
               {transfers.length ? " · allow for untimed transfers" : ""}
@@ -499,7 +509,8 @@ export default function ItineraryWorkspace({
                   </div>
                 ) : (
                   <article
-                    className={`day-activity ${conflicts[entry.activity.id] ? "has-conflict" : ""} ${entry.activity.completed ? "is-completed" : ""} ${entry.activity.skipped ? "is-skipped" : ""}`}
+                    className={`day-activity ${conflicts[entry.activity.id] ? "has-conflict" : ""} ${entry.activity.completed ? "is-completed" : ""} ${entry.activity.skipped ? "is-skipped" : ""} ${mapSelected === entry.activity.id ? "is-map-selected" : ""}`}
+                    id={`day-activity-${entry.activity.id}`}
                     key={entry.activity.id}
                   >
                     <time>
@@ -530,6 +541,11 @@ export default function ItineraryWorkspace({
                         <button onClick={() => onEdit({ ...entry.activity })}>
                           Edit or move
                         </button>
+                        {entry.activity.place && !entry.activity.skipped && validCoordinates(entry.activity.place.latitude, entry.activity.place.longitude) && (
+                          <button type="button" className="map-locate" aria-pressed={mapSelected === entry.activity.id} onClick={() => { setMapSelected(entry.activity.id); setMapOpen(true); }}>
+                            Show on map
+                          </button>
+                        )}
                         <label>
                           <input
                             type="checkbox"
