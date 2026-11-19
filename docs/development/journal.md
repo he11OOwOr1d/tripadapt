@@ -860,3 +860,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026. The new starting-location search sits in the first step of the main creation flow, so I walked it on a new draft: required, Enter-to-search, choosing a match and continuing all work. Doing it created a second trip in the account (`639aceee-71ae-4e06-87fc-b70be8dc8d16`, now "Kyoto, Japan" as its start) because a new draft autosaves when signed in; there is no delete, so it stays as a disposable QA trip. No code changed. Committed locally; not pushed.
 
+## 185. Check the drive estimate on a three-destination trip
+
+20 November 2026. On the disposable QA trip (Delhi start; Jaipur, Agra, Varanasi) all six arrival and departure cards paired the right places, and two long estimates worked (634 km and 826 km). The main QA trip was not touched. No code changed. Committed locally; not pushed.
+
