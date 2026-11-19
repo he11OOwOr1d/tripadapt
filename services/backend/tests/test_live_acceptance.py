@@ -7,7 +7,7 @@ import test_time_change_proposals as moves
 import test_trips
 from fastapi import HTTPException
 
-from app.api import google_places, journeys, proposals
+from app.api import journeys, place_checks, proposals
 from app.planning.live_acceptance import (
     LiveAcceptance,
     planned_visit_date,
@@ -58,9 +58,7 @@ def plan():
 
 
 def checks(**kw):
-    return LiveAcceptance(
-        google_place_id="ChIJ_test", visit_date=date(2026, 11, 12), **kw
-    )
+    return LiveAcceptance(visit_date=date(2026, 11, 12), **kw)
 
 
 def providers(monkeypatch, status="fits_reported_hours", spare=5, warnings=None):
@@ -74,7 +72,7 @@ def providers(monkeypatch, status="fits_reported_hours", spare=5, warnings=None)
         calls.append(("route", body))
         return {"data": SimpleNamespace(spare_minutes=spare, warnings=warnings or [])}
 
-    monkeypatch.setattr(google_places, "google_check", hours)
+    monkeypatch.setattr(place_checks, "hours_check", hours)
     monkeypatch.setattr(journeys, "check_journey", route)
     return calls
 
@@ -94,7 +92,6 @@ def test_both_adjacent_legs_use_candidate_time_and_never_change_plan(monkeypatch
 @pytest.mark.parametrize(
     "status",
     [
-        "reported_closed",
         "outside_reported_hours",
         "hours_unknown",
         "outside_coverage",
@@ -136,9 +133,9 @@ def test_missing_adjacent_location_and_provider_outage_stop_acceptance(monkeypat
     value.activities[0].place_id = uuid4()
 
     def outage(*args):
-        raise HTTPException(503, "GOOGLE_PLACES_UNAVAILABLE")
+        raise HTTPException(503, "PLACE_HOURS_UNAVAILABLE")
 
-    monkeypatch.setattr(google_places, "google_check", outage)
+    monkeypatch.setattr(place_checks, "hours_check", outage)
     with pytest.raises(HTTPException) as error:
         recheck_move(None, None, None, value, metadata, checks())
     assert error.value.status_code == 503
@@ -171,7 +168,7 @@ def test_live_guard_rejection_keeps_proposal_pending_then_explicit_provisional_a
     proposed = moves.propose(client, base, tag, body).json()["data"]
 
     def reject(*args):
-        raise HTTPException(503, "GOOGLE_PLACES_UNAVAILABLE")
+        raise HTTPException(503, "PLACE_HOURS_UNAVAILABLE")
 
     monkeypatch.setattr(proposals, "recheck_move", reject)
     request = {
@@ -272,7 +269,7 @@ def test_single_visit_failure_identifies_the_proposed_activity(monkeypatch):
     from app.planning.live_acceptance import DayCheckFailure
 
     value, metadata = plan()
-    providers(monkeypatch, status="reported_closed")
+    providers(monkeypatch, status="outside_reported_hours")
     with pytest.raises(DayCheckFailure) as caught:
         recheck_move(None, None, None, value, metadata, checks())
     diagnostic = caught.value.diagnostic
@@ -282,7 +279,7 @@ def test_single_visit_failure_identifies_the_proposed_activity(monkeypatch):
         if str(a.logical_id) == metadata["command"]["activity_id"]
     )
     assert diagnostic.kind == "visit" and diagnostic.activity_id == target.logical_id
-    assert diagnostic.reason == "closed" and diagnostic.from_activity_id is None
+    assert diagnostic.reason == "outside_hours" and diagnostic.from_activity_id is None
 
 
 def test_outgoing_route_failure_names_the_exact_edge_without_provider_text(monkeypatch):
@@ -304,8 +301,7 @@ def test_outgoing_route_failure_names_the_exact_edge_without_provider_text(monke
         recheck_move(None, None, None, value, metadata, checks())
     diagnostic = caught.value.diagnostic
     assert (
-        caught.value.detail == "ROUTES_UNAVAILABLE"
-        and caught.value.status_code == 503
+        caught.value.detail == "ROUTES_UNAVAILABLE" and caught.value.status_code == 503
     )
     assert diagnostic.kind == "journey" and diagnostic.reason == "provider_error"
     assert diagnostic.from_activity_id == value.activities[1].logical_id

@@ -10,10 +10,7 @@ from app.planning.live_acceptance import DelayLiveAcceptance, recheck_delay
 
 def setup():
     plan, metadata = live.plan()
-    checks = DelayLiveAcceptance(
-        visit_date=date(2026, 11, 13),
-        listings={a.logical_id: "ChIJ_test" for a in plan.activities[1:]},
-    )
+    checks = DelayLiveAcceptance(visit_date=date(2026, 11, 13))
     return plan, metadata, checks
 
 
@@ -32,21 +29,12 @@ def test_all_affected_hours_and_unique_connecting_legs_use_candidate(monkeypatch
 @pytest.mark.parametrize(
     "change,code",
     [
-        ("missing", "LIVE_CHECK_LISTINGS_REQUIRED"),
-        ("extra", "LIVE_CHECK_LISTINGS_REQUIRED"),
-        ("bad", "LIVE_CHECK_LISTINGS_REQUIRED"),
         ("location", "LIVE_CHECK_LOCATION_REQUIRED"),
         ("date", "LIVE_CHECK_DATE_MISMATCH"),
     ],
 )
 def test_invalid_coverage_fails_before_paid_calls(monkeypatch, change, code):
     plan, metadata, checks = setup()
-    if change == "missing":
-        checks.listings.pop(plan.activities[-1].logical_id)
-    if change == "extra":
-        checks.listings[uuid4()] = "ChIJ_test"
-    if change == "bad":
-        checks.listings[plan.activities[-1].logical_id] = "bad listing"
     if change == "location":
         plan.activities[0].place_id = None
     if change == "date":
@@ -113,17 +101,14 @@ def test_delay_guard_failure_recovery_retry_and_no_provider_facts_saved(
         "acknowledged_issue_ids": [
             i["id"] for i in proposed["validation"]["issues"] if i["acknowledgeable"]
         ],
-        "day_live_check": {
-            "visit_date": "2026-11-13",
-            "listings": {command["activity_id"]: "ChIJ_test"},
-        },
+        "day_live_check": {"visit_date": "2026-11-13"},
     }
     path = base + f"/proposals/{proposed['id']}/accept"
     calls = []
 
     def fail(*args):
         calls.append(args)
-        raise HTTPException(503, "GOOGLE_PLACES_UNAVAILABLE")
+        raise HTTPException(503, "PLACE_HOURS_UNAVAILABLE")
 
     monkeypatch.setattr(proposals, "recheck_delay", fail)
     assert (
@@ -163,9 +148,9 @@ def test_wrong_operation_and_mixed_guards_cannot_bypass_scope(context):
         "acknowledged_issue_ids": [
             i["id"] for i in proposed["validation"]["issues"] if i["acknowledgeable"]
         ],
-        "live_check": LiveAcceptance(
-            google_place_id="ChIJ_test", visit_date=date(2026, 11, 13)
-        ).model_dump(mode="json"),
+        "live_check": LiveAcceptance(visit_date=date(2026, 11, 13)).model_dump(
+            mode="json"
+        ),
     }
     path = base + f"/proposals/{proposed['id']}/accept"
     assert (
@@ -174,10 +159,7 @@ def test_wrong_operation_and_mixed_guards_cannot_bypass_scope(context):
         ).status_code
         == 422
     )
-    body["day_live_check"] = {
-        "visit_date": "2026-11-13",
-        "listings": {command["activity_id"]: "ChIJ_test"},
-    }
+    body["day_live_check"] = {"visit_date": "2026-11-13"}
     assert (
         client.post(
             path, json=body, headers={"Idempotency-Key": str(uuid4())}
@@ -193,7 +175,6 @@ def test_wrong_operation_and_mixed_guards_cannot_bypass_scope(context):
 @pytest.mark.parametrize(
     "status,reason",
     [
-        ("reported_closed", "closed"),
         ("outside_reported_hours", "outside_hours"),
         ("outside_coverage", "outside_coverage"),
         ("hours_unknown", "hours_unknown"),
@@ -221,7 +202,7 @@ def test_visit_failure_identifies_candidate_without_provider_payload(
 def test_failed_second_visit_is_named_not_the_first(monkeypatch):
     from types import SimpleNamespace
 
-    from app.api import google_places
+    from app.api import place_checks
     from app.planning.live_acceptance import DayCheckFailure
 
     plan, metadata, checks = setup()
@@ -236,7 +217,7 @@ def test_failed_second_visit_is_named_not_the_first(monkeypatch):
             )
         }
 
-    monkeypatch.setattr(google_places, "google_check", hours)
+    monkeypatch.setattr(place_checks, "hours_check", hours)
     with pytest.raises(DayCheckFailure) as error:
         recheck_delay(None, None, None, plan, metadata, checks)
     assert error.value.diagnostic.activity_id == plan.activities[-1].logical_id
@@ -266,17 +247,17 @@ def test_route_failure_names_exact_edge_without_raw_warning(
 
 
 def test_provider_outage_has_safe_context_and_preserves_retry_header(monkeypatch):
-    from app.api import google_places
+    from app.api import place_checks
     from app.planning.live_acceptance import DayCheckFailure
 
     plan, metadata, checks = setup()
 
     def outage(*args):
         raise HTTPException(
-            429, "GOOGLE_PLACES_RATE_LIMITED", headers={"Retry-After": "60"}
+            429, "PLACE_HOURS_RATE_LIMITED", headers={"Retry-After": "60"}
         )
 
-    monkeypatch.setattr(google_places, "google_check", outage)
+    monkeypatch.setattr(place_checks, "hours_check", outage)
     with pytest.raises(DayCheckFailure) as error:
         recheck_delay(None, None, None, plan, metadata, checks)
     assert error.value.status_code == 429 and error.value.headers == {
@@ -302,7 +283,7 @@ def test_problem_context_reaches_client_and_is_not_saved(context, monkeypatch):
         target = next(
             a for a in plan.activities if str(a.logical_id) == command["activity_id"]
         )
-        day_check_failure("LIVE_CHECK_HOURS_NOT_CONFIRMED", target, "closed")
+        day_check_failure("LIVE_CHECK_HOURS_NOT_CONFIRMED", target, "outside_hours")
 
     monkeypatch.setattr(proposals, "recheck_delay", reject)
     response = client.post(
@@ -315,16 +296,13 @@ def test_problem_context_reaches_client_and_is_not_saved(context, monkeypatch):
                 for i in proposed["validation"]["issues"]
                 if i["acknowledgeable"]
             ],
-            "day_live_check": {
-                "visit_date": "2026-11-13",
-                "listings": {command["activity_id"]: "ChIJ_test"},
-            },
+            "day_live_check": {"visit_date": "2026-11-13"},
         },
     )
     assert response.status_code == 409
     assert response.json()["day_check"] == {
         "kind": "visit",
-        "reason": "closed",
+        "reason": "outside_hours",
         "activity_id": command["activity_id"],
         "from_activity_id": None,
     }

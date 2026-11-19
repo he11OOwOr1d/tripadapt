@@ -2272,14 +2272,14 @@
             "description": "Structured problem response"
           },
           "409": {
+            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/DayCheckProblem"
                 }
               }
-            },
-            "description": "Conflict"
+            }
           },
           "412": {
             "content": {
@@ -2293,14 +2293,14 @@
             "description": "Structured problem response"
           },
           "422": {
+            "description": "Unprocessable Entity",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/DayCheckProblem"
                 }
               }
-            },
-            "description": "Unprocessable Entity"
+            }
           },
           "428": {
             "content": {
@@ -2314,24 +2314,24 @@
             "description": "Structured problem response"
           },
           "429": {
+            "description": "Too Many Requests",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/DayCheckProblem"
                 }
               }
-            },
-            "description": "Too Many Requests"
+            }
           },
           "503": {
+            "description": "Service Unavailable",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/DayCheckProblem"
                 }
               }
-            },
-            "description": "Service Unavailable"
+            }
           }
         }
       }
@@ -4144,15 +4144,15 @@
         }
       }
     },
-    "/api/v1/google-places/matches": {
+    "/api/v1/place-checks/hours": {
       "post": {
-        "summary": "Google Matches",
-        "operationId": "google_matches_api_v1_google_places_matches_post",
+        "summary": "Hours Check",
+        "operationId": "hours_check_api_v1_place_checks_hours_post",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MatchInput"
+                "$ref": "#/components/schemas/HoursInput"
               }
             }
           },
@@ -4164,139 +4164,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Envelope_list_NearbyGoogleMatch__"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Structured problem response",
-            "content": {
-              "application/problem+json": {},
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Structured problem response",
-            "content": {
-              "application/problem+json": {},
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Structured problem response",
-            "content": {
-              "application/problem+json": {},
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Structured problem response",
-            "content": {
-              "application/problem+json": {},
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "412": {
-            "description": "Structured problem response",
-            "content": {
-              "application/problem+json": {},
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Structured problem response",
-            "content": {
-              "application/problem+json": {},
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "428": {
-            "description": "Structured problem response",
-            "content": {
-              "application/problem+json": {},
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Structured problem response",
-            "content": {
-              "application/problem+json": {},
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Structured problem response",
-            "content": {
-              "application/problem+json": {},
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
-    "/api/v1/google-places/check": {
-      "post": {
-        "summary": "Google Check",
-        "operationId": "google_check_api_v1_google_places_check_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CheckInput"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Envelope_GoogleCheck_"
+                  "$ref": "#/components/schemas/Envelope_HoursCheck_"
                 }
               }
             }
@@ -6200,52 +6068,6 @@
         ],
         "title": "Budget"
       },
-      "CheckInput": {
-        "properties": {
-          "source_place_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Source Place Id"
-          },
-          "google_place_id": {
-            "type": "string",
-            "pattern": "^[A-Za-z0-9_-]{1,200}$",
-            "title": "Google Place Id"
-          },
-          "visit_date": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Visit Date"
-          },
-          "start": {
-            "type": "string",
-            "format": "time",
-            "title": "Start"
-          },
-          "duration_minutes": {
-            "type": "integer",
-            "maximum": 1440.0,
-            "exclusiveMinimum": 0.0,
-            "title": "Duration Minutes"
-          }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "required": [
-          "source_place_id",
-          "google_place_id",
-          "start",
-          "duration_minutes"
-        ],
-        "title": "CheckInput"
-      },
       "CommandBatch": {
         "properties": {
           "commands": {
@@ -6696,8 +6518,6 @@
             "type": "string",
             "enum": [
               "location_missing",
-              "listing_mismatch",
-              "closed",
               "outside_hours",
               "hours_unknown",
               "outside_coverage",
@@ -6868,25 +6688,12 @@
             "minimum": 0.0,
             "title": "Buffer Minutes",
             "default": 10
-          },
-          "listings": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "propertyNames": {
-              "format": "uuid"
-            },
-            "type": "object",
-            "maxProperties": 6,
-            "minProperties": 1,
-            "title": "Listings"
           }
         },
         "additionalProperties": false,
         "type": "object",
         "required": [
-          "visit_date",
-          "listings"
+          "visit_date"
         ],
         "title": "DelayLiveAcceptance"
       },
@@ -6922,10 +6729,10 @@
         ],
         "title": "Envelope[CostCoverage]"
       },
-      "Envelope_GoogleCheck_": {
+      "Envelope_HoursCheck_": {
         "properties": {
           "data": {
-            "$ref": "#/components/schemas/GoogleCheck"
+            "$ref": "#/components/schemas/HoursCheck"
           },
           "meta": {
             "$ref": "#/components/schemas/Meta"
@@ -6936,7 +6743,7 @@
           "data",
           "meta"
         ],
-        "title": "Envelope[GoogleCheck]"
+        "title": "Envelope[HoursCheck]"
       },
       "Envelope_JobView_": {
         "properties": {
@@ -7210,26 +7017,6 @@
         ],
         "title": "Envelope[WeatherView]"
       },
-      "Envelope_list_NearbyGoogleMatch__": {
-        "properties": {
-          "data": {
-            "items": {
-              "$ref": "#/components/schemas/NearbyGoogleMatch"
-            },
-            "type": "array",
-            "title": "Data"
-          },
-          "meta": {
-            "$ref": "#/components/schemas/Meta"
-          }
-        },
-        "type": "object",
-        "required": [
-          "data",
-          "meta"
-        ],
-        "title": "Envelope[list[NearbyGoogleMatch]]"
-      },
       "Envelope_list_StopView__": {
         "properties": {
           "data": {
@@ -7250,10 +7037,11 @@
         ],
         "title": "Envelope[list[StopView]]"
       },
-      "GoogleCheck": {
+      "HoursCheck": {
         "properties": {
-          "place": {
-            "$ref": "#/components/schemas/GoogleMatch"
+          "place_name": {
+            "type": "string",
+            "title": "Place Name"
           },
           "retrieved_at": {
             "type": "string",
@@ -7277,93 +7065,69 @@
           },
           "hours_basis": {
             "type": "string",
+            "enum": [
+              "regular",
+              "unavailable"
+            ],
             "title": "Hours Basis"
           },
-          "price_level": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Price Level"
-          },
-          "price_range": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Price Range"
-          },
-          "attributions": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Attributions"
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "default": "Geoapify / OpenStreetMap contributors"
           }
         },
         "additionalProperties": false,
         "type": "object",
         "required": [
-          "place",
+          "place_name",
           "retrieved_at",
           "status",
           "explanation",
           "hours",
-          "hours_basis",
-          "attributions"
+          "hours_basis"
         ],
-        "title": "GoogleCheck"
+        "title": "HoursCheck"
       },
-      "GoogleMatch": {
+      "HoursInput": {
         "properties": {
-          "id": {
+          "source_place_id": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9_-]{1,200}$",
-            "title": "Id"
+            "format": "uuid",
+            "title": "Source Place Id"
           },
-          "name": {
+          "visit_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Visit Date"
+          },
+          "start": {
             "type": "string",
-            "maxLength": 500,
-            "minLength": 1,
-            "title": "Name"
+            "format": "time",
+            "title": "Start"
           },
-          "address": {
-            "type": "string",
-            "maxLength": 1000,
-            "title": "Address"
-          },
-          "latitude": {
-            "type": "number",
-            "maximum": 90.0,
-            "minimum": -90.0,
-            "title": "Latitude"
-          },
-          "longitude": {
-            "type": "number",
-            "maximum": 180.0,
-            "minimum": -180.0,
-            "title": "Longitude"
+          "duration_minutes": {
+            "type": "integer",
+            "maximum": 1440.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Duration Minutes"
           }
         },
         "additionalProperties": false,
         "type": "object",
         "required": [
-          "id",
-          "name",
-          "address",
-          "latitude",
-          "longitude"
+          "source_place_id",
+          "start",
+          "duration_minutes"
         ],
-        "title": "GoogleMatch"
+        "title": "HoursInput"
       },
       "JobView": {
         "properties": {
@@ -7593,11 +7357,6 @@
       },
       "LiveAcceptance": {
         "properties": {
-          "google_place_id": {
-            "type": "string",
-            "pattern": "^[A-Za-z0-9_-]{1,200}$",
-            "title": "Google Place Id"
-          },
           "visit_date": {
             "type": "string",
             "format": "date",
@@ -7623,7 +7382,6 @@
         "additionalProperties": false,
         "type": "object",
         "required": [
-          "google_place_id",
           "visit_date"
         ],
         "title": "LiveAcceptance"
@@ -7748,35 +7506,6 @@
         ],
         "title": "Location"
       },
-      "MatchInput": {
-        "properties": {
-          "source_place_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Source Place Id"
-          },
-          "query": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 160,
-                "minLength": 2,
-                "pattern": "^[^\\x00-\\x1f\\x7f]+$"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Query"
-          }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "required": [
-          "source_place_id"
-        ],
-        "title": "MatchInput"
-      },
       "Me": {
         "properties": {
           "id": {
@@ -7869,55 +7598,6 @@
           "request_id"
         ],
         "title": "Meta"
-      },
-      "NearbyGoogleMatch": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "pattern": "^[A-Za-z0-9_-]{1,200}$",
-            "title": "Id"
-          },
-          "name": {
-            "type": "string",
-            "maxLength": 500,
-            "minLength": 1,
-            "title": "Name"
-          },
-          "address": {
-            "type": "string",
-            "maxLength": 1000,
-            "title": "Address"
-          },
-          "latitude": {
-            "type": "number",
-            "maximum": 90.0,
-            "minimum": -90.0,
-            "title": "Latitude"
-          },
-          "longitude": {
-            "type": "number",
-            "maximum": 180.0,
-            "minimum": -180.0,
-            "title": "Longitude"
-          },
-          "distance_meters": {
-            "type": "integer",
-            "maximum": 1000.0,
-            "minimum": 0.0,
-            "title": "Distance Meters"
-          }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "required": [
-          "id",
-          "name",
-          "address",
-          "latitude",
-          "longitude",
-          "distance_meters"
-        ],
-        "title": "NearbyGoogleMatch"
       },
       "Page": {
         "properties": {

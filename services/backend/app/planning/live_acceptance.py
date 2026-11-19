@@ -8,12 +8,10 @@ from uuid import UUID
 from fastapi import HTTPException
 from pydantic import Field
 
-from app.providers.google_places import GOOGLE_ID
 from app.trips.schemas import StrictModel
 
 
 class LiveAcceptance(StrictModel):
-    google_place_id: str = Field(pattern=GOOGLE_ID)
     visit_date: date
     mode: Literal["WALK", "DRIVE"] = "WALK"
     buffer_minutes: int = Field(ge=0, le=120, default=10)
@@ -60,22 +58,13 @@ def recheck_move(db, user, request, plan, metadata, checks):
     legs = ([] if index == 0 else [(day[index - 1], target)]) + (
         [] if index == len(day) - 1 else [(target, day[index + 1])]
     )
-    recheck_visits_and_journeys(
-        db,
-        user,
-        request,
-        [target],
-        legs,
-        {target.logical_id: checks.google_place_id},
-        checks,
-    )
+    recheck_visits_and_journeys(db, user, request, [target], legs, checks)
 
 
 class DelayLiveAcceptance(StrictModel):
     visit_date: date
     mode: Literal["WALK", "DRIVE"] = "WALK"
     buffer_minutes: int = Field(ge=0, le=120, default=10)
-    listings: dict[UUID, str] = Field(min_length=1, max_length=6)
 
 
 def delay_check_scope(plan, metadata):
@@ -111,8 +100,6 @@ class DayCheckDiagnostic(StrictModel):
     kind: Literal["visit", "journey"]
     reason: Literal[
         "location_missing",
-        "listing_mismatch",
-        "closed",
         "outside_hours",
         "hours_unknown",
         "outside_coverage",
@@ -156,27 +143,19 @@ def day_check_failure(code, activity, reason, origin=None, status=409, headers=N
 
 
 def recheck_delay(db, user, request, plan, metadata, checks):
-    import re
-
     visits, legs, scope = delay_check_scope(plan, metadata)
     if len(visits) > 6:
         raise HTTPException(422, "LIVE_CHECK_DAY_LIMIT")
-    if set(checks.listings) != {a.logical_id for a in visits} or any(
-        not re.fullmatch(GOOGLE_ID, ident) for ident in checks.listings.values()
-    ):
-        raise HTTPException(422, "LIVE_CHECK_LISTINGS_REQUIRED")
     expected = planned_visit_date(plan, scope)
     if expected and expected != checks.visit_date:
         raise HTTPException(422, "LIVE_CHECK_DATE_MISMATCH")
-    recheck_visits_and_journeys(
-        db, user, request, visits, legs, checks.listings, checks
-    )
+    recheck_visits_and_journeys(db, user, request, visits, legs, checks)
 
 
-def recheck_visits_and_journeys(db, user, request, visits, legs, listings, checks):
+def recheck_visits_and_journeys(db, user, request, visits, legs, checks):
     """One evidence policy for single changes and day adjustments; facts stay transient."""
-    from app.api.google_places import CheckInput, google_check
     from app.api.journeys import JourneyInput, check_journey
+    from app.api.place_checks import HoursInput, hours_check
 
     for visit in visits:
         if visit.place_id is None:
@@ -188,10 +167,9 @@ def recheck_visits_and_journeys(db, user, request, visits, legs, listings, check
             )
     for visit in visits:
         try:
-            hours = google_check(
-                CheckInput(
+            hours = hours_check(
+                HoursInput(
                     source_place_id=visit.place_id,
-                    google_place_id=listings[visit.logical_id],
                     visit_date=checks.visit_date,
                     start=visit.local_start_time,
                     duration_minutes=visit.duration_minutes,
@@ -202,31 +180,29 @@ def recheck_visits_and_journeys(db, user, request, visits, legs, listings, check
             )["data"]
         except HTTPException as error:
             # Provider bodies/messages never become diagnostic content.
-            mismatch = error.detail == "GOOGLE_PLACE_LOCATION_MISMATCH"
             code = (
                 error.detail
                 if error.detail
                 in {
-                    "GOOGLE_PLACE_LOCATION_MISMATCH",
-                    "GOOGLE_PLACE_NOT_FOUND",
-                    "GOOGLE_PLACES_UNAVAILABLE",
-                    "GOOGLE_PLACES_ACCESS_DENIED",
-                    "GOOGLE_PLACES_NOT_CONFIGURED",
-                    "GOOGLE_PLACES_RATE_LIMITED",
-                    "GOOGLE_PLACES_BUSY",
+                    "PLACE_LOCATION_MISMATCH",
+                    "PLACE_HOURS_NOT_FOUND",
+                    "PLACE_HOURS_UNAVAILABLE",
+                    "PLACE_HOURS_ACCESS_DENIED",
+                    "PLACE_HOURS_NOT_CONFIGURED",
+                    "PLACE_HOURS_RATE_LIMITED",
+                    "PLACE_HOURS_BUSY",
                 }
-                else "GOOGLE_PLACES_UNAVAILABLE"
+                else "PLACE_HOURS_UNAVAILABLE"
             )
             day_check_failure(
                 code,
                 visit,
-                "listing_mismatch" if mismatch else "provider_error",
+                "provider_error",
                 status=error.status_code,
                 headers=error.headers,
             )
         if hours.status != "fits_reported_hours":
             reason = {
-                "reported_closed": "closed",
                 "outside_reported_hours": "outside_hours",
                 "outside_coverage": "outside_coverage",
             }.get(hours.status, "hours_unknown")

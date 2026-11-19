@@ -254,9 +254,7 @@ def test_real_readiness_report_preserves_rows_and_separates_accepted_from_draft(
     ).json()["data"]
     current = client.get(base + "/replanning/context", params=params).json()["data"]
     draft = db.get(PlanVersion, UUID(current["base_version_id"]))
-    item = db.scalars(
-        select(Activity).where(Activity.version_id == draft.id)
-    ).first()
+    item = db.scalars(select(Activity).where(Activity.version_id == draft.id)).first()
     item.user_label = "Draft only title"
     draft.edit_sequence += 1
     db.commit()

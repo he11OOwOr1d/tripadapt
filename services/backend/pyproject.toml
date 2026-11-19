@@ -8,6 +8,7 @@ dependencies = [
     "fastapi>=0.162.1",
     "groq>=1.7.0",
     "langgraph>=1.2.20",
+    "opening-hours-py>=2.1.6",
     "psycopg[binary]>=3.3.8",
     "pydantic-settings>=2.16.2",
     "pyjwt[crypto]>=2.10,<3",

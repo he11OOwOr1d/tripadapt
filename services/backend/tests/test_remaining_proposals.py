@@ -410,7 +410,7 @@ def test_skips_must_be_remaining_flexible_items(context, monkeypatch):
 def test_remaining_hours_block_acceptance_until_visits_fit(context, monkeypatch):
     from fastapi import HTTPException
 
-    from app.api import google_places
+    from app.api import place_checks
 
     values = setup(context, monkeypatch)
     client, db, base, trip, ctx, body, state = values
@@ -436,14 +436,13 @@ def test_remaining_hours_block_acceptance_until_visits_fit(context, monkeypatch)
         "visit_date": body["local_date"],
         "mode": body["mode"],
         "buffer_minutes": body["buffer_minutes"],
-        "listings": {visit["activity_id"]: "qa_listing" for visit in visits},
     }
     expected_checks = [
         (body["local_date"], visit["after"], visit["duration_minutes"])
         for visit in visits
     ]
     observed = []
-    hours_status = "reported_closed"
+    hours_status = "outside_reported_hours"
 
     def check_hours(check, *_):
         observed.append(
@@ -454,10 +453,10 @@ def test_remaining_hours_block_acceptance_until_visits_fit(context, monkeypatch)
             )
         )
         if hours_status == "provider_error":
-            raise HTTPException(503, "GOOGLE_PLACES_ACCESS_DENIED")
+            raise HTTPException(503, "PLACE_HOURS_ACCESS_DENIED")
         return {"data": SimpleNamespace(status=hours_status)}
 
-    monkeypatch.setattr(google_places, "google_check", check_hours)
+    monkeypatch.setattr(place_checks, "hours_check", check_hours)
 
     def accept(live_checks=checks):
         return client.post(
@@ -475,14 +474,6 @@ def test_remaining_hours_block_acceptance_until_visits_fit(context, monkeypatch)
         )
 
     route_calls = state.calls
-    incomplete = accept(
-        {**checks, "listings": {visits[0]["activity_id"]: "qa_listing"}}
-    )
-    assert incomplete.status_code == 422, incomplete.text
-    assert incomplete.json()["code"] == "LIVE_CHECK_LISTINGS_REQUIRED"
-    assert not observed
-    assert state.calls == route_calls
-
     mismatch = accept({**checks, "buffer_minutes": checks["buffer_minutes"] + 1})
     assert mismatch.status_code == 422, mismatch.text
     assert mismatch.json()["code"] == "LIVE_CHECK_CONTEXT_MISMATCH"
@@ -498,16 +489,16 @@ def test_remaining_hours_block_acceptance_until_visits_fit(context, monkeypatch)
     hours_status = "provider_error"
     denied = accept()
     assert denied.status_code == 503, denied.text
-    assert denied.json()["code"] == "GOOGLE_PLACES_ACCESS_DENIED"
+    assert denied.json()["code"] == "PLACE_HOURS_ACCESS_DENIED"
     assert denied.json()["day_check"]["reason"] == "provider_error"
     assert state.calls == route_calls
     observed.clear()
 
-    hours_status = "reported_closed"
+    hours_status = "outside_reported_hours"
     blocked = accept()
     assert blocked.status_code == 409, blocked.text
     assert blocked.json()["code"] == "LIVE_CHECK_HOURS_NOT_CONFIRMED"
-    assert blocked.json()["day_check"]["reason"] == "closed"
+    assert blocked.json()["day_check"]["reason"] == "outside_hours"
     assert observed == expected_checks[:1]
     assert state.calls == route_calls
     assert db.get(Trip, UUID(trip["id"])).current_version_id == UUID(

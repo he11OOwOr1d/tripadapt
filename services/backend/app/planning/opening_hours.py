@@ -1,56 +1,67 @@
-"""Deterministic whole-visit comparison against Google's current dated periods."""
+"""Deterministic whole-visit comparison against OpenStreetMap's regular hours.
 
-from datetime import date, datetime, time, timedelta
+OpenStreetMap lists recurring rules, for example ``Tu-Su 10:00-17:00; Dec 25
+off``. They carry no live closures, so every answer is labeled unverified and
+anything this module cannot interpret safely is reported as unknown.
+"""
+
+import re
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
+import opening_hours as osm
 
-def check_hours(details, visit_date, start, minutes, timezone, now):
+CAVEAT = (
+    " These are regular hours from OpenStreetMap contributors and are not "
+    "verified. Holidays and special closures may be missing; confirm with the venue."
+)
+SUNLIGHT = re.compile(r"\b(sunrise|sunset|dawn|dusk)\b", re.IGNORECASE)
+HOLIDAY = re.compile(r"\bPH\b")
+SCHOOL_HOLIDAY = re.compile(r"\bSH\b")
+UNREADABLE = (
+    "hours_unknown",
+    "The listed hours use a format this app cannot interpret safely. Confirm directly with the venue.",
+)
+
+
+def unique_local(value, zone):
+    """A wall-clock time that exists exactly once; clock changes are never guessed."""
+    aware = value.replace(tzinfo=zone)
+    return (
+        aware.utcoffset() == value.replace(tzinfo=zone, fold=1).utcoffset()
+        and aware.astimezone(ZoneInfo("UTC")).astimezone(zone).replace(tzinfo=None)
+        == value
+    )
+
+
+def check_hours(rules, visit_date, start, minutes, timezone, now, country, coords):
+    """Return (status, explanation) for one whole visit at a venue."""
     zone = ZoneInfo(timezone)
-    today = now.astimezone(zone).date()
-    if details.get("businessStatus") in ("CLOSED_TEMPORARILY", "CLOSED_PERMANENTLY"):
+    if not rules or not rules.strip():
         return (
-            "reported_closed",
-            "Google Maps currently reports this place as closed. Confirm with the venue before planning a visit.",
+            "hours_unknown",
+            "No opening hours are listed for this place. Confirm directly with the venue.",
         )
     if visit_date is None:
         return (
             "date_needed",
             "Choose a visit date to compare your time with reported hours.",
         )
-    if not today <= visit_date <= today + timedelta(days=6):
+    if visit_date < now.astimezone(zone).date():
         return (
             "outside_coverage",
-            "This date is outside Google's current seven-day hours window. Regular hours are indicative; check again nearer your visit.",
+            "That date has already passed. Choose today or a later date.",
         )
-    hours = details.get("currentOpeningHours")
-    if (
-        not isinstance(hours, dict)
-        or not isinstance(hours.get("periods"), list)
-        or not hours["periods"]
-    ):
+    if SCHOOL_HOLIDAY.search(rules):
         return (
             "hours_unknown",
-            "Current dated opening hours are unavailable. Confirm directly with the venue.",
+            "These hours depend on school holidays, which this app cannot check. Confirm directly with the venue.",
         )
     begin = datetime.combine(visit_date, start)
     end = begin + timedelta(minutes=minutes)
-    if end.date() > today + timedelta(days=6):
-        return (
-            "outside_coverage",
-            "The visit extends beyond the current hours window. Check again nearer your visit.",
-        )
-
-    def unique_local(value):
-        aware = value.replace(tzinfo=zone)
-        return (
-            aware.utcoffset() == value.replace(tzinfo=zone, fold=1).utcoffset()
-            and aware.astimezone(ZoneInfo("UTC")).astimezone(zone).replace(tzinfo=None)
-            == value
-        )
-
     if (
-        not unique_local(begin)
-        or not unique_local(end)
+        not unique_local(begin, zone)
+        or not unique_local(end, zone)
         or begin.replace(tzinfo=zone).utcoffset()
         != end.replace(tzinfo=zone).utcoffset()
     ):
@@ -58,58 +69,45 @@ def check_hours(details, visit_date, start, minutes, timezone, now):
             "hours_unknown",
             "This visit crosses an ambiguous clock change. Confirm local times before comparing opening hours.",
         )
-    intervals = []
-    for period in hours["periods"]:
-        try:
-            opened = period["open"]
-            closed = period.get("close")
-            if closed is None:
-                if (
-                    opened.get("day") == 0
-                    and opened.get("hour") == 0
-                    and opened.get("minute", 0) == 0
-                    and "date" not in opened
-                ):
-                    return (
-                        "fits_reported_hours",
-                        "Your full visit fits the reported 24-hour schedule. Hours can change; confirm with the venue.",
-                    )
-                raise ValueError()
-
-            def point(value):
-                stamp = value["date"]
-                return datetime.combine(
-                    date(stamp["year"], stamp["month"], stamp["day"]),
-                    time(value["hour"], value.get("minute", 0)),
-                )
-
-            left, right = point(opened), point(closed)
-            if right <= left:
-                raise ValueError()
-            intervals.append((left, right))
-        except (KeyError, TypeError, ValueError):
+    options = {}
+    if HOLIDAY.search(rules):
+        # Without a country, public-holiday rules would be silently ignored.
+        if not country:
             return (
                 "hours_unknown",
-                "The reported hours could not be compared safely. Confirm directly with the venue.",
+                "These hours depend on public holidays, but the country is unknown. Confirm directly with the venue.",
             )
-    # Merge adjacent intervals before checking the entire proposed visit.
-    merged = []
-    for left, right in sorted(intervals):
-        if merged and left <= merged[-1][1]:
-            merged[-1] = (merged[-1][0], max(right, merged[-1][1]))
-        else:
-            merged.append((left, right))
-    if any(left <= begin and end <= right for left, right in merged):
+        options["country"] = country
+    if SUNLIGHT.search(rules):
+        options["coords"] = coords
+    try:
+        spans = list(osm.OpeningHours(rules, **options).intervals(begin, end))
+    except (
+        osm.ParserError,
+        osm.UnknownCountryError,
+        osm.InvalidCoordinatesError,
+        SyntaxError,
+        ValueError,
+        OverflowError,
+    ):
+        return UNREADABLE
+    if not spans or any(
+        state == osm.State.UNKNOWN or comment for _, _, state, comment in spans
+    ):
+        return UNREADABLE
+    if all(state == osm.State.OPEN for _, _, state, _ in spans):
         return (
             "fits_reported_hours",
-            "Your full visit fits the reported opening hours. Hours can change; confirm with the venue.",
+            "Your full visit fits the regular opening hours." + CAVEAT,
         )
-    if any(left < end and begin < right for left, right in merged):
+    if any(state == osm.State.OPEN for _, _, state, _ in spans):
         return (
             "outside_reported_hours",
-            "Part of this visit falls outside reported opening hours. Change the time or duration.",
+            "Part of this visit falls outside the regular opening hours. Change the time or duration."
+            + CAVEAT,
         )
     return (
         "outside_reported_hours",
-        "This visit is outside reported opening hours. Choose another time or confirm directly with the venue.",
+        "This visit is outside the regular opening hours. Choose another time or confirm directly with the venue."
+        + CAVEAT,
     )

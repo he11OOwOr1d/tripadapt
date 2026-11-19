@@ -18,8 +18,8 @@ from app.api import (  # noqa: F401 - register proposal routes
     chat_replacements,
     conversation,
     destinations,
-    google_places,
     journeys,
+    place_checks,
     places,
     planning_jobs,
     proposals,
@@ -73,7 +73,7 @@ async def request_context(request: Request, call_next):
             "/api/v1/trips",
             "/api/v1/jobs",
             "/api/v1/places",
-            "/api/v1/google-places",
+            "/api/v1/place-checks",
             "/api/v1/journeys",
         )
     ) or request.url.path in ("/api/v1/me", "/api/v1/destinations/search"):

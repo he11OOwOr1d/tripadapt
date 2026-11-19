@@ -124,13 +124,11 @@ def frozen_routes_fit(candidate, body, preview):
 
 
 def recheck_remaining_hours(db, user, request, candidate, metadata, checks):
-    import re
     from datetime import date
 
     from fastapi import HTTPException
 
     from app.planning.live_acceptance import recheck_visits_and_journeys
-    from app.providers.google_places import GOOGLE_ID
 
     command = metadata["request"]
     ids = {change["activity_id"] for change in metadata["changes"]}
@@ -138,12 +136,8 @@ def recheck_remaining_hours(db, user, request, candidate, metadata, checks):
         (a for a in candidate.activities if str(a.logical_id) in ids),
         key=lambda a: (a.local_start_time, str(a.logical_id)),
     )
-    if (
-        not 0 < len(visits) <= 6
-        or set(checks.listings) != {a.logical_id for a in visits}
-        or any(not re.fullmatch(GOOGLE_ID, value) for value in checks.listings.values())
-    ):
-        raise HTTPException(422, "LIVE_CHECK_LISTINGS_REQUIRED")
+    if not 0 < len(visits) <= 6:
+        raise HTTPException(422, "LIVE_CHECK_DAY_LIMIT")
     if checks.visit_date != date.fromisoformat(command["local_date"]):
         raise HTTPException(422, "LIVE_CHECK_DATE_MISMATCH")
     if (
@@ -153,4 +147,4 @@ def recheck_remaining_hours(db, user, request, candidate, metadata, checks):
         raise HTTPException(422, "LIVE_CHECK_CONTEXT_MISMATCH")
     # The remaining-day guard checks every journey, including the initial leg,
     # after these venue checks. Do not substitute a delay scope or a past visit.
-    recheck_visits_and_journeys(db, user, request, visits, [], checks.listings, checks)
+    recheck_visits_and_journeys(db, user, request, visits, [], checks)

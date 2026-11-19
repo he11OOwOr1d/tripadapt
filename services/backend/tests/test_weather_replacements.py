@@ -167,7 +167,6 @@ def test_live_checks_are_explicit_date_bound_and_fail_closed(context, monkeypatc
             i["id"] for i in proposal["validation"]["issues"] if i["acknowledgeable"]
         ],
         live_check=dict(
-            google_place_id="listing",
             visit_date=body["visit_date"],
             mode="WALK",
             buffer_minutes=10,

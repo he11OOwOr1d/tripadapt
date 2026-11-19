@@ -6,7 +6,7 @@ import pytest
 import test_remaining_proposals as remaining
 import test_trips
 
-from app.api import google_places
+from app.api import place_checks
 
 
 @pytest.fixture
@@ -36,9 +36,6 @@ def choices(proposal):
         visit_date="2026-11-14",
         mode="DRIVE",
         buffer_minutes=10,
-        listings={
-            c["activity_id"]: "ChIJ_test" for c in proposal["generation"]["changes"]
-        },
     )
 
 
@@ -54,7 +51,7 @@ def test_every_remaining_visit_including_commitments_is_checked_then_routes(
         calls.append(body)
         return {"data": SimpleNamespace(status="fits_reported_hours")}
 
-    monkeypatch.setattr(google_places, "google_check", hours)
+    monkeypatch.setattr(place_checks, "hours_check", hours)
     routes_before = state.calls
     response = accept(values, proposal, choices(proposal))
     assert response.status_code == 200, response.text
@@ -67,7 +64,6 @@ def test_every_remaining_visit_including_commitments_is_checked_then_routes(
 @pytest.mark.parametrize(
     "status,reason",
     [
-        ("reported_closed", "closed"),
         ("outside_reported_hours", "outside_hours"),
         ("unknown", "hours_unknown"),
         ("outside_coverage", "outside_coverage"),
@@ -81,8 +77,8 @@ def test_named_hours_failures_leave_pending_without_route_fallback(
     proposal = remaining.save(values).json()["data"]
     routes_before = state.calls
     monkeypatch.setattr(
-        google_places,
-        "google_check",
+        place_checks,
+        "hours_check",
         lambda *args: {"data": SimpleNamespace(status=status)},
     )
     response = accept(values, proposal, choices(proposal))
@@ -105,7 +101,6 @@ def test_named_hours_failures_leave_pending_without_route_fallback(
         ({"visit_date": "2026-11-15"}, "LIVE_CHECK_DATE_MISMATCH"),
         ({"mode": "WALK"}, "LIVE_CHECK_CONTEXT_MISMATCH"),
         ({"buffer_minutes": 0}, "LIVE_CHECK_CONTEXT_MISMATCH"),
-        ({"listings": {str(uuid4()): "ChIJ_test"}}, "LIVE_CHECK_LISTINGS_REQUIRED"),
     ],
 )
 def test_hours_cannot_change_scope_date_or_route_assumptions(
@@ -114,9 +109,7 @@ def test_hours_cannot_change_scope_date_or_route_assumptions(
     values = remaining.setup(context, monkeypatch)
     proposal = remaining.save(values).json()["data"]
     called = []
-    monkeypatch.setattr(
-        google_places, "google_check", lambda *args: called.append(args)
-    )
+    monkeypatch.setattr(place_checks, "hours_check", lambda *args: called.append(args))
     response = accept(values, proposal, {**choices(proposal), **change})
     assert (
         response.status_code == 422 and response.json()["code"] == code and called == []
@@ -128,9 +121,7 @@ def test_expired_context_does_not_spend_hours_requests(context, monkeypatch):
     proposal = remaining.save(values).json()["data"]
     values[-1].now += timedelta(minutes=6)
     called = []
-    monkeypatch.setattr(
-        google_places, "google_check", lambda *args: called.append(args)
-    )
+    monkeypatch.setattr(place_checks, "hours_check", lambda *args: called.append(args))
     response = accept(values, proposal, choices(proposal))
     assert (
         response.status_code == 409

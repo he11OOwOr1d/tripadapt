@@ -2,6 +2,7 @@
 
 import json
 import math
+import re
 import ssl
 import threading
 import time
@@ -27,6 +28,67 @@ class CheckFailure(Exception):
     def __init__(self, code, status=503):
         super().__init__(code)
         self.code, self.status = code, status
+
+
+class PlaceHours(NamedTuple):
+    name: str
+    latitude: float
+    longitude: float
+    opening_hours: str | None
+    country_code: str | None
+
+
+EXTERNAL_ID = re.compile(
+    r"^(?:(node|way|relation)/([1-9][0-9]*)|geoapify/([A-Za-z0-9_-]{1,400}))$"
+)
+OSM_TYPES = {"node": "n", "way": "w", "relation": "r"}
+
+
+def place_lookup(external_id):
+    """Map a retained source ID to place-details parameters, refusing anything else."""
+    found = EXTERNAL_ID.fullmatch(external_id) if isinstance(external_id, str) else None
+    if found is None:
+        raise CheckFailure("PLACE_HOURS_NOT_FOUND", 404)
+    if found[3]:
+        return {"id": found[3]}
+    return {"osm_type": OSM_TYPES[found[1]], "osm_id": found[2]}
+
+
+def parse_place_hours(data):
+    """Read only the fields we use; reject anything shaped unexpectedly."""
+    try:
+        features = data["features"]
+        if not isinstance(features, list):
+            raise ValueError()
+        for feature in features:
+            properties = feature["properties"]
+            if properties.get("feature_type") != "details":
+                continue
+            latitude, longitude = properties["lat"], properties["lon"]
+            hours = properties.get("opening_hours")
+            country = properties.get("country_code")
+            name = properties.get("name") or ""
+            if (
+                type(latitude) not in (int, float)
+                or type(longitude) not in (int, float)
+                or not (-90 <= latitude <= 90 and -180 <= longitude <= 180)
+                or not isinstance(name, str)
+                or not (
+                    hours is None or (isinstance(hours, str) and len(hours) <= 2000)
+                )
+                or not (country is None or re.fullmatch(r"[A-Za-z]{2}", str(country)))
+            ):
+                raise ValueError()
+            return PlaceHours(
+                name[:300],
+                float(latitude),
+                float(longitude),
+                (hours or "").strip() or None,
+                country.upper() if country else None,
+            )
+    except (KeyError, TypeError, ValueError, AttributeError):
+        raise CheckFailure("PLACE_HOURS_UNAVAILABLE") from None
+    raise CheckFailure("PLACE_HOURS_NOT_FOUND", 404)
 
 
 class RouteEstimate(NamedTuple):
@@ -141,3 +203,13 @@ class GeoapifyChecks:
             },
         )
         return parse_route(data)
+
+    def place_hours(self, owner, external_id):
+        """Fetch the place's regular opening hours. Hours may be missing."""
+        data = self.get(
+            owner,
+            "PLACE_HOURS",
+            "https://api.geoapify.com/v2/place-details",
+            {**place_lookup(external_id), "features": "details"},
+        )
+        return parse_place_hours(data)
