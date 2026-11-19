@@ -8,7 +8,7 @@ TripAdapt is the repository and engineering name. **Elsewhere** is the product n
 
 [Live UI review](https://elsewhere-ui-review.vercel.app) · [Trip planner](https://elsewhere-ui-review.vercel.app/trips/new) · [Design decisions](docs/architecture/design-decisions.md) · [Repository structure](docs/architecture/repository-structure.md)
 
-> **Current stage — 19 November 2026:** `main` (PR #5) includes the landing and creation flow, Supabase account autosave, editable itineraries, grounded Groq planning with reviewed proposals, accepted-plan history and restoration, weather/delay/fatigue/remaining-day replanning, and cost records with currency, conversion and tax handling. The hosted Supabase database is at migration `0025_immutable_cost_items` and the Render API/worker runs this code; a signed-in production smoke test passed except Google Maps checks, which Google rejects until Render's outbound IPs are allowlisted. Still open: interactive map, accommodation, intercity/transit, reviews/discovery feed, full-trip generation and an always-on worker. See [current status](docs/development/status.md).
+> **Current stage — 20 November 2026:** `main` includes the landing and creation flow, Supabase account autosave, editable itineraries, grounded Groq planning with reviewed proposals, accepted-plan history and restoration, weather/delay/fatigue/remaining-day replanning, cost records with currency, conversion and tax handling, Geoapify/OpenStreetMap place discovery, opening-hours and route checks (Google was removed), an itinerary map (MapLibre with Geoapify tiles), and a recorded stay for each destination. Local work after that (committed on `main` locally, not yet pushed or deployed): route checks from and to the stay, drive estimates between destinations including a whole-route panel, journeys booked elsewhere with day-view flags and an AI planner that respects them, booked-stay nights checks, and a broad accessibility pass. Still open: reviews/discovery feed, train/bus/flight schedules (only driving estimates exist), several stays in one destination, full-trip generation and an always-on worker. See [current status](docs/development/status.md) and the [release plan](docs/deployments/stay-features-release-plan.md).
 
 ## What works now
 
@@ -56,7 +56,7 @@ npm --prefix apps/web run build
 npm --prefix apps/web test
 ```
 
-The npm regression suite has 185 tests; the backend suite has 488 tests (as of 19 November 2026). Checks cover account mapping, autosave, schedule logic, scoped proposals/recovery and provider lookup boundaries. Browser reviews cover desktop and 390px/320px phone layouts. [Journey implementation and verification](docs/trip-creation-journey.md).
+The npm regression suite has 238 tests; the backend suite has 623 tests (as of 20 November 2026, on the local branch). Checks cover account mapping, autosave, schedule logic, scoped proposals/recovery and provider lookup boundaries. Browser reviews cover desktop and 390px/320px phone layouts. [Journey implementation and verification](docs/trip-creation-journey.md).
 
 ## Full-stack local development
 
@@ -164,7 +164,7 @@ For model planning, configure the server-only Groq key/model and existing planni
 
 The `codex/planning-recovery-discovery` publication branch disables Vercel Git deployment explicitly. Publishing source does not deploy the API/worker or provision production credentials.
 
-Google Places (New) now provides an optional activity-editor match and reported-hours/price check. Only the selected Place ID is retained; details are refreshed explicitly and are not sent to Groq. The Google key is backend-only. See [Google checks and live verification](docs/google-place-checks.md). Migration `0019_google_place_ids` is applied locally to the existing Supabase database; no deployment or push was performed. Routes-based travel times and exact admission prices remain separate integrations.
+**Superseded:** Google Places and Routes were removed on 19 November 2026 (see [opening-hours and route checks without Google](docs/geoapify-checks-learning.md)); the paragraph below is kept as history. Google Places (New) now provides an optional activity-editor match and reported-hours/price check. Only the selected Place ID is retained; details are refreshed explicitly and are not sent to Groq. The Google key is backend-only. See [Google checks and live verification](docs/google-place-checks.md). Migration `0019_google_place_ids` is applied locally to the existing Supabase database; no deployment or push was performed. Routes-based travel times and exact admission prices remain separate integrations.
 
 On-demand [journey estimates](docs/journey-checks.md) now compare walking/driving time and an arrival buffer with consecutive activities. Google content stays transient; schedules remain user-controlled.
 
