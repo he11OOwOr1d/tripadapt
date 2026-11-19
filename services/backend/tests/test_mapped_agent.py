@@ -83,6 +83,40 @@ def test_stay_for_ai_reads_only_this_destinations_recorded_stay(context, monkeyp
     assert stay_for_ai(plan, plan.stops[0]) is None
 
 
+def test_catalog_adds_straight_line_distance_only_for_a_located_stay(
+    context, monkeypatch
+):
+    db, plan, stop, place = evidence(context, monkeypatch)
+    plain = catalog_from_ids(db, plan.stops[0], [place["id"]])
+    assert "distance_from_stay_km" not in plain[0]
+    unlocated = catalog_from_ids(db, plan.stops[0], [place["id"]], {"name": "Inn"})
+    assert "distance_from_stay_km" not in unlocated[0]
+    half = catalog_from_ids(
+        db, plan.stops[0], [place["id"]], {"name": "Inn", "latitude": 26.9}
+    )
+    assert "distance_from_stay_km" not in half[0]
+    row = db.get(DiscoveredPlace, place["id"])
+    here = {
+        "name": "Inn",
+        "latitude": row.payload["latitude"],
+        "longitude": row.payload["longitude"],
+    }
+    assert (
+        catalog_from_ids(db, plan.stops[0], [place["id"]], here)[0][
+            "distance_from_stay_km"
+        ]
+        == 0.0
+    )
+    far = catalog_from_ids(
+        db,
+        plan.stops[0],
+        [place["id"]],
+        {**here, "latitude": here["latitude"] + 0.09},
+    )
+    assert 9.5 < far[0]["distance_from_stay_km"] < 10.5
+    assert [c["id"] for c in far] == [c["id"] for c in plain]
+
+
 def test_real_catalog_is_grounded_and_checked_again_at_accept_boundary(
     context, monkeypatch
 ):

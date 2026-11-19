@@ -780,3 +780,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026. The chat's deterministic answers now include the recorded stay, worded as the traveler's own record, built server-side so the model never sees the stay text. 2 backend tests (576 total); verified live and signed in, baseline restored, session kept. Committed locally; not pushed. See [the learning note](../lodging-learning.md).
 
+## 165. Fix what the review of the stay commits found
+
+20 November 2026. A medium code review of the unpushed commits found a stale-result bug (the stay-journey reset key lacked the visit duration) and an unguarded coordinate access in the AI distance code; both fixed, plus the stay line is no longer truncated and one rounding rule is documented. I also noticed the distance test promised in entry 163 had never been written (a chained `sed` failure skipped it); it now exists, so the note's claim is true. 578 backend and 207 frontend tests pass. Not re-run in the browser: the key change is a one-token fix covered by reasoning, not a live check.
+

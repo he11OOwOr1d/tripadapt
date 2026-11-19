@@ -157,6 +157,8 @@ def check_journey_from_stay(
         )
     except CheckFailure as error:
         fail(error)
+    # Truncating the start leaves earlier, the safe side for a leave-by time; the
+    # way back rounds the end up, the safe side for an arrival time.
     leave = int(clock_minutes(body.destination_start)) - minutes - body.buffer_minutes
     return wrap(
         request,

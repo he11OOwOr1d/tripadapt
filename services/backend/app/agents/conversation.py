@@ -411,7 +411,7 @@ def respond(
     if decision.topic == "summary":
         parts = [
             f"{s.name}: {s.desired_nights if s.desired_nights is not None else 'unallocated'} stay nights"
-            + (f" ({stay_note(plan, s)})" if stay_note(plan, s) else "")
+            + (f" ({note})" if (note := stay_note(plan, s)) else "")
             for s in plan.stops[:8]
         ]
         return {
@@ -461,6 +461,8 @@ def respond(
     )
     if len(activities) > 12:
         reply += "\nMore items are visible in Plan."
-    if decision.topic == "day" and stay_note(plan, stop):
-        reply += f"\nYou are {stay_note(plan, stop)}."
-    return {"kind": "answer", "text": reply[:2900], "choices": []}
+    reply = reply[:2900]
+    # Added after truncation so the stay and its disclaimer are never cut off.
+    if decision.topic == "day" and (note := stay_note(plan, stop)):
+        reply += f"\nYou are {note}."
+    return {"kind": "answer", "text": reply, "choices": []}

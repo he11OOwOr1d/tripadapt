@@ -54,3 +54,7 @@ The Groq day planner now receives the recorded stay for the day's destination as
 
 Verified: 2 new backend tests (576 pass in total); live, signed in, through the chat with a real Groq routing call on the QA trip: both answers showed the stay, with the booked flag when set. The stay was then removed, a reload confirmed the baseline and that the session was still signed in. The chat messages themselves remain in the QA trip's conversation history (messages are not plan data and the app has no delete). Not covered: the hosted app; the chat's "stays" intent (changing a stay still answers "unsupported").
 
+### Review follow-up (20 November 2026)
+
+A code review of the stay commits found two real defects, now fixed: the stay-journey component kept an old result when a visit's duration changed (its reset key left out the duration, so the way-back headline paired a stale route with a new end time), and the distance code assumed coordinates were always present (it now skips the distance unless both stay and place coordinates exist). Also: the stay line on the "Explain this day" answer is now added after the 2,900-character cut so the disclaimer is never truncated, and the rounding policy of the two journey endpoints is documented (leave-by truncates seconds, arrival rounds up; both are the safe side). While fixing these I found the distance test described above had never been saved; it now exists, plus a half-coordinate case and a start with seconds. The full backend suite is 578 passing and the frontend 207.
+

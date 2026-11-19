@@ -120,6 +120,7 @@ def test_gap_checks_and_no_mutation(context, monkeypatch, start, buffer, status,
         ("09:00", 0, "leave_by", "08:40"),
         ("00:25", 10, "needs_earlier_start", None),
         ("00:30", 10, "leave_by", "00:00"),
+        ("09:00:45", 10, "leave_by", "08:30"),
     ],
 )
 def test_stay_journey_gives_a_leave_by_time(

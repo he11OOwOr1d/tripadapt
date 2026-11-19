@@ -49,7 +49,13 @@ def catalog_from_ids(db, stop, ids, stay=None):
         ) or stamp > datetime.now(timezone.utc) + timedelta(minutes=1):
             raise ValueError("Place evidence needs refresh")
         near = {}
-        if stay and stay.get("latitude") is not None:
+        if (
+            stay
+            and stay.get("latitude") is not None
+            and stay.get("longitude") is not None
+            and row.payload.get("latitude") is not None
+            and row.payload.get("longitude") is not None
+        ):
             near["distance_from_stay_km"] = round(
                 distance(
                     stay["latitude"],
