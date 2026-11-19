@@ -1,6 +1,6 @@
 # Release plan: stay features and accessibility fixes (not yet deployed)
 
-20 November 2026. A checklist for pushing and deploying the local commits on `main` after `568a6b7` (the stay record deployment). Nothing here has been pushed. `AGENTS.md` says to push or deploy only when the owner asks, so this is a plan to follow on request, not a record of a release. Replace it with a real release note afterwards.
+20 November 2026. A checklist for pushing and deploying the local commits on `main` after `568a6b7` (about 45 commits: stay route checks, intercity and whole-route estimates, journeys booked elsewhere, booked-stay nights, AI and chat awareness, a cache, and accessibility fixes; see `git log 568a6b7..main`) (the stay record deployment). Nothing here has been pushed. `AGENTS.md` says to push or deploy only when the owner asks, so this is a plan to follow on request, not a record of a release. Replace it with a real release note afterwards.
 
 ## What is in the batch
 
