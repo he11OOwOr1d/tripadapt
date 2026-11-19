@@ -47,11 +47,13 @@ export function stayTimingNote(lodging: Lodging | null | undefined, leg: "out" |
   if (!lodging) return null;
   const end = visitEnd(visit);
   if (firstDay && lodging.check_in) {
-    const early = leg === "out" ? visit.start < lodging.check_in : end !== null && end <= lodging.check_in;
+    const early = leg === "out" ? visit.start < lodging.check_in : end !== null && end < lodging.check_in;
     if (early) return `Check-in is from ${lodging.check_in}, so you may not be at your stay yet. This estimate assumes you ${leg === "out" ? "start from" : "return to"} it.`;
   }
-  if (lastDay && lodging.check_out && visit.start >= lodging.check_out) {
-    return `You check out at ${lodging.check_out}, before this visit starts, so you may have left your stay by then. This estimate assumes you ${leg === "out" ? "start from" : "return to"} it.`;
+  // Out: the visit starts after check-out. Back: it ends after check-out (or runs past midnight).
+  const late = leg === "out" ? visit.start >= (lodging.check_out ?? "") : end === null || end > (lodging.check_out ?? "");
+  if (lastDay && lodging.check_out && late) {
+    return `You check out at ${lodging.check_out}, ${leg === "out" ? "before this visit starts" : "before this visit ends"}, so you may have left your stay by then. This estimate assumes you ${leg === "out" ? "start from" : "return to"} it.`;
   }
   return null;
 }

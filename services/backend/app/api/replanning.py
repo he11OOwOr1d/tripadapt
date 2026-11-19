@@ -130,8 +130,12 @@ def replan_context(
     # A searched stay can be where the traveler is; the destination check below
     # keeps a stale or foreign record out.
     preference = plan.preferences.stay_preferences.get(stop.client_id)
-    if preference and preference.lodging and preference.lodging.place_id:
-        ids.add(preference.lodging.place_id)
+    stay = preference.lodging if preference else None
+    if stay and stay.place_id:
+        record = db.get(DiscoveredPlace, stay.place_id)
+        # The stay's record must be the place the traveler searched for.
+        if record and record.payload.get("external_id") == stay.external_id:
+            ids.add(stay.place_id)
     locations = (
         [
             detail(place)

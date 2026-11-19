@@ -43,8 +43,13 @@ test('check-in matters only on the arrival day and check-out only on the departu
   assert.equal(s.stayTimingNote(stay,'out',act('a','09:00'),false,false),null);
   assert.match(s.stayTimingNote(stay,'back',act('a','10:00',{minutes:60}),true,false),/Check-in is from 14:00/);
   assert.equal(s.stayTimingNote(stay,'back',act('a','15:00'),true,false),null);
+  assert.equal(s.stayTimingNote(stay,'back',act('a','13:00',{minutes:60}),true,false),null);
   assert.match(s.stayTimingNote(stay,'out',act('a','12:00'),false,true),/check out at 11:00/);
   assert.match(s.stayTimingNote(stay,'back',act('a','11:00'),false,true),/check out at 11:00/);
+  assert.match(s.stayTimingNote(stay,'back',act('a','10:00',{minutes:180}),false,true),/before this visit ends/);
+  assert.equal(s.stayTimingNote(stay,'back',act('a','09:00',{minutes:120}),false,true),null);
+  assert.equal(s.stayTimingNote(stay,'back',act('a','13:00',{minutes:60}),true,false),null);
+  assert.equal(s.stayTimingNote(stay,'back',act('a','13:00',{minutes:60}),true,false),null);
   assert.equal(s.stayTimingNote(stay,'out',act('a','10:59'),false,true),null);
   assert.equal(s.stayTimingNote({name:'H'},'out',act('a','09:00'),true,true),null);
   assert.equal(s.stayTimingNote(null,'out',act('a','09:00'),true,true),null);

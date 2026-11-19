@@ -319,7 +319,7 @@ def test_a_searched_stay_is_offered_as_a_known_location_only_when_its_record_exi
         db.commit()
         return row
 
-    def locations(row):
+    def locations(row, external_id="node/777"):
         plan.preferences.stay_preferences[stop.client_id] = StayPreference(
             style="",
             rate="",
@@ -328,7 +328,7 @@ def test_a_searched_stay_is_offered_as_a_known_location_only_when_its_record_exi
                 name="Hotel Aurora",
                 latitude=35.02,
                 longitude=135.75,
-                external_id="node/777",
+                external_id=external_id,
                 place_id=row.id,
             ),
         )
@@ -345,6 +345,8 @@ def test_a_searched_stay_is_offered_as_a_known_location_only_when_its_record_exi
         return [p["name"] for p in ctx["known_locations"]]
 
     assert locations(place(stop.place_reference_id)) == ["Hotel Aurora"]
+    # A stay whose id points at a different place than it names is never offered.
+    assert locations(place(stop.place_reference_id), "node/999") == []
     # A record the server does not hold is never offered.
     from types import SimpleNamespace
 

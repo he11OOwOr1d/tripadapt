@@ -792,3 +792,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026. A searched stay now keeps its retained place id and appears in the readiness check's list of mapped places, so "I'm at my hotel" is a one-click starting point. The id only nominates a candidate; the destination-scoped lookup and later checks are unchanged. 3 backend and 1 frontend test (582 / 209 pass); verified live and signed in up to selecting the stay, baseline restored. Deploy backend first. Committed locally; not pushed. See [the learning note](../lodging-learning.md).
 
+## 168. Fix the second review's findings
+
+20 November 2026. The way-back note on the departure day now compares the visit's end with check-out; the arrival-day boundary is strict; the stay's place id is trusted only when its external id matches the retained record; a stray generated file was reverted. 3 more test assertions (582 / 209 pass). Browser not re-run; the changes are small pure-function and query-filter fixes covered by tests. Committed locally; not pushed.
+

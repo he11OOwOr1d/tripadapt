@@ -47,4 +47,3 @@ test('a retained place id is accepted as a uuid on a searched stay and rejected 
   assert.equal(out.isLodging({...searched,place_id:5}),false);
   assert.equal(out.isLodging({name:'A',place_id:PID}),false);
 });
-
