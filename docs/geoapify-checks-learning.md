@@ -43,4 +43,20 @@ Nothing for this change. The owner deleted the Google Cloud project and removed 
 
 - **Hosted click-through.** Once the Vercel site was reachable, the signed-in production app ran the new hours check on the existing QA trip (Asian Art Museum at 10:00 on a Wednesday was "outside the regular opening hours", matching the museum's real 11:00 opening) and the journey check between two mapped activities (25 minutes walking, 1.7 km), with Geoapify credits shown. A temporary third activity was added and removed; the trip is back to its two original activities.
 - **Column drop.** After the migration the hosted API reported schema `0026` and returned 200 on readiness, the QA trip loaded, a new activity was saved and removed (write and delete on the new schema) and a reload showed the original two. Because Render's readiness check requires an exact schema match, the migration was applied while the new build waited, so any window was seconds; no errors were observed.
-- **Still untested in the browser:** the remaining-day and day-delay live checks, drive routes, and the live-acceptance panel at phone width.
+- **The remaining flows, run on the hosted app (see the next section).**
+
+## The remaining live flows, on the hosted app (19 November)
+
+A second dedicated QA trip (`7699e436-0c30-4c8e-afdd-258d81cf9c2f`) held three mapped museums on one day. All four flows that had only unit-test coverage now have live evidence:
+
+- **Day-delay live check with Drive routes.** Moving Diaspora 12:00 to 12:30 and Randall 15:30 to 16:00, a live check dated Friday 27 Nov **failed closed** with a named reason: "Randall Museum at 16:00 … outside the regular opening hours", the review still pending. That was correct: 27 Nov is the day after Thanksgiving and Randall's listed rules include `Nov Th[4] +1 day off`. Retrying with Wednesday 2 Dec in Drive mode was accepted after fresh hours and drive-route checks.
+- **Remaining-day live check.** Readiness, a walking preview (0, 25 and 73 minutes between visits, from live routes), and a saved proposal that skipped the 10:00 visit. A first accept was refused by the **per-minute usage limit**; after the fix below and a redeploy, a second accept was refused because the reported time had gone stale (more than five minutes old), and a third, fast run was accepted. A reload confirmed only the two later visits remained.
+- **Live-acceptance panels at 390 px.** The single-move panel and the day-delay panel each had no horizontal overflow, no Google wording, and 44 px tap targets (the checkbox sits in a 44 px label). A screenshot of the single-move panel was reviewed.
+
+## A limit bug found by the live run
+
+The limits carried over from the Google adapter (6 calls a minute) could never allow a live acceptance: three visits need about 7 calls (hours plus routes) and six visits about 13. The app reported "Route checks have reached the local usage limit" and kept the review pending, which was safe but made the feature unusable. The limits are now 40 a minute, 300 a day per user and 1,000 a day overall (two thirds of Geoapify's free credits stay for discovery), named in code and pinned by tests that a six-visit volume fits in a minute and the daily cap still applies. Unit tests had not caught this because they mocked the provider.
+
+## Remaining untested
+
+Nothing from the earlier gap list. Not exercised: a live acceptance with six visits (the maximum), venues with no listed hours at the acceptance step on the hosted app, and the first-call latency after a Render cold start.
