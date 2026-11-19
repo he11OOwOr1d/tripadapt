@@ -200,7 +200,7 @@
 }
 .creation-intro {
   font-size: 17px;
-  color: #61715c;
+  color: #485444;
   max-width: 52ch;
   margin-bottom: 30px !important;
 }
@@ -237,7 +237,7 @@
 }
 .trip-app .creation-note {
   font-size: 14px;
-  color: #63735c;
+  color: #5c6a55;
   line-height: 1.5;
   margin-top: 8px;
   margin-bottom: 22px;
@@ -343,7 +343,7 @@
 }
 .creation-route small {
   display: block;
-  color: #617356;
+  color: #5a6a4f;
   font-size: 13px;
 }
 .creation-route .route-end {
@@ -402,7 +402,7 @@
 .creation-summary-cost small {
   font-size: 12px;
   line-height: 1.5;
-  color: #5c6f52;
+  color: #586b4f;
   margin-top: 7px;
 }
 .creation-alert {
@@ -454,7 +454,7 @@
   margin: 0;
 }
 .creation-stop small {
-  color: #65765e;
+  color: #495544;
   font-size: 13px;
 }
 .creation-stop-actions {
@@ -877,6 +877,6 @@
 .journey-impact { margin: 16px 0; padding: 12px 16px; border: 1px solid #c4cdb4; border-radius: 8px; }
 .journey-impact ul { list-style: none; padding: 0; margin: 0; }
 .journey-impact li { display: grid; gap: 4px; padding: 10px 0; border-top: 1px solid #d9dece; overflow-wrap: anywhere; }
-.journey-impact li span { font-size: 13px; color: #5f6f54; }
+.journey-impact li span { font-size: 13px; color: #55634b; }
 .journey-impact-carry { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; }
 .journey-impact button { min-height: 44px; }

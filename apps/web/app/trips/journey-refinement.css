@@ -31,7 +31,7 @@
 }
 .trip-save-state {
   font-size: 12px;
-  color: #58714e;
+  color: #546c4b;
   white-space: nowrap;
 }
 .trip-account-menu {
@@ -223,13 +223,13 @@
 }
 .time-budget > div > span {
   font-size: 13px;
-  color: #5c7452;
+  color: #556b4c;
 }
 .time-budget > p {
   font-size: 13px;
   line-height: 1.5;
   margin: 14px 0 0 !important;
-  color: #596f50;
+  color: #576c4e;
   max-width: 49ch;
 }
 .time-budget > p > strong {
@@ -308,7 +308,7 @@
 }
 .time-stop p {
   font-size: 13px;
-  color: #66795c;
+  color: #54634b;
   margin: 0;
 }
 .time-stop-dot {
@@ -341,7 +341,7 @@
   width: 52px;
   gap: 0;
   font-size: 10px;
-  color: #6b7d5d;
+  color: #657658;
 }
 .trip-app .night-stepper input {
   border: 0;
@@ -376,7 +376,7 @@
 }
 .time-split-action > span {
   font-size: 12px;
-  color: #6c7e60;
+  color: #56644c;
 }
 .preference-intro {
   display: flex;
@@ -399,7 +399,7 @@
 .preference-intro p {
   margin: 0;
   font-size: 13px;
-  color: #718164;
+  color: #57634d;
 }
 .trip-app .simple-preference {
   padding: 25px 0;
@@ -413,7 +413,7 @@
 }
 .simple-preference-title > span {
   font-size: 12px;
-  color: #6d7e60;
+  color: #56644c;
   white-space: nowrap;
 }
 .simple-preference h3 {
@@ -470,7 +470,7 @@
   cursor: pointer;
   min-height: 44px;
   align-content: center;
-  color: #58734d;
+  color: #4d6544;
   text-decoration: underline;
   text-underline-offset: 4px;
 }
@@ -494,7 +494,7 @@
 }
 .preference-honesty {
   font-size: 12px;
-  color: #708263;
+  color: #56644c;
   margin: 25px 0 0;
 }
 @media (max-width: 760px) {
@@ -622,7 +622,7 @@
 .cost-record-list { list-style: none; margin: 12px 0; padding: 0; }
 .cost-record-list li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 16px; padding: 14px 0; border-top: 1px solid #d9dece; overflow-wrap: anywhere; }
 .cost-record-list li > div:first-child { flex: 1 1 220px; min-width: 0; }
-.cost-record-list span { display: block; font-size: 13px; color: #5f6f54; }
+.cost-record-list span { display: block; font-size: 13px; color: #55634b; }
 .cost-record-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .trip-app .cost-records button { min-height: 44px; }
 .cost-record-confirm { flex-basis: 100%; }
@@ -634,4 +634,4 @@
 .cost-coverage-heading { margin: 18px 0 4px; font-size: 15px; }
 .cost-record-list .cost-record-removed { color: #7a5a2c; }
 .trip-app .cost-records-confirm { display: flex; flex-direction: row; gap: 10px; align-items: flex-start; margin-top: 16px; min-height: 44px; }
-.cost-records-confirm small { display: block; color: #5f6f54; }
+.cost-records-confirm small { display: block; color: #55634b; }

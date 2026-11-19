@@ -812,3 +812,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026. Fixed the 21 contrast failures the audit found (muted greens at 2.9 to 4.5:1) by darkening 17 declarations in `itinerary.css` to at least 4.6:1 with the same hue. Axe now reports none in the day workspace. Remaining and untouched: the shared header label (3.75:1) and a heading-order issue. Not seen by eye (no screenshots). Committed locally; not pushed. See [the learning note](../lodging-learning.md).
 
+## 173. Fix contrast in the trip creation form
+
+20 November 2026. Audited the creation form with axe at first load and with each step opened: about 50 contrast failures (muted green text at 2.8 to 4.4:1). Darkened 21 declarations in four trip stylesheets to at least 4.6:1 keeping each hue; axe now reports none there. Chat, history and review screens were not audited; no screenshots, so not seen by eye. 210 frontend tests and the build pass. Committed locally; not pushed. See [the learning note](../lodging-learning.md).
+
