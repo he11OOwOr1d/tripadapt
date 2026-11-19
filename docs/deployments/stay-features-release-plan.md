@@ -6,7 +6,7 @@
 
 - **Backend:** `POST /journeys/from-stay`, `/journeys/to-stay` and `/journeys/intercity` (a driving estimate between two mapped places, including a starting point chosen from the map search); an optional `place_id` on a stay record; the AI day planner and chat read the stay; the readiness context offers a searched stay as a known location. OpenAPI snapshot regenerated.
 - **Frontend:** the stay journey section with check-in and check-out notes, an intercity drive-estimate button on the arrival and departure cards, linked costs in the stay panel, the stay in the restore review, keyboard focus fixes in the stay form and the chat log, a unique label on the map section, h2 transfer-card headings, and darker muted text in the trip stylesheets (`app/trips/*.css` only; the locked landing and `app/design/` are untouched).
-- **No migration, no new environment variable, no new dependency.** The AI features use the existing Groq key; route checks use the existing Geoapify backend key.
+- **No migration, no new environment variable, no new dependency.** The intercity endpoint has a per-process in-memory cache (six hours), lost on restart; on Render's free tier a cold start clears it. The AI features use the existing Groq key; route checks use the existing Geoapify backend key.
 
 ## Order
 

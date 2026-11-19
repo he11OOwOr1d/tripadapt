@@ -872,3 +872,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026. Fixed a floating-point rounding bug in the "Use X hours" value (an exhaustive test over 0 to 3000 minutes now guards it), made a malformed reference a handled 422 instead of a 500, hid the button for a place and itself, corrected the starting-location field's wording and Enter handling, and removed an unused import. 225 frontend and 592 backend tests pass; not re-run in the browser. Committed locally; not pushed.
 
+## 188. Review the new endpoints for security and add a cache
+
+20 November 2026. Read the new endpoints for authentication, validation, request forgery, access control and data exposure (no issues), found the shared provider quota to be the real exposure (the whole-route panel can spend a request per journey), and added a bounded six-hour in-process cache for intercity estimates that keeps the original retrieval time and never caches failures. Added a plain disclosure that the stay and start coordinates are sent to Geoapify. 595 backend and 225 frontend tests pass. Committed locally; not pushed. See [the intercity note](../intercity-estimate-learning.md).
+

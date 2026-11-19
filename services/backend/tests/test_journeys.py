@@ -27,6 +27,13 @@ def geo(time, distance, **extra):
     return {"features": [{"properties": {"time": time, "distance": distance, **extra}}]}
 
 
+@pytest.fixture(autouse=True)
+def fresh_intercity_cache():
+    journeys.intercity_cache.clear()
+    yield
+    journeys.intercity_cache.clear()
+
+
 @pytest.fixture
 def context():
     yield from test_trips.context.__wrapped__()
@@ -444,6 +451,75 @@ def test_intercity_malformed_reference_is_a_handled_422_not_a_500(
         response = client.post("/api/v1/journeys/intercity", json=body)
         assert response.status_code == 422, response.text
         assert "PLACE_LOCATION_UNAVAILABLE" in response.text
+
+
+def test_intercity_repeats_do_not_spend_provider_quota_and_keep_the_original_time(
+    context, monkeypatch
+):
+    client, db, _ = context
+    one = reference(db, 701, 10.0, 10.0)
+    two = reference(db, 702, 11.0, 11.0)
+    three = reference(db, 703, 12.0, 12.0)
+    calls = []
+
+    def route(*args):
+        calls.append(args)
+        return RouteEstimate(60, 1000, [])
+
+    monkeypatch.setattr(journeys, "geoapify_checks", SimpleNamespace(route=route))
+    url = "/api/v1/journeys/intercity"
+
+    def ask(a, b):
+        response = client.post(
+            url,
+            json={
+                "origin": {"reference_id": str(a)},
+                "destination": {"reference_id": str(b)},
+            },
+        )
+        assert response.status_code == 200, response.text
+        return response.json()["data"]
+
+    first = ask(one, two)
+    again = ask(one, two)
+    assert len(calls) == 1
+    assert again == first  # including the original retrieval time
+    ask(two, one)  # the reverse road can differ, so it is its own entry
+    ask(one, three)
+    assert len(calls) == 3
+
+
+def test_intercity_failures_are_never_cached(context, monkeypatch):
+    client, db, _ = context
+    one = reference(db, 801, 10.0, 10.0)
+    two = reference(db, 802, 11.0, 11.0)
+    outcomes = [CheckFailure("ROUTES_UNAVAILABLE", 503), RouteEstimate(5, 50, [])]
+
+    def route(*args):
+        value = outcomes.pop(0)
+        if isinstance(value, Exception):
+            raise value
+        return value
+
+    monkeypatch.setattr(journeys, "geoapify_checks", SimpleNamespace(route=route))
+    body = {
+        "origin": {"reference_id": str(one)},
+        "destination": {"reference_id": str(two)},
+    }
+    assert client.post("/api/v1/journeys/intercity", json=body).status_code == 503
+    assert client.post("/api/v1/journeys/intercity", json=body).status_code == 200
+
+
+def test_route_cache_expires_and_stays_bounded():
+    now = [0.0]
+    cache = journeys.RouteCache(ttl=10, size=2, clock=lambda: now[0])
+    cache.put("a", 1)
+    cache.put("b", 2)
+    assert cache.get("a") == 1
+    cache.put("c", 3)  # evicts the least recently used, "b"
+    assert cache.get("b") is None and cache.get("a") == 1 and cache.get("c") == 3
+    now[0] = 10.0
+    assert cache.get("a") is None and cache.get("c") is None
 
 
 def test_intercity_provider_failure_is_reported_not_zero(context, monkeypatch):

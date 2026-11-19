@@ -50,6 +50,6 @@ export default function RouteDrives({ trip }: { trip: Trip }) {
     </li>)}</ol>
     <button type="button" disabled={busy || !ready.length} onClick={() => void all()}>{busy ? "Estimating the drives…" : ready.length ? `Estimate ${ready.length === 1 ? "the mapped journey" : `all ${ready.length} mapped journeys`}` : "No journey has both ends on the map"}</button>
     {summary.checked > 0 && <p role="status"><strong>{driveSummaryLine(summary)}</strong></p>}
-    {summary.checked > 0 && <><p className="provider-attribution">Route data: Powered by Geoapify · © OpenStreetMap contributors</p><small>Straight driving between place centres, without live traffic or breaks. Unmapped journeys are not counted.</small></>}
+    {summary.checked > 0 && <><p className="provider-attribution">Route data: Powered by Geoapify · © OpenStreetMap contributors</p><small>Straight driving between place centres, without live traffic or breaks. Unmapped journeys are not counted. The map points of each pair of places are sent to the route provider, Geoapify, to compute these.</small></>}
   </section>;
 }

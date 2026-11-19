@@ -1,7 +1,10 @@
 """Transient route estimates; no itinerary mutation or provider payload retention."""
 
 import math
+import threading
+from collections import OrderedDict
 from datetime import datetime, time, timezone
+from time import monotonic
 from typing import Literal
 from uuid import UUID
 
@@ -253,6 +256,43 @@ def check_journey_to_stay(
     )
 
 
+class RouteCache:
+    """A small in-process cache of intercity estimates.
+
+    A road route between two places barely changes within hours, so repeating it
+    should not spend provider quota. The entry keeps the original retrieval time,
+    so a cached answer is never presented as fresher than it is.
+    """
+
+    def __init__(self, ttl=6 * 3600, size=512, clock=monotonic):
+        self.ttl, self.size, self.clock = ttl, size, clock
+        self.lock = threading.Lock()
+        self.items = OrderedDict()
+
+    def get(self, key):
+        with self.lock:
+            entry = self.items.get(key)
+            if entry is None or self.clock() - entry[0] >= self.ttl:
+                self.items.pop(key, None)
+                return None
+            self.items.move_to_end(key)
+            return entry[1]
+
+    def put(self, key, value):
+        with self.lock:
+            self.items[key] = (self.clock(), value)
+            self.items.move_to_end(key)
+            while len(self.items) > self.size:
+                self.items.popitem(last=False)
+
+    def clear(self):
+        with self.lock:
+            self.items.clear()
+
+
+intercity_cache = RouteCache()
+
+
 def resolve_point(db, place):
     if place.reference_id is None:
         return (place.latitude, place.longitude)
@@ -282,16 +322,23 @@ def check_intercity(
     start, end = resolve_point(db, body.origin), resolve_point(db, body.destination)
     if start == end:
         raise HTTPException(422, "JOURNEY_SAME_PLACE")
-    try:
-        minutes, meters, warnings = geoapify_checks.route(
-            str(user.id), "DRIVE", start, end
-        )
-    except CheckFailure as error:
-        fail(error)
+    # About 10 m: the same road route for any caller, so it is safe to share.
+    key = tuple(round(value, 4) for value in (*start, *end))
+    found = intercity_cache.get(key)
+    if found is None:
+        try:
+            minutes, meters, warnings = geoapify_checks.route(
+                str(user.id), "DRIVE", start, end
+            )
+        except CheckFailure as error:
+            fail(error)
+        found = (datetime.now(timezone.utc), minutes, meters, list(warnings))
+        intercity_cache.put(key, found)
+    retrieved_at, minutes, meters, warnings = found
     return wrap(
         request,
         IntercityCheck(
-            retrieved_at=datetime.now(timezone.utc),
+            retrieved_at=retrieved_at,
             mode="DRIVE",
             travel_minutes=minutes,
             distance_meters=meters,

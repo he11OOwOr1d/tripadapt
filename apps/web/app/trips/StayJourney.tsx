@@ -41,7 +41,7 @@ export default function StayJourney({ lodging, activities, firstDay = false, las
   const checkOut = () => { if (!outReady || !validBuffer || !first.place || lodging.latitude == null || lodging.longitude == null) return; const { latitude, longitude } = lodging; const place = first.place.id; void run("out", (signal) => stayJourneyAdapter.check({ latitude, longitude, destination_place_id: place, mode, destination_start: first.start, buffer_minutes: Number(buffer) }, signal), setOut); };
   const checkBack = () => { if (!backReady || !endTime || !last.place || lodging.latitude == null || lodging.longitude == null) return; const { latitude, longitude } = lodging; const place = last.place.id; void run("back", (signal) => stayReturnAdapter.check({ latitude, longitude, origin_place_id: place, mode, origin_end: endTime }, signal), setBack); };
   const credit = <p className="provider-attribution">Route data: Powered by Geoapify · © OpenStreetMap contributors</p>;
-  const fineprint = (at: string) => <small>Checked {new Date(at).toLocaleString()}. Estimate only; no live traffic, parking, tickets or accessibility check. Walking routes may miss sidewalks or pedestrian paths.</small>;
+  const fineprint = (at: string) => <small>Checked {new Date(at).toLocaleString()}. Estimate only; no live traffic, parking, tickets or accessibility check. Walking routes may miss sidewalks or pedestrian paths. To compute it, the map point of your stay and of the visit is sent to the route provider, Geoapify.</small>;
 
   return <details className="stay-journey">
     <summary>Getting between your stay and your visits</summary>
