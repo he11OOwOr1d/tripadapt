@@ -225,10 +225,6 @@ class Activity(Base):
 
     __tablename__ = "activity"
     __table_args__ = (
-        CheckConstraint(
-            "google_place_id IS NULL OR google_place_id ~ '^[A-Za-z0-9_-]{1,200}$'",
-            name="valid_google_place_id",
-        ),
         UniqueConstraint("version_id", "logical_item_id"),
         ForeignKeyConstraint(
             ["version_id", "stop_id"],
@@ -249,7 +245,6 @@ class Activity(Base):
     kind: Mapped[str] = mapped_column(
         String(20), default="custom", server_default="custom"
     )
-    google_place_id: Mapped[str | None] = mapped_column(String(200))
     place_id: Mapped[UUID | None] = mapped_column(ForeignKey("discovered_place.id"))
     user_label: Mapped[str] = mapped_column(String(300))
     local_day_offset: Mapped[int]
