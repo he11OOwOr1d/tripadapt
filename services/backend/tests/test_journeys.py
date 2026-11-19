@@ -214,12 +214,12 @@ def test_route_quota_and_concurrency_do_not_call_upstream(monkeypatch):
         transport, "urlopen", lambda *a, **k: pytest.fail("must not call upstream")
     )
     client = GeoapifyChecks(clock=lambda: 0)
-    client.calls.extend([0] * 6)
+    client.calls.extend([0] * transport.PER_MINUTE_LIMIT)
     with pytest.raises(CheckFailure) as limited:
         client.route("owner", "WALK", (1, 2), (3, 4))
     assert (limited.value.code, limited.value.status) == ("ROUTES_RATE_LIMITED", 429)
     client = GeoapifyChecks(clock=lambda: 0)
-    client.owners["owner"].extend([0] * 30)
+    client.owners["owner"].extend([0] * transport.PER_OWNER_DAILY_LIMIT)
     with pytest.raises(CheckFailure, match="ROUTES_RATE_LIMITED"):
         client.route("owner", "WALK", (1, 2), (3, 4))
     client = GeoapifyChecks()
@@ -273,3 +273,26 @@ def test_route_failure_and_destination_boundary(context, monkeypatch):
     response = client.post("/api/v1/journeys/check", json=body)
     assert response.status_code == 422
     assert response.json()["code"] == "JOURNEY_DIFFERENT_DESTINATIONS"
+
+
+def test_a_full_six_visit_acceptance_fits_in_one_minute(monkeypatch):
+    """Six hours checks plus seven routes must not trip the per-minute limit."""
+    monkeypatch.setattr(settings, "geoapify_api_key", SecretStr("test-secret"))
+    monkeypatch.setattr(transport, "urlopen", lambda *a, **k: Response(geo(60, 100)))
+    client = GeoapifyChecks(clock=lambda: 0)
+    for _ in range(13):
+        assert client.route("owner", "WALK", (1, 2), (3, 4)).minutes == 1
+    assert 13 < transport.PER_MINUTE_LIMIT
+
+
+def test_the_daily_cap_protects_the_shared_free_allowance(monkeypatch):
+    monkeypatch.setattr(settings, "geoapify_api_key", SecretStr("test-secret"))
+    monkeypatch.setattr(
+        transport, "urlopen", lambda *a, **k: pytest.fail("must not call upstream")
+    )
+    client = GeoapifyChecks(clock=lambda: 1000)
+    # Calls from earlier in the day, outside the one-minute window.
+    client.calls.extend([0] * transport.DAILY_LIMIT)
+    with pytest.raises(CheckFailure, match="ROUTES_RATE_LIMITED"):
+        client.route("someone-else", "WALK", (1, 2), (3, 4))
+    assert transport.DAILY_LIMIT < 3000

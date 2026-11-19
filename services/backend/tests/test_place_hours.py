@@ -296,7 +296,7 @@ def test_hours_not_configured_and_quota_make_no_upstream_call(monkeypatch):
         GeoapifyChecks().place_hours("owner", "node/100")
     monkeypatch.setattr(settings, "geoapify_api_key", SecretStr("test-secret"))
     client = GeoapifyChecks(clock=lambda: 0)
-    client.calls.extend([0] * 6)
+    client.calls.extend([0] * transport.PER_MINUTE_LIMIT)
     with pytest.raises(CheckFailure, match="PLACE_HOURS_RATE_LIMITED"):
         client.place_hours("owner", "node/100")
 

@@ -20,6 +20,12 @@ from app.config import settings
 # numbers we keep. Journeys never leave one destination, so 1 MiB is generous.
 MAX_RESPONSE_BYTES = 1048576
 MODES = {"WALK": "walk", "DRIVE": "drive"}
+# One day-checked acceptance with six visits needs about 13 calls (6 hours + 7
+# routes). Geoapify's free plan allows 3,000 credits a day at 5 requests a
+# second and place discovery shares that key, so cap checks at a third of it.
+PER_MINUTE_LIMIT = 40
+PER_OWNER_DAILY_LIMIT = 300
+DAILY_LIMIT = 1000
 
 
 class CheckFailure(Exception):
@@ -141,9 +147,9 @@ class GeoapifyChecks:
                     del self.owners[ident]
             personal = self.owners.get(owner, deque())
             if (
-                len(self.calls) >= 100
-                or sum(now - t < 60 for t in self.calls) >= 6
-                or len(personal) >= 30
+                len(self.calls) >= DAILY_LIMIT
+                or sum(now - t < 60 for t in self.calls) >= PER_MINUTE_LIMIT
+                or len(personal) >= PER_OWNER_DAILY_LIMIT
             ):
                 raise CheckFailure(f"{scope}_RATE_LIMITED", 429)
             if not self.slots.acquire(blocking=False):
