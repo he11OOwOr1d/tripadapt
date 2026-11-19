@@ -36,3 +36,16 @@ test('the return headline gives an arrive-by time or says after midnight',()=>{
   assert.match(s.stayReturnHeadline({status:'arrive_by',arrive_by:'18:20'},'Fort','18:00'),/back at your stay by 18:20/);
   assert.match(s.stayReturnHeadline({status:'after_midnight',arrive_by:null},'Fort','23:50'),/after midnight/);
 });
+test('check-in matters only on the arrival day and check-out only on the departure day',()=>{
+  const stay={name:'H',check_in:'14:00',check_out:'11:00'};
+  assert.match(s.stayTimingNote(stay,'out',act('a','09:00'),true,false),/Check-in is from 14:00/);
+  assert.equal(s.stayTimingNote(stay,'out',act('a','15:00'),true,false),null);
+  assert.equal(s.stayTimingNote(stay,'out',act('a','09:00'),false,false),null);
+  assert.match(s.stayTimingNote(stay,'back',act('a','10:00',{minutes:60}),true,false),/Check-in is from 14:00/);
+  assert.equal(s.stayTimingNote(stay,'back',act('a','15:00'),true,false),null);
+  assert.match(s.stayTimingNote(stay,'out',act('a','12:00'),false,true),/check out at 11:00/);
+  assert.match(s.stayTimingNote(stay,'back',act('a','11:00'),false,true),/check out at 11:00/);
+  assert.equal(s.stayTimingNote(stay,'out',act('a','10:59'),false,true),null);
+  assert.equal(s.stayTimingNote({name:'H'},'out',act('a','09:00'),true,true),null);
+  assert.equal(s.stayTimingNote(null,'out',act('a','09:00'),true,true),null);
+});

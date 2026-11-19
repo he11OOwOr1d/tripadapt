@@ -784,3 +784,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026. A medium code review of the unpushed commits found a stale-result bug (the stay-journey reset key lacked the visit duration) and an unguarded coordinate access in the AI distance code; both fixed, plus the stay line is no longer truncated and one rounding rule is documented. I also noticed the distance test promised in entry 163 had never been written (a chained `sed` failure skipped it); it now exists, so the note's claim is true. 578 backend and 207 frontend tests pass. Not re-run in the browser: the key change is a one-token fix covered by reasoning, not a live check.
 
+## 166. Qualify the stay route checks around check-in and check-out
+
+20 November 2026. The leave-by and way-back checks assume the traveler is at the stay, which is wrong before check-in on the arrival day or after check-out on the departure day. Added a plain note in those cases rather than changing the estimate. 1 frontend test (208 total); verified live and signed in for the arrival-day branch, baseline restored; the departure-day branch is unit-tested only. Committed locally; not pushed. See [the learning note](../lodging-learning.md).
+
