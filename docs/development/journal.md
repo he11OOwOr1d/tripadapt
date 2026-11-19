@@ -727,3 +727,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 ## 151. Confirm the removed keys
 
 19 November 2026. The owner removed the Google keys from local, Render and Vercel settings. Local `.env` has no Google variables, and no key material remains in the repository. One earlier repository-wide search printed the old Google key from the ignored local `.env`; the key was already unusable without billing and is now deleted. Production Render still answers readiness on the previous code, which no longer needs those keys.
+
+## 152. Verify the Geoapify checks in a signed-in browser
+
+19 November 2026. Ran the new frontend and backend locally against the hosted database (no migration) and signed in. The account had no trips, so a new dedicated QA trip (`452b84e7-4ca4-4f1c-b3bd-9dbce366c2c9`) was created. A device-only draft containing leftover test costs was cleared for a blank form and restored exactly afterward. Verified live: destination lookup, Geoapify discovery, two saved mapped activities, the hours check (fits on a Wednesday, outside on a Monday), the journey check, and acceptance of a suggested 11:35 start after a 25-minute shortfall **with fresh live hours and route checks**. All server responses were 200 with no errors. At 390 px there was no horizontal overflow on the hours panel or the journey result. **Gaps:** the live-acceptance panel at phone width, the remaining-day and day-delay live checks, and drive routes were not exercised in the browser. The QA trip remains in the account.

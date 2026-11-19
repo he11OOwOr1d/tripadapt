@@ -4,7 +4,7 @@ Local implementation and verification status. The dated sections below preserve 
 
 ## Google replaced by Geoapify — 19 November 2026 (branch, not deployed)
 
-Branch `codex/replace-google-with-geoapify` removes Google Places and Routes because the Google project had no billing. Journey estimates and opening hours now use Geoapify and OpenStreetMap data; hours are regular rules, labeled unverified. 528 backend and 183 frontend tests pass; live Geoapify checks of routes and of 12 San Francisco museums passed from the backend code. **Not yet verified:** signed-in browser flows (desktop and phone) and anything on the hosted app, which still runs the previous code. The `google_place_id` field and column remain until a later migration. See [the learning note](../geoapify-checks-learning.md).
+Branch `codex/replace-google-with-geoapify` removes Google Places and Routes because the Google project had no billing. Journey estimates and opening hours now use Geoapify and OpenStreetMap data; hours are regular rules, labeled unverified. 528 backend and 183 frontend tests pass; live Geoapify checks of routes and of 12 San Francisco museums passed from the backend code. A signed-in browser run on a dedicated QA trip (local web and API against the hosted database) passed: hours check, journey check, and acceptance of a time change with fresh live hours and route checks, plus a 390 px overflow check. **Not verified:** the hosted app, which still ran the previous code when this was written. The `google_place_id` field and column remain until a later migration. See [the learning note](../geoapify-checks-learning.md).
 
 ## Hosted release state — 19 November 2026
 
