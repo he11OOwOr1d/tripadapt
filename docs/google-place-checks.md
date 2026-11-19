@@ -1,5 +1,7 @@
 # Google Places checks in the activity editor
 
+> **Superseded on 19 November 2026.** Google Places and Routes were removed; opening hours and journey estimates now use Geoapify and OpenStreetMap data. See [opening-hours and route checks without Google](geoapify-checks-learning.md). This note is kept as history.
+
 11 November 2026. This implements on-demand matching, reported opening-hours checks and available price information through Places API (New). It does not replace Geoapify/OSM discovery or feed Google details to Groq. Google Routes, admission-ticket inventory and automatic whole-trip feasibility remain separate work.
 
 ## Journey

@@ -1,5 +1,7 @@
 # Journey estimates between activities
 
+> **Superseded on 19 November 2026.** Google Places and Routes were removed; opening hours and journey estimates now use Geoapify and OpenStreetMap data. See [opening-hours and route checks without Google](geoapify-checks-learning.md). This note is kept as history.
+
 11 November 2026. The next provider slice adds an explicit **Time to get there** disclosure in the existing day itinerary. It follows retained place discovery and Google reported-hours checks. The approved landing and trip creation flow are unchanged.
 
 ## Traveler flow
