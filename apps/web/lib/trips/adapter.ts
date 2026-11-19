@@ -60,6 +60,11 @@ export type Trip = {
       overnight: number;
       rate: string;
       basis: "person" | "vehicle";
+      /** A journey booked elsewhere, as the traveler entered it; never verified. Local times at the journey's two ends. */
+      departure?: string;
+      arrival?: string;
+      reference?: string;
+      booked?: boolean;
     }
   >;
 };
@@ -332,7 +337,11 @@ export function isTrip(value: unknown): value is Trip {
         optionalAmount(p.hours) &&
         Number.isSafeInteger(p.overnight) &&
         Number(p.overnight) >= 0 &&
-        ["person", "vehicle"].includes(String(p.basis)),
+        ["person", "vehicle"].includes(String(p.basis)) &&
+        (p.departure === undefined || (typeof p.departure === "string" && /^$|^([01][0-9]|2[0-3]):[0-5][0-9]$/.test(p.departure))) &&
+        (p.arrival === undefined || (typeof p.arrival === "string" && /^$|^([01][0-9]|2[0-3]):[0-5][0-9]$/.test(p.arrival))) &&
+        (p.reference === undefined || (typeof p.reference === "string" && p.reference.length <= 100 && ![...p.reference].some((c) => c.charCodeAt(0) < 32 || c.charCodeAt(0) === 127))) &&
+        (p.booked === undefined || typeof p.booked === "boolean"),
     ) &&
     (t.costsConfirmed === undefined || typeof t.costsConfirmed === "boolean") &&
     (t.costRecords === undefined ||

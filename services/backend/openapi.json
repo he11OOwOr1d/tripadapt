@@ -11143,6 +11143,29 @@
               "vehicle"
             ],
             "title": "Basis"
+          },
+          "departure": {
+            "type": "string",
+            "pattern": "^$|^([01][0-9]|2[0-3]):[0-5][0-9]$",
+            "title": "Departure",
+            "default": ""
+          },
+          "arrival": {
+            "type": "string",
+            "pattern": "^$|^([01][0-9]|2[0-3]):[0-5][0-9]$",
+            "title": "Arrival",
+            "default": ""
+          },
+          "reference": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Reference",
+            "default": ""
+          },
+          "booked": {
+            "type": "boolean",
+            "title": "Booked",
+            "default": false
           }
         },
         "additionalProperties": false,

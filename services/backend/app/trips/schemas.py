@@ -71,6 +71,18 @@ class TravelPreference(StrictModel):
     overnight: int = Field(ge=0)
     rate: str = Field(pattern=r"^$|^\d+(\.\d{1,2})?$")
     basis: Literal["person", "vehicle"]
+    # A journey the traveler booked elsewhere, recorded as they entered it. Never
+    # verified against a supplier. `departure` is local time at the journey's
+    # origin and `arrival` local time at its destination.
+    departure: str = Field(default="", pattern=r"^$|^([01][0-9]|2[0-3]):[0-5][0-9]$")
+    arrival: str = Field(default="", pattern=r"^$|^([01][0-9]|2[0-3]):[0-5][0-9]$")
+    reference: str = Field(default="", max_length=100)
+    booked: bool = False
+
+    @field_validator("reference")
+    @classmethod
+    def plain_text(cls, value):
+        return no_controls(value)
 
 
 class CostInput(StrictModel):

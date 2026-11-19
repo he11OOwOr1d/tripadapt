@@ -374,7 +374,7 @@
   border-color: #cfb17a;
 }
 .day-activity .day-item-conflict {
-  color: #8b6330;
+  color: #87602f;
   font-size: 12px;
 }
 .day-conflict-banner,
@@ -1047,3 +1047,13 @@ fieldset.live-acceptance { border-inline: 0; min-width: 0; }
 .route-drives ol { list-style: none; margin: .75rem 0; padding: 0; display: grid; gap: .5rem; }
 .route-drives li { display: flex; flex-wrap: wrap; gap: .25rem .75rem; justify-content: space-between; }
 .route-drives button { min-height: 44px; padding: .5rem .9rem; font: inherit; }
+.transfer-booking { margin-top: 10px; }
+.transfer-booking p, .transfer-booking small { max-width: 65ch; line-height: 1.5; overflow-wrap: anywhere; }
+.transfer-booking small { display: block; margin-block: .4rem; }
+.transfer-booking button { min-height: 44px; padding: .5rem .8rem; font: inherit; text-align: left; }
+.transfer-booking form { display: grid; gap: .75rem; }
+.transfer-booking label { display: grid; gap: .3rem; }
+.transfer-booking input:not([type="checkbox"]) { min-height: 44px; padding: .5rem .6rem; font: inherit; width: 100%; box-sizing: border-box; }
+.transfer-booking .transfer-booked { display: inline-flex; flex-direction: row; align-items: center; gap: .6rem; min-height: 44px; cursor: pointer; }
+.transfer-booked input { width: 1.15rem; height: 1.15rem; margin: 0; }
+.transfer-booking-actions { display: flex; flex-wrap: wrap; gap: .5rem; }

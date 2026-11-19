@@ -32,7 +32,9 @@ import LodgingPanel from "./LodgingPanel";
 import StayJourney from "./StayJourney";
 import IntercityEstimate from "./IntercityEstimate";
 import RouteDrives from "./RouteDrives";
+import TransferBooking from "./TransferBooking";
 import { originPlace, stopPlace, withTravelHours } from "../../lib/trips/intercity";
+import { mergeIssues, transferConflicts, withTransferBooking } from "../../lib/trips/transfers";
 import { withLodging } from "../../lib/trips/lodging";
 const kindName = {
   custom: "Activity",
@@ -154,7 +156,7 @@ export default function ItineraryWorkspace({
     (a) => a.stopId === current.stop.id && a.day === localDay,
   );
   const entries = dayTimeline(activities),
-    conflicts = dayConflicts(trip, current.stop.id, localDay);
+    conflicts = mergeIssues(dayConflicts(trip, current.stop.id, localDay), transferConflicts(trip, current.stop.id, localDay));
   const transfers = [
     ...(localDay === 1 && current.inbound
       ? [{ leg: current.inbound, label: "Arriving", from: current.index > 0 ? stopPlace(trip.stops[current.index - 1]) : originPlace(trip), to: stopPlace(current.stop) }]
@@ -401,6 +403,7 @@ export default function ItineraryWorkspace({
                         <p className="day-transfer-caveat">
                           Departure time and arrival buffer not set.
                         </p>
+                        <TransferBooking key={`${leg.key}:${JSON.stringify([pref?.departure, pref?.arrival, pref?.reference, pref?.booked])}`} from={from?.name ?? leg.from} to={to?.name ?? leg.to} pref={pref} disabled={editorOpen} onSave={(booking) => onUpdate({ travelPreferences: withTransferBooking(trip.travelPreferences, leg.key, booking) })} />
                         <IntercityEstimate key={JSON.stringify([from?.name, from?.end, to?.name, to?.end])} from={from} to={to} currentHours={pref?.hours ?? ""} disabled={editorOpen} onUse={(hours) => onUpdate({ travelPreferences: withTravelHours(trip.travelPreferences, leg.key, hours) })} />
                       </div>
                       <button
@@ -416,7 +419,7 @@ export default function ItineraryWorkspace({
             )}
             {!!Object.keys(conflicts).length && (
               <div className="day-conflict-banner" role="status">
-                <strong>Some timings overlap.</strong>
+                <strong>Some timings need a look.</strong>
                 <span>
                   Open a highlighted item to change its time or move it to
                   another day.
