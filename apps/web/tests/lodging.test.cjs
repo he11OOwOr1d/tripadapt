@@ -58,3 +58,21 @@ test('costs linked to a stay are listed as entered, with no totals',()=>{
   assert.deepEqual(J(out.stayCostLines(undefined,'s1','INR')),[]);
   assert.deepEqual(J(out.stayCostLines(recs,'none','INR')),[]);
 });
+test('booked nights are validated like the backend and shown in the summary',()=>{
+  assert.equal(out.isLodging({name:'A',booked:true,booked_nights:3}),true);
+  assert.equal(out.isLodging({name:'A',booked_nights:null}),true);
+  for(const n of [0,366,1.5,'3','many',NaN])assert.equal(out.isLodging({name:'A',booked_nights:n}),false,String(n));
+  assert.equal(out.lodgingSummary({name:'Haveli',booked:true,booked_nights:3}),'Haveli · marked as booked by you for 3 nights');
+  assert.equal(out.lodgingSummary({name:'Haveli',booked:true,booked_nights:1,check_in:'14:00'}),'Haveli · marked as booked by you for 1 night · check-in 14:00');
+  assert.equal(out.lodgingSummary({name:'Haveli',booked:false,booked_nights:3}),'Haveli · not marked as booked');
+});
+test('a booked stay that no longer matches the plan’s nights is flagged, and only then',()=>{
+  const stay={name:'H',booked:true,booked_nights:3};
+  assert.equal(out.bookedNightsNote(stay,3),null);
+  assert.match(out.bookedNightsNote(stay,2),/booked for 3 nights, but your plan now has 2 nights here/);
+  assert.match(out.bookedNightsNote({...stay,booked_nights:1},2),/booked for 1 night, but your plan now has 2 nights/);
+  assert.equal(out.bookedNightsNote({name:'H',booked:true},2),null);
+  assert.equal(out.bookedNightsNote({name:'H',booked_nights:3},2),null);
+  assert.equal(out.bookedNightsNote(stay,0),null);
+  assert.equal(out.bookedNightsNote(null,2),null);
+});

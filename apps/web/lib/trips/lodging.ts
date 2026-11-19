@@ -17,6 +17,8 @@ export type Lodging = {
   /** The retained place record behind a searched stay; lets it serve as "where I am". */
   place_id?: string | null;
   booked?: boolean;
+  /** Nights the traveler's own booking covers, as entered; never checked with the supplier. */
+  booked_nights?: number | null;
   check_in?: string;
   check_out?: string;
 };
@@ -33,7 +35,7 @@ const plain = (v: unknown, max: number) => typeof v === "string" && v.length <= 
 export function isLodging(value: unknown): value is Lodging {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const l = value as Record<string, unknown>;
-  const allowed = ["name", "address", "latitude", "longitude", "external_id", "source", "place_id", "booked", "check_in", "check_out"];
+  const allowed = ["name", "address", "latitude", "longitude", "external_id", "source", "place_id", "booked", "booked_nights", "check_in", "check_out"];
   const has = (k: string) => l[k] !== undefined && l[k] !== null;
   const mapped = has("latitude") || has("longitude");
   return (
@@ -42,6 +44,7 @@ export function isLodging(value: unknown): value is Lodging {
     (l.address === undefined || plain(l.address, LODGING_ADDRESS_MAX)) &&
     (l.source === undefined || plain(l.source, 120)) &&
     (l.booked === undefined || typeof l.booked === "boolean") &&
+    (!has("booked_nights") || (Number.isSafeInteger(l.booked_nights) && Number(l.booked_nights) >= 1 && Number(l.booked_nights) <= 365)) &&
     (l.check_in === undefined || (typeof l.check_in === "string" && TIME.test(l.check_in))) &&
     (l.check_out === undefined || (typeof l.check_out === "string" && TIME.test(l.check_out))) &&
     (!mapped || (has("latitude") && has("longitude") && validCoordinates(l.latitude, l.longitude))) &&
@@ -84,7 +87,8 @@ export function withLodging(prefs: StayPreferences | undefined, stopId: string, 
 export function lodgingSummary(lodging: Lodging | null | undefined): string {
   if (!lodging) return "No place to stay recorded yet.";
   const times = [lodging.check_in && `check-in ${lodging.check_in}`, lodging.check_out && `check-out ${lodging.check_out}`].filter(Boolean).join(", ");
-  return `${lodging.name}${lodging.booked ? " · marked as booked by you" : " · not marked as booked"}${times ? ` · ${times}` : ""}`;
+  const nights = lodging.booked && lodging.booked_nights ? ` for ${lodging.booked_nights} ${lodging.booked_nights === 1 ? "night" : "nights"}` : "";
+  return `${lodging.name}${lodging.booked ? ` · marked as booked by you${nights}` : " · not marked as booked"}${times ? ` · ${times}` : ""}`;
 }
 
 /**
@@ -99,3 +103,14 @@ export function stayCostLines(records: CostRecord[] | undefined, stopId: string,
       return `${r.label} · ${amount} · ${r.status === "paid" ? "marked paid by you" : "estimated"}`;
     });
 }
+
+/**
+ * A booked stay is a commitment, so a plan that no longer matches the nights the traveler said they
+ * booked is flagged for them to act on. It only compares two of their own numbers; nothing is checked with a supplier.
+ */
+export function bookedNightsNote(lodging: Lodging | null | undefined, planNights: number): string | null {
+  if (!lodging?.booked || !lodging.booked_nights || planNights < 1 || lodging.booked_nights === planNights) return null;
+  const n = (k: number) => `${k} ${k === 1 ? "night" : "nights"}`;
+  return `You marked this stay as booked for ${n(lodging.booked_nights)}, but your plan now has ${n(planNights)} here. Check your booking, or update the nights you booked.`;
+}
+

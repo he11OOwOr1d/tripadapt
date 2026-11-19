@@ -34,6 +34,7 @@ import IntercityEstimate from "./IntercityEstimate";
 import RouteDrives from "./RouteDrives";
 import TransferBooking from "./TransferBooking";
 import { originPlace, stopPlace, withTravelHours } from "../../lib/trips/intercity";
+import { stayDates } from "../../lib/trips/stay-dates";
 import { hasBooking, mergeIssues, transferConflicts, withTransferBooking } from "../../lib/trips/transfers";
 import { withLodging } from "../../lib/trips/lodging";
 const kindName = {
@@ -479,7 +480,7 @@ export default function ItineraryWorkspace({
             </div>}
             {readinessOpen && timeChangeReview && <ReplanningReadiness key={`${current.stop.id}:${localDay}`} tripId={timeChangeReview.account.id} onEditActivity={onReadinessEdit} initialBasis={readinessBasis} onAccepted={timeChangeReview.onAccepted} stopId={current.stop.id} day={localDay-1} onClose={()=>setReadinessOpen(false)} />}
             {delayOpen && timeChangeReview && <DayDelayReview key={`${current.stop.id}:${localDay}`} activities={activities} place={current.stop.name} timezone={current.stop.timezone} review={timeChangeReview} initial={delaySeed} onEditActivity={timeChangeReview.onEditActivity ? (proposal,id)=>{const opened=timeChangeReview.onEditActivity!(proposal,id);if(opened)setDelayOpen(false);return opened;} : undefined} onClose={()=>setDelayOpen(false)} />}
-            <LodgingPanel key={current.stop.id} stop={current.stop} costs={trip.costRecords} currency={trip.currency} lodging={trip.stayPreferences?.[current.stop.id]?.lodging} disabled={editorOpen} onSave={(lodging) => onUpdate({ stayPreferences: withLodging(trip.stayPreferences, current.stop.id, lodging) })} />
+            <LodgingPanel key={current.stop.id} stop={current.stop} costs={trip.costRecords} currency={trip.currency} dates={stayDates(trip, current.arrivalDay, current.departureDay)} lodging={trip.stayPreferences?.[current.stop.id]?.lodging} disabled={editorOpen} onSave={(lodging) => onUpdate({ stayPreferences: withLodging(trip.stayPreferences, current.stop.id, lodging) })} />
             <StayJourney key={JSON.stringify([current.stop.id, localDay, trip.stayPreferences?.[current.stop.id]?.lodging?.check_in, trip.stayPreferences?.[current.stop.id]?.lodging?.check_out, trip.stayPreferences?.[current.stop.id]?.lodging?.latitude, trip.stayPreferences?.[current.stop.id]?.lodging?.longitude, activities.map((a) => [a.id, a.start, a.minutes, a.place?.id, a.skipped])])} lodging={trip.stayPreferences?.[current.stop.id]?.lodging} activities={activities} firstDay={localDay === 1} lastDay={localDay === current.days} />
             <DayMapPanel key={`${current.stop.id}:${localDay}`} stop={current.stop} stops={schedule.map((s) => s.stop)} activities={activities} lodging={trip.stayPreferences?.[current.stop.id]?.lodging} open={mapOpen} onOpenChange={setMapOpen} selectedId={mapSelected} onSelect={selectOnMap} />
             <p className="day-window">

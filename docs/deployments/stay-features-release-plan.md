@@ -4,7 +4,7 @@
 
 ## What is in the batch
 
-- **Backend:** four new optional fields on each journey's travel preference (`departure`, `arrival`, `reference`, `booked`, `arrival_buffer`, `departure_buffer`); `POST /journeys/from-stay`, `/journeys/to-stay` and `/journeys/intercity` (a driving estimate between two mapped places, including a starting point chosen from the map search); an optional `place_id` on a stay record; the AI day planner and chat read the stay; the readiness context offers a searched stay as a known location. OpenAPI snapshot regenerated.
+- **Backend:** four new optional fields on each journey's travel preference (`departure`, `arrival`, `reference`, `booked`, `arrival_buffer`, `departure_buffer`); `POST /journeys/from-stay`, `/journeys/to-stay` and `/journeys/intercity` (a driving estimate between two mapped places, including a starting point chosen from the map search); an optional `place_id` and `booked_nights` on a stay record; the AI day planner and chat read the stay; the readiness context offers a searched stay as a known location. OpenAPI snapshot regenerated.
 - **Frontend:** the stay journey section with check-in and check-out notes, an intercity drive-estimate button on the arrival and departure cards, linked costs in the stay panel, the stay in the restore review, keyboard focus fixes in the stay form and the chat log, journey booking details with day-view flags, a unique label on the map section, h2 transfer-card headings, and darker muted text in the trip stylesheets (`app/trips/*.css` only; the locked landing and `app/design/` are untouched).
 - **No migration, no new environment variable, no new dependency.** The intercity endpoint has a per-process in-memory cache (six hours), lost on restart; on Render's free tier a cold start clears it. The AI features use the existing Groq key; route checks use the existing Geoapify backend key.
 
@@ -16,7 +16,7 @@
 
 ## Rollback hazard (read before rolling back)
 
-Once a stay with a `place_id`, or a journey with booking details (`departure`, `arrival`, `reference`, `booked`, `arrival_buffer`, `departure_buffer`), has been saved, rolling **either** half back to the previous release can make that plan unreadable: the older backend's stay model forbids unknown fields, and the older frontend's validator rejects unknown stay keys too. If a rollback is ever needed after the release has been used, first remove stays that were saved from a search, or prefer rolling forward with a fix. Stays saved before this release have no `place_id` and are unaffected.
+Once a stay with a `place_id` or `booked_nights`, or a journey with booking details (`departure`, `arrival`, `reference`, `booked`, `arrival_buffer`, `departure_buffer`), has been saved, rolling **either** half back to the previous release can make that plan unreadable: the older backend's stay model forbids unknown fields, and the older frontend's validator rejects unknown stay keys too. If a rollback is ever needed after the release has been used, first remove stays that were saved from a search, or prefer rolling forward with a fix. Stays saved before this release have no `place_id` and are unaffected.
 
 ## Signed-in checks after deploying (hosted app)
 
@@ -34,7 +34,8 @@ Use a dedicated QA trip, record its baseline, restore it afterwards, and do not 
 10. After an estimate, press "Use … hours as my travel time": the card shows the hours; clear them in the trip form afterwards (the journey keeps an empty default preference entry, which is harmless).
 11. "See the whole trip" on a trip with two or more mapped destinations: press "Estimate all … mapped journeys"; each journey gets a time and distance and the total equals their sum.
 12. On a disposable trip, open a destination's day, add a 09:00 visit, record an arrival of 10:00 on its arrival card and a departure of 09:30 on its moving-on card: the visit shows both flags; remove the details afterwards.
-13. Look at the page once on a visible window: the darker muted text and the stay pin have only been checked by numbers and DOM so far.
+13. A booked stay with "Nights you booked" different from the destination's nights shows the mismatch note, and the trip dates show on a trip with exact dates; set the nights equal and the note disappears.
+14. Look at the page once on a visible window: the darker muted text and the stay pin have only been checked by numbers and DOM so far.
 
 ## Known gaps carried into the release
 

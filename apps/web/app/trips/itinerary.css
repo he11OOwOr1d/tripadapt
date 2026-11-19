@@ -1057,3 +1057,4 @@ fieldset.live-acceptance { border-inline: 0; min-width: 0; }
 .transfer-booking .transfer-booked { display: inline-flex; flex-direction: row; align-items: center; gap: .6rem; min-height: 44px; cursor: pointer; }
 .transfer-booked input { width: 1.15rem; height: 1.15rem; margin: 0; }
 .transfer-booking-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.lodging-panel .lodging-warning { border-left: 4px solid #87602f; padding-left: .75rem; color: #5d4220; }

@@ -37,6 +37,9 @@ class Lodging(StrictModel):
     # traveler's reported location. Server-checked wherever it is used.
     place_id: UUID | None = None
     booked: bool = False
+    # How many nights the traveler's own booking covers, as they entered it, so a
+    # later change to the plan's nights can be flagged. Never checked with the supplier.
+    booked_nights: int | None = Field(default=None, ge=1, le=365)
     check_in: str = Field(default="", pattern=r"^$|^([01][0-9]|2[0-3]):[0-5][0-9]$")
     check_out: str = Field(default="", pattern=r"^$|^([01][0-9]|2[0-3]):[0-5][0-9]$")
 

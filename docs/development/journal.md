@@ -896,3 +896,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026. The chat's route summary now lists recorded journeys as the traveler's own entries, built server-side (618 backend tests; verified live through the real chat). I also re-ran the CI-parity checks on the 38 local commits: 617 backend tests on Python 3.14.4, 233 frontend tests on Node 22, ruff, lock files, and `npm ci --dry-run` all pass. Committed locally; not pushed.
 
+## 194. Flag a booked stay that no longer matches the plan, and show dates from the trip
+
+20 November 2026. PRD FR-04: booked stays are commitments and changes are flagged. Added an optional "nights you booked" on a booked stay, a plain note when the plan's nights differ, and check-in and check-out dates derived from the trip's exact dates. No migration. 622 backend and 237 frontend tests pass; verified live and signed in on the disposable trip (validation, derived dates, flag, clearing, axe). Not built: several stays in one destination. Committed locally; not pushed. See [the learning note](../lodging-learning.md).
+
