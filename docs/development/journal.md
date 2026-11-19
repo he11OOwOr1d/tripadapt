@@ -800,3 +800,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026. Costs could already be linked to a stay but the stay panel did not show them. It now lists them as entered (no total, to avoid a figure that could disagree with the cost summary). 1 frontend test (210 pass); verified live and signed in with a temporary linked cost, which I removed (the two earlier QA cost records were untouched). Committed locally; not pushed. See [the learning note](../lodging-learning.md).
 
+## 170. Show the stay in the restore review
+
+20 November 2026. The restore review's preferences panel now mentions a recorded stay. Type-checked and the suite passes; not verified in a browser, because that needs an accepted version on the QA trip and accepting is irreversible. Committed locally; not pushed.
+

@@ -84,3 +84,9 @@ The cost ledger already lets a traveler link a cost to a destination's stay, but
 
 Verified: 1 frontend test (210 pass); type check passes. Live, signed in, on the QA trip: I added a temporary "QA room" cost linked to the Jaipur stay in the trip form; after navigating to the day view the panel listed "QA room (temporary) · INR 3000.00 per group × 2 · estimated". I removed it, confirmed the cost list is back to the two earlier QA records (Louvre tickets and Hotel deposit, untouched) and that a reload shows no cost line, with the session still signed in. Not verified: the hosted app, and 390 px for this list (it is a plain wrapping list with no new controls).
 
+### The restore review shows the stay (20 November 2026, later)
+
+When a traveler reviews restoring an earlier version, the "Stay and travel preferences to restore" panel listed each destination's style and allowance but not the recorded stay, so accepting a restore could silently bring back or drop a stay. It now adds "Staying at Hotel Aurora, marked as booked by you (your own record, not confirmed with the stay)" per destination when the restored snapshot has one.
+
+Verified only by the type check and the existing frontend suite (210 pass): the project has no component-render tests, and a live check needs an accepted earlier version to restore, which cannot be undone on the QA trip, so I did not create one. Treat this as unverified in the browser. A one-line addition to an existing panel.
+

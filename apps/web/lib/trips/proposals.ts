@@ -60,7 +60,7 @@ export type Proposal = {
     budget?: { amount: string; mode: string } | null;
     origin?: { label: string } | null;
     return_location?: { label: string } | null;
-    preferences?: { pace: string; interests: string[]; preferred_modes: string[]; return_to_origin: boolean; stay_preferences: Record<string, {style: string; rate: string; basis: string}>; travel_preferences: Record<string, {mode: string; hours: string; overnight: number; rate: string; basis: string}> };
+    preferences?: { pace: string; interests: string[]; preferred_modes: string[]; return_to_origin: boolean; stay_preferences: Record<string, {style: string; rate: string; basis: string; lodging?: {name: string; booked?: boolean} | null}>; travel_preferences: Record<string, {mode: string; hours: string; overnight: number; rate: string; basis: string}> };
 
     stops: { client_id: string; name: string; desired_nights: number | null; timezone?: string; place_reference_id?: string | null }[];
     activities: {
