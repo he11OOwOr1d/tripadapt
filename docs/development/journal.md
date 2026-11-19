@@ -786,5 +786,5 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 ## 166. Qualify the stay route checks around check-in and check-out
 
-20 November 2026. The leave-by and way-back checks assume the traveler is at the stay, which is wrong before check-in on the arrival day or after check-out on the departure day. Added a plain note in those cases rather than changing the estimate. 1 frontend test (208 total); verified live and signed in for the arrival-day branch, baseline restored; the departure-day branch is unit-tested only. Committed locally; not pushed. See [the learning note](../lodging-learning.md).
+20 November 2026. The leave-by and way-back checks assume the traveler is at the stay, which is wrong before check-in on the arrival day or after check-out on the departure day. Added a plain note in those cases rather than changing the estimate. 1 frontend test (208 total); verified live and signed in for the arrival-day branch, baseline restored; the departure-day branch was checked live afterwards on day 3 and restored. Committed locally; not pushed. See [the learning note](../lodging-learning.md).
 
