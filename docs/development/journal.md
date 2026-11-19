@@ -856,3 +856,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026. After a drive estimate, an explicit button copies the hours (rounded up to a hundredth) into that journey's own "Approximate hours" entry. It changes only that field and is never automatic. 2 frontend tests (219 total); verified live and signed in; axe clean. Restore caveat: clearing the field leaves an all-default preference entry because the app cannot delete one. Committed locally; not pushed. See [the intercity note](../intercity-estimate-learning.md).
 
+## 184. Regression-check the creation flow and note a second QA trip
+
+20 November 2026. The new starting-location search sits in the first step of the main creation flow, so I walked it on a new draft: required, Enter-to-search, choosing a match and continuing all work. Doing it created a second trip in the account (`639aceee-71ae-4e06-87fc-b70be8dc8d16`, now "Kyoto, Japan" as its start) because a new draft autosaves when signed in; there is no delete, so it stays as a disposable QA trip. No code changed. Committed locally; not pushed.
+

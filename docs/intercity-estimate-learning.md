@@ -43,3 +43,9 @@ After a result, an explicit button offers **Use 3.12 hours as my travel time** (
 - **Restore caveat:** the app cannot delete a journey's preference entry once it exists, so clearing the hours leaves an all-default entry (empty mode and hours, 0 nights, no allowance) in place of no entry. Every calculation treats the two the same; only the restore review's wording differs ("mode open; unknown hours; ..." instead of "preferences left open"). This is a small deviation from restoring the QA trip's exact original data.
 - **Not verified:** the hosted app, a screenshot, and replacing an existing non-empty entry live (covered by the pure update and the button label logic, not clicked).
 
+## Regression check of the creation flow, and a side effect
+
+Because the starting location is the first field of the main creation flow, I checked it end to end on a new draft, signed in (local web and API, hosted database): the field is still `required` and an empty value is invalid; pressing Enter runs the place search and does not submit the form; choosing a match fills the field and closes the list; and "Continue to dates" then opens "When you go" with no error. A plainly typed start still works because choosing a match is optional.
+
+**Side effect:** opening a new `/trips/new` while signed in created a new trip in the account (the address became `?trip=639aceee-71ae-4e06-87fc-b70be8dc8d16`), and I then changed its starting location to "Kyoto, Japan" while testing. The app has no way to delete a trip, so the library now holds two trips named "My untitled escape": the dedicated QA trip `77d6c6b1-ec94-4653-ba83-2d4fa8d41101` and this one. I will treat `639aceee-71ae-4e06-87fc-b70be8dc8d16` as a second disposable QA trip for tests that cannot be cleanly undone. Earlier visits to `/trips/new` in this session did not add trips (the library showed only these two).
+
