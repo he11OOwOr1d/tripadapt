@@ -631,7 +631,17 @@ def get_proposal(
 @router.post(
     "/trips/{trip_id}/proposals/{proposal_id}/accept",
     response_model=Envelope[ProposalView],
-    responses={status: {"model": DayCheckProblem} for status in (409, 422, 429, 503)},
+    # Explicit phrases keep the public contract stable across Python versions
+    # (Python 3.14 renamed HTTP 422's default reason phrase).
+    responses={
+        code: {"model": DayCheckProblem, "description": description}
+        for code, description in (
+            (409, "Conflict"),
+            (422, "Unprocessable Entity"),
+            (429, "Too Many Requests"),
+            (503, "Service Unavailable"),
+        )
+    },
 )
 def accept(
     trip_id: UUID,
