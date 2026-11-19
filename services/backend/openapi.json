@@ -4409,6 +4409,139 @@
         ]
       }
     },
+    "/api/v1/journeys/from-stay": {
+      "post": {
+        "summary": "Check Journey From Stay",
+        "description": "Estimate the trip from the stay to a visit and the latest time to leave.",
+        "operationId": "check_journey_from_stay_api_v1_journeys_from_stay_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StayJourneyInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_StayJourneyCheck_"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Structured problem response",
+            "content": {
+              "application/problem+json": {},
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/trips/{trip_id}/replanning/context": {
       "get": {
         "summary": "Replan Context",
@@ -6941,6 +7074,22 @@
           "meta"
         ],
         "title": "Envelope[RevisionPage]"
+      },
+      "Envelope_StayJourneyCheck_": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/StayJourneyCheck"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "Envelope[StayJourneyCheck]"
       },
       "Envelope_TripView_": {
         "properties": {
@@ -10071,6 +10220,126 @@
           "duration_minutes"
         ],
         "title": "SkippedActivity"
+      },
+      "StayJourneyCheck": {
+        "properties": {
+          "retrieved_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Retrieved At"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "WALK",
+              "DRIVE"
+            ],
+            "title": "Mode"
+          },
+          "travel_minutes": {
+            "type": "integer",
+            "title": "Travel Minutes"
+          },
+          "distance_meters": {
+            "type": "integer",
+            "title": "Distance Meters"
+          },
+          "buffer_minutes": {
+            "type": "integer",
+            "title": "Buffer Minutes"
+          },
+          "leave_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Leave By"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "leave_by",
+              "needs_earlier_start"
+            ],
+            "title": "Status"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "retrieved_at",
+          "mode",
+          "travel_minutes",
+          "distance_meters",
+          "buffer_minutes",
+          "leave_by",
+          "status",
+          "warnings"
+        ],
+        "title": "StayJourneyCheck"
+      },
+      "StayJourneyInput": {
+        "properties": {
+          "latitude": {
+            "type": "number",
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Latitude"
+          },
+          "longitude": {
+            "type": "number",
+            "maximum": 180.0,
+            "minimum": -180.0,
+            "title": "Longitude"
+          },
+          "destination_place_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Destination Place Id"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "WALK",
+              "DRIVE"
+            ],
+            "title": "Mode"
+          },
+          "destination_start": {
+            "type": "string",
+            "format": "time",
+            "title": "Destination Start"
+          },
+          "buffer_minutes": {
+            "type": "integer",
+            "maximum": 120.0,
+            "minimum": 0.0,
+            "title": "Buffer Minutes",
+            "default": 10
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "latitude",
+          "longitude",
+          "destination_place_id",
+          "mode",
+          "destination_start"
+        ],
+        "title": "StayJourneyInput",
+        "description": "From a traveler-recorded stay (a map point) to a retained place."
       },
       "StayPreference": {
         "properties": {

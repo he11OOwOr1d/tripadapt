@@ -15,3 +15,19 @@ export const journeyAdapter = {
     return (await accountRequest<JourneyCheck>("/journeys/check", { method: "POST", signal: AbortSignal.any([signal, AbortSignal.timeout(12000)]), body: JSON.stringify(input) })).data;
   },
 };
+
+export type StayJourneyCheck = {
+  retrieved_at: string;
+  mode: "WALK" | "DRIVE";
+  travel_minutes: number;
+  distance_meters: number;
+  buffer_minutes: number;
+  leave_by: string | null;
+  status: "leave_by" | "needs_earlier_start";
+  warnings: string[];
+};
+export const stayJourneyAdapter = {
+  async check(input: { latitude: number; longitude: number; destination_place_id: string; mode: "WALK" | "DRIVE"; destination_start: string; buffer_minutes: number }, signal: AbortSignal) {
+    return (await accountRequest<StayJourneyCheck>("/journeys/from-stay", { method: "POST", signal: AbortSignal.any([signal, AbortSignal.timeout(12000)]), body: JSON.stringify(input) })).data;
+  },
+};

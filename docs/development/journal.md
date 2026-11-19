@@ -763,3 +763,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 ## 160. Deploy the stay record
 
 19 November 2026. Pushed `afca645` to `main` at the owner's request (no new branch or PR). CI passed and both Vercel projects succeeded. Render, which must accept the new field before the frontend sends it, answered a live lodging search; no migration was needed. The production bundle contains the stay panel and search. **Not verified:** a signed-in run on the hosted app. A background poll I started waited on an OpenAPI path that the API does not expose, and was stopped; the live search was the real check.
+
+## 161. Check the trip from the stay to the first visit
+
+20 November 2026. Next gap from the stay record: it fed only the map. Added `POST /journeys/from-stay` (stay coordinates plus a retained place, mode, start and buffer; returns a leave-by time or `needs_earlier_start`) rather than loosening the pair check, which needs two retained places and a gap. The UI is a disclosure under the stay panel, shown only when a stay and a day with visits exist, and needs coordinates at both ends. 12 backend and 3 frontend tests; full suites pass (561 backend, 204 frontend). Verified live and signed in on the QA trip (walk 09:24, drive 09:44 for a 10:00 visit, 390 px clean) and restored to baseline. Committed locally; not pushed or deployed. See [the learning note](../lodging-learning.md).

@@ -1028,3 +1028,9 @@ fieldset.live-acceptance { border-inline: 0; min-width: 0; }
 .lodging-results li { display: grid; gap: .3rem; padding: .6rem; border: 1px solid #d3d8cb; }
 .day-map-panel .map-pin.is-lodging { border-radius: .4rem .4rem 50% 50%; background: #3a4f7a; color: #f8f7f1; font-size: 1.15rem; }
 .day-map-panel .map-pin.is-lodging.is-selected { background: #a8480d; color: #fff; }
+.stay-journey { margin: 1rem 0; padding: .75rem 1rem; border: 1px solid #bdc4b4; border-radius: .25rem; }
+.stay-journey > summary { cursor: pointer; min-height: 2.75rem; display: flex; align-items: center; font-weight: 600; }
+.stay-journey-body p, .stay-journey-body small { max-width: 65ch; line-height: 1.5; overflow-wrap: anywhere; }
+.stay-journey-body small { display: block; margin-block: .4rem; }
+.stay-journey-body h4 { margin: .5rem 0; }
+.stay-journey-body button { min-height: 2.75rem; }

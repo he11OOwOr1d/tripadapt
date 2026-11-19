@@ -113,6 +113,90 @@ def test_gap_checks_and_no_mutation(context, monkeypatch, start, buffer, status,
     assert client.post("/api/v1/journeys/check", json=body).status_code == 401
 
 
+@pytest.mark.parametrize(
+    "start,buffer,status,leave_by",
+    [
+        ("09:00", 10, "leave_by", "08:30"),
+        ("09:00", 0, "leave_by", "08:40"),
+        ("00:25", 10, "needs_earlier_start", None),
+        ("00:30", 10, "leave_by", "00:00"),
+    ],
+)
+def test_stay_journey_gives_a_leave_by_time(
+    context, monkeypatch, start, buffer, status, leave_by
+):
+    client, db, _ = context
+    _, source = test_activity_discovery.discovered(client, monkeypatch)
+    calls = []
+
+    def route(*args):
+        calls.append(args)
+        return RouteEstimate(20, 1300, ["Use care."])
+
+    monkeypatch.setattr(journeys, "geoapify_checks", SimpleNamespace(route=route))
+    body = {
+        "latitude": 26.9,
+        "longitude": 75.8,
+        "destination_place_id": source["id"],
+        "mode": "WALK",
+        "destination_start": start,
+        "buffer_minutes": buffer,
+    }
+    response = client.post("/api/v1/journeys/from-stay", json=body)
+    assert response.status_code == 200, response.text
+    assert response.headers["cache-control"] == "private, no-store"
+    result = response.json()["data"]
+    assert (result["status"], result["leave_by"]) == (status, leave_by)
+    assert result["travel_minutes"] == 20 and result["warnings"] == ["Use care."]
+    assert calls[0][2] == (26.9, 75.8)
+    assert len(db.new) == 0
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"latitude": 0, "longitude": 0},
+        {"latitude": 91},
+        {"longitude": -181},
+        {"mode": "TRANSIT"},
+        {"destination_start": "09:00:00+02:00"},
+        {"buffer_minutes": 121},
+        {"extra": 1},
+    ],
+)
+def test_stay_journey_rejects_bad_input(context, monkeypatch, change):
+    client, _, _ = context
+    _, source = test_activity_discovery.discovered(client, monkeypatch)
+    monkeypatch.setattr(
+        journeys,
+        "geoapify_checks",
+        SimpleNamespace(route=lambda *a: RouteEstimate(1, 1, [])),
+    )
+    body = {
+        "latitude": 26.9,
+        "longitude": 75.8,
+        "destination_place_id": source["id"],
+        "mode": "WALK",
+        "destination_start": "09:00",
+        **change,
+    }
+    assert client.post("/api/v1/journeys/from-stay", json=body).status_code == 422
+
+
+def test_stay_journey_needs_known_place_and_sign_in(context, monkeypatch):
+    client, _, _ = context
+    body = {
+        "latitude": 26.9,
+        "longitude": 75.8,
+        "destination_place_id": str(uuid4()),
+        "mode": "WALK",
+        "destination_start": "09:00",
+    }
+    assert client.post("/api/v1/journeys/from-stay", json=body).status_code == 404
+    app.dependency_overrides.pop(verified_identity)
+    assert client.post("/api/v1/journeys/from-stay", json=body).status_code == 401
+
+
 class Response:
     def __init__(self, body):
         self.body = body

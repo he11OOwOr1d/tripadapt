@@ -38,6 +38,28 @@ class JourneyCheck(StrictModel):
     warnings: list[str]
 
 
+class StayJourneyInput(StrictModel):
+    """From a traveler-recorded stay (a map point) to a retained place."""
+
+    latitude: float = Field(ge=-90, le=90, allow_inf_nan=False)
+    longitude: float = Field(ge=-180, le=180, allow_inf_nan=False)
+    destination_place_id: UUID
+    mode: Literal["WALK", "DRIVE"]
+    destination_start: time
+    buffer_minutes: int = Field(ge=0, le=120, default=10)
+
+
+class StayJourneyCheck(StrictModel):
+    retrieved_at: datetime
+    mode: Literal["WALK", "DRIVE"]
+    travel_minutes: int
+    distance_meters: int
+    buffer_minutes: int
+    leave_by: str | None
+    status: Literal["leave_by", "needs_earlier_start"]
+    warnings: list[str]
+
+
 def clock_minutes(value):
     return (
         value.hour * 60
@@ -87,6 +109,44 @@ def check_journey(
             buffer_minutes=body.buffer_minutes,
             spare_minutes=spare,
             status="fits_estimate" if spare >= 0 else "shortfall",
+            warnings=warnings,
+        ),
+    )
+
+
+@router.post("/journeys/from-stay", response_model=Envelope[StayJourneyCheck])
+def check_journey_from_stay(
+    body: StayJourneyInput,
+    request: Request,
+    user: AppUser = Depends(current_user),
+    db: Session = Depends(session),
+):
+    """Estimate the trip from the stay to a visit and the latest time to leave."""
+    if body.latitude == 0 and body.longitude == 0:
+        raise HTTPException(422, "STAY_LOCATION_INVALID")
+    if body.destination_start.tzinfo:
+        raise HTTPException(422, "JOURNEY_LOCAL_TIME_REQUIRED")
+    destination = source_place(db, body.destination_place_id)
+    try:
+        minutes, meters, warnings = geoapify_checks.route(
+            str(user.id),
+            body.mode,
+            (body.latitude, body.longitude),
+            (destination.payload["latitude"], destination.payload["longitude"]),
+        )
+    except CheckFailure as error:
+        fail(error)
+    leave = int(clock_minutes(body.destination_start)) - minutes - body.buffer_minutes
+    return wrap(
+        request,
+        StayJourneyCheck(
+            retrieved_at=datetime.now(timezone.utc),
+            mode=body.mode,
+            travel_minutes=minutes,
+            distance_meters=meters,
+            buffer_minutes=body.buffer_minutes,
+            leave_by=f"{leave // 60:02d}:{leave % 60:02d}" if leave >= 0 else None,
+            status="leave_by" if leave >= 0 else "needs_earlier_start",
             warnings=warnings,
         ),
     )
