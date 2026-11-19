@@ -238,6 +238,7 @@ class Activity(Base):
         CheckConstraint(
             "kind IN ('custom','meal','rest','free_time')", name="activity_kind_valid"
         ),
+        CheckConstraint("NOT (completed AND skipped)", name="activity_one_outcome"),
     )
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
     version_id: Mapped[UUID] = mapped_column(
@@ -257,6 +258,7 @@ class Activity(Base):
     fixed: Mapped[bool]
     completed: Mapped[bool]
     booked: Mapped[bool]
+    skipped: Mapped[bool] = mapped_column(default=False, server_default="false")
 
 
 class CreateReceipt(Base):
@@ -357,3 +359,89 @@ class ConversationTurn(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+
+
+class CostItem(Base):
+    """Traveler-entered cost on one plan version; not a quote, booking or charge.
+
+    Links use logical IDs because activity and stop rows are rewritten on every
+    schedule sync; same-version link integrity is enforced when the version is
+    written (see `reconcile_costs`).
+    """
+
+    __tablename__ = "cost_item"
+    __table_args__ = (
+        Index("ix_cost_item_version", "version_id"),
+        UniqueConstraint("version_id", "logical_item_id"),
+        UniqueConstraint("version_id", "position"),
+        CheckConstraint(
+            "category IN ('food','activity','accommodation','transport','taxes_fees',"
+            "'miscellaneous')",
+            name="cost_item_category_valid",
+        ),
+        CheckConstraint(
+            "unit IN ('per_person','per_group')", name="cost_item_unit_valid"
+        ),
+        CheckConstraint(
+            "amount_status IN ('estimated','paid')", name="cost_item_status_valid"
+        ),
+        CheckConstraint("quantity BETWEEN 1 AND 10000", name="cost_item_quantity"),
+        CheckConstraint("amount IS NULL OR amount >= 0", name="cost_item_amount"),
+        CheckConstraint(
+            "amount_status <> 'paid' OR amount IS NOT NULL",
+            name="cost_item_paid_amount",
+        ),
+        CheckConstraint(
+            "num_nonnulls(activity_logical_id, stop_logical_id, leg_key) <= 1",
+            name="cost_item_single_link",
+        ),
+        CheckConstraint(
+            "NOT link_removed OR (amount_status = 'paid'"
+            " AND num_nonnulls(activity_logical_id, stop_logical_id, leg_key) = 0)",
+            name="cost_item_removed_link",
+        ),
+        CheckConstraint("position >= 0", name="cost_item_position"),
+        CheckConstraint(
+            "conversion_rate IS NULL OR conversion_rate > 0", name="cost_item_rate"
+        ),
+        CheckConstraint(
+            "currency IS NOT NULL OR (conversion_rate IS NULL AND rate_note IS NULL"
+            " AND rate_date IS NULL)",
+            name="cost_item_rate_needs_currency",
+        ),
+        CheckConstraint(
+            "tax_status IN ('included','excluded','unknown')",
+            name="cost_item_tax_status",
+        ),
+        CheckConstraint(
+            "tax_percent IS NULL OR (tax_status = 'excluded'"
+            " AND tax_percent >= 0 AND tax_percent <= 100)",
+            name="cost_item_tax_percent",
+        ),
+    )
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
+    version_id: Mapped[UUID] = mapped_column(
+        ForeignKey("plan_version.id", ondelete="CASCADE")
+    )
+    logical_item_id: Mapped[UUID] = mapped_column(Uuid)
+    position: Mapped[int]
+    category: Mapped[str] = mapped_column(String(20))
+    label: Mapped[str] = mapped_column(String(120))
+    unit: Mapped[str] = mapped_column(String(20))
+    quantity: Mapped[int]
+    amount: Mapped[Decimal | None] = mapped_column(Numeric(18, 4))
+    amount_status: Mapped[str] = mapped_column(String(20))
+    activity_logical_id: Mapped[UUID | None] = mapped_column(Uuid)
+    stop_logical_id: Mapped[UUID | None] = mapped_column(Uuid)
+    # Intercity journey key (JSON endpoint pair); journeys are not rows.
+    leg_key: Mapped[str | None] = mapped_column(String(1500))
+    # Original currency and the traveler-entered rate into the display currency.
+    currency: Mapped[str | None] = mapped_column(String(3))
+    conversion_rate: Mapped[Decimal | None] = mapped_column(Numeric(20, 10))
+    rate_note: Mapped[str | None] = mapped_column(String(200))
+    rate_date: Mapped[date | None] = mapped_column(Date)
+    tax_status: Mapped[str] = mapped_column(
+        String(10), default="unknown", server_default="unknown"
+    )
+    tax_percent: Mapped[Decimal | None] = mapped_column(Numeric(6, 3))
+    link_removed: Mapped[bool] = mapped_column(default=False, server_default="false")

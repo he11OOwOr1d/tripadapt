@@ -13,12 +13,12 @@ from app.persistence.models import AppUser
 from app.planning.removal import RemoveActivity, remove_activity, validate_removal
 
 
-@pytest.mark.parametrize("flag", ["fixed", "booked", "completed"])
+@pytest.mark.parametrize("flag", ["fixed", "booked", "completed", "skipped"])
 def test_protected_activity_cannot_be_removed(flag):
     plan, scope = test_reschedule.sample()
     setattr(plan.activities[0], flag, True)
     original = plan.model_copy(deep=True)
-    with pytest.raises(ValueError, match="fixed, booked or completed"):
+    with pytest.raises(ValueError, match="fixed, booked, completed or skipped"):
         remove_activity(
             plan, scope, RemoveActivity(activity_id=str(plan.activities[0].logical_id))
         )
@@ -146,3 +146,32 @@ def test_removal_proposal_is_frozen_and_requires_explicit_current_acceptance(
     assert len(remaining) == (1 if outcome == "accept" else 2)
     if outcome == "accept":
         assert remaining[0]["logical_id"] == str(plan.activities[1].logical_id)
+
+
+def test_removal_keeps_paid_costs_and_matches_the_stored_candidate():
+    from app.trips.schemas import PlanInput
+
+    plan, scope = test_reschedule.sample()
+    target = plan.activities[0].logical_id
+    data = plan.model_dump(mode="json")
+    data["costs"] = [
+        dict(
+            id=str(uuid4()),
+            category="activity",
+            label=label,
+            unit="per_group",
+            quantity=1,
+            amount="20",
+            status=status,
+            activity_id=str(target),
+        )
+        for label, status in (("Ticket", "paid"), ("Snacks", "estimated"))
+    ]
+    plan = PlanInput.model_validate(data)
+    candidate, metadata = remove_activity(
+        plan, scope, RemoveActivity(activity_id=str(target))
+    )
+    assert [(c.label, c.link_removed) for c in candidate.costs] == [("Ticket", True)]
+    # The stored candidate is re-read and reconciled; it must still validate.
+    stored = PlanInput.model_validate(json.loads(candidate.model_dump_json()))
+    validate_removal(plan, stored, scope, metadata)

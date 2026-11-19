@@ -1,6 +1,9 @@
+import asyncio
 from contextlib import asynccontextmanager
+from pathlib import Path
 from uuid import uuid4
 
+from alembic.script import ScriptDirectory
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,6 +14,8 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from starlette.exceptions import HTTPException
 
 from app.api import (  # noqa: F401 - register proposal routes
+    budget,
+    chat_replacements,
     conversation,
     destinations,
     google_places,
@@ -18,18 +23,34 @@ from app.api import (  # noqa: F401 - register proposal routes
     places,
     planning_jobs,
     proposals,
+    replanning,
     revisions,
+    stay_rebalance,
+    weather,
+    weather_revisions,
 )
 from app.api.trips import router
 from app.config import settings
 from app.persistence.database import engine
 from app.persistence.models import SystemProbe
+from app.planning.live_acceptance import DayCheckFailure
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    yield
-    engine.dispose()
+    worker = None
+    if settings.planning_worker_embedded:
+        from app.jobs.service import WebServiceWorker
+
+        worker = WebServiceWorker()
+        worker.start()
+    app.state.planning_worker = worker
+    try:
+        yield
+    finally:
+        if worker is not None:
+            await asyncio.to_thread(worker.stop)
+        engine.dispose()
 
 
 app = FastAPI(title="TripAdapt API", version="0.1.0", lifespan=lifespan)
@@ -101,6 +122,11 @@ def live(request: Request):
     responses={503: {"description": "Database or schema unavailable"}},
 )
 def ready(request: Request):
+    worker = getattr(request.app.state, "planning_worker", None)
+    if settings.planning_worker_embedded and (worker is None or not worker.alive):
+        return JSONResponse(
+            status_code=503, content={"code": "PLANNING_WORKER_UNAVAILABLE"}
+        )
     try:
         with engine.connect() as connection:
             revision = connection.execute(
@@ -109,7 +135,12 @@ def ready(request: Request):
             marker = connection.execute(
                 select(SystemProbe.initialized_at).where(SystemProbe.id == 1)
             ).scalar_one()
-            if revision != "0019_google_place_ids":
+            if (
+                revision
+                != ScriptDirectory(
+                    str(Path(__file__).resolve().parents[1] / "migrations")
+                ).get_current_head()
+            ):
                 raise ValueError("Schema revision mismatch")
         return {
             "data": {
@@ -139,7 +170,7 @@ def ready(request: Request):
 app.include_router(router)
 
 
-def problem(request, status, code, issues=None):
+def problem(request, status, code, issues=None, day_check=None):
     return JSONResponse(
         status_code=status,
         media_type="application/problem+json",
@@ -151,8 +182,18 @@ def problem(request, status, code, issues=None):
             "detail": "Review the request and retry.",
             "request_id": request.state.request_id,
             "issues": issues or [],
+            **({"day_check": day_check.model_dump(mode="json")} if day_check else {}),
         },
     )
+
+
+@app.exception_handler(DayCheckFailure)
+async def day_check_problem(request, exc):
+    response = problem(
+        request, exc.status_code, str(exc.detail), day_check=exc.diagnostic
+    )
+    response.headers.update(exc.headers or {})
+    return response
 
 
 @app.exception_handler(HTTPException)

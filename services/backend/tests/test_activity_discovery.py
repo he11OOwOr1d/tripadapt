@@ -280,7 +280,7 @@ def test_place_schedule_reopen_accept_and_restore_preserve_source(context, monke
 
 
 @pytest.mark.parametrize(
-    "change", [{"place_id": str(uuid4())}, {"user_label": "Forged name"}]
+    "change", [{"place_id": str(uuid4())}, {"stop_logical_id": str(uuid4())}]
 )
 def test_place_references_cannot_be_forged(context, monkeypatch, change):
     client, _, _ = context
@@ -346,4 +346,151 @@ def test_failed_live_refresh_can_explicitly_show_recent_retained_results(
             f"/api/v1/places/search?destination_reference_id={destination['reference_id']}&category=gallery"
         ).status_code
         == 503
+    )
+
+
+def test_existing_manual_activity_can_link_rename_and_detach_without_schedule_loss(
+    context, monkeypatch
+):
+    client, _, _ = context
+    destination, place = discovered(client, monkeypatch)
+    stop = str(uuid4())
+    activity = {
+        "logical_id": str(uuid4()),
+        "stop_logical_id": stop,
+        "user_label": "A quiet hour of my own",
+        "local_day_offset": 12,
+        "local_start_time": "10:35",
+        "duration_minutes": 95,
+        "kind": "rest",
+        "fixed": True,
+        "booked": True,
+        "completed": True,
+    }
+    trip = client.post(
+        "/api/v1/trips",
+        json={
+            "title": "Link a map",
+            "plan": {
+                "stops": [
+                    {
+                        "client_id": stop,
+                        "name": destination["label"],
+                        "timezone": destination["timezone"],
+                        "desired_nights": 20,
+                        "place_reference_id": destination["reference_id"],
+                    }
+                ],
+                "activities": [activity],
+            },
+        },
+    ).json()["data"]
+    base = f"/api/v1/trips/{trip['id']}"
+    path = base + f"/versions/{trip['draft_version_id']}"
+    tag = client.get(path).headers["etag"]
+    linked = {**activity, "place_id": place["id"]}
+    response = client.post(
+        base + "/draft/commands",
+        headers={"If-Match": tag},
+        json={
+            "commands": [
+                {"type": "activity.replace_user_schedule", "activities": [linked]}
+            ]
+        },
+    )
+    assert response.status_code == 200, response.text
+    tag = response.headers["etag"]
+    read = client.get(path).json()["data"]
+    saved = read["activities"][0]
+    for key, value in linked.items():
+        assert (
+            saved[key] == value
+            or key == "local_start_time"
+            and saved[key] == "10:35:00"
+        )
+    assert read["place_details"][place["id"]]["name"] == place["name"]
+    assert read["place_details"][place["id"]]["name"] != saved["user_label"]
+    renamed = {
+        **linked,
+        "user_label": "My personal museum break",
+        "google_place_id": "ChIJ_test",
+    }
+    response = client.post(
+        base + "/draft/commands",
+        headers={"If-Match": tag},
+        json={
+            "commands": [
+                {"type": "activity.replace_user_schedule", "activities": [renamed]}
+            ]
+        },
+    )
+    assert response.status_code == 200, response.text
+    tag = response.headers["etag"]
+    proposal = test_proposals.submit(client, base, tag).json()["data"]
+    assert proposal["plan"]["activities"][0]["user_label"] == renamed["user_label"]
+    assert proposal["place_details"][place["id"]]["name"] == place["name"]
+    assert test_proposals.accept(client, base, proposal).status_code == 200
+    response = client.post(
+        base + "/draft/commands",
+        headers={"If-Match": tag},
+        json={
+            "commands": [
+                {"type": "activity.replace_user_schedule", "activities": [activity]}
+            ]
+        },
+    )
+    assert response.status_code == 200, response.text
+    read = client.get(path).json()["data"]
+    assert read["activities"][0]["place_id"] is None
+    assert read["activities"][0]["google_place_id"] is None
+    assert read["activities"][0]["logical_id"] == activity["logical_id"]
+    assert (
+        read["activities"][0]["fixed"]
+        and read["activities"][0]["booked"]
+        and read["activities"][0]["completed"]
+    )
+    assert (
+        client.get(base + f"/versions/{proposal['candidate_version_id']}").json()[
+            "data"
+        ]["activities"][0]["place_id"]
+        == place["id"]
+    )
+
+
+def test_custom_label_cannot_link_a_place_from_another_destination(
+    context, monkeypatch
+):
+    client, _, _ = context
+    _, place = discovered(client, monkeypatch)
+    stop = str(uuid4())
+    response = client.post(
+        "/api/v1/trips",
+        json={
+            "title": "Wrong destination",
+            "plan": {
+                "stops": [
+                    {
+                        "client_id": stop,
+                        "name": "Unmapped other destination",
+                        "timezone": "UTC",
+                        "desired_nights": 2,
+                    }
+                ],
+                "activities": [
+                    {
+                        "logical_id": str(uuid4()),
+                        "stop_logical_id": stop,
+                        "user_label": "My own label",
+                        "local_start_time": "10:00",
+                        "local_day_offset": 0,
+                        "duration_minutes": 60,
+                        "place_id": place["id"],
+                    }
+                ],
+            },
+        },
+    )
+    assert (
+        response.status_code == 422
+        and response.json()["code"] == "ACTIVITY_PLACE_MISMATCH"
     )

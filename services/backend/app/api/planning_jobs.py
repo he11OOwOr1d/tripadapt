@@ -15,6 +15,7 @@ from app.api.identity import current_user, session
 from app.api.proposals import plan_input
 from app.api.trips import Envelope, owned, router, wrap
 from app.config import settings
+from app.jobs.policy import lifecycle_allows_job
 from app.persistence.models import AppUser, PlanningJob, PlanVersion, SystemProbe
 from app.trips.schemas import StrictModel
 
@@ -116,6 +117,13 @@ def admit_job(
             raise HTTPException(409, "IDEMPOTENCY_KEY_REUSED")
         result = previous
     else:
+        if not lifecycle_allows_job(trip.lifecycle, body.operation):
+            raise HTTPException(
+                409,
+                "TRIP_CHAT_CLOSED"
+                if trip.lifecycle in ("completed", "archived")
+                else "AGENT_PLANNING_ONLY",
+            )
         row = db.get(PlanVersion, body.base_version_id)
         if (
             row is None
@@ -166,6 +174,8 @@ def admit_job(
             input={
                 "request": body.model_dump(mode="json"),
                 "plan": plan.model_dump(mode="json"),
+                "trip_lifecycle": trip.lifecycle,
+                "trip_lock_version": trip.lock_version,
                 "base_edit_sequence": row.edit_sequence,
                 "base_current_id": str(trip.current_version_id)
                 if trip.current_version_id

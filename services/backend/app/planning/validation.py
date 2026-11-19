@@ -96,9 +96,11 @@ def validate_plan(plan: PlanInput) -> dict:
             issue(
                 "CROSSES_MIDNIGHT", "Split this activity across two days.", item=ident
             )
-        grouped.setdefault((str(a.stop_logical_id), a.local_day_offset), []).append(
-            (start, end, a)
-        )
+        # A skipped activity did not occupy its time, so it cannot overlap.
+        if not a.skipped:
+            grouped.setdefault((str(a.stop_logical_id), a.local_day_offset), []).append(
+                (start, end, a)
+            )
     for items in grouped.values():
         for i, (start, end, a) in enumerate(items):
             overlaps = [
@@ -119,10 +121,30 @@ def validate_plan(plan: PlanInput) -> dict:
         blocking=False,
     )
     if plan.budget and plan.budget.mode == "strict":
-        issue(
-            "STRICT_BUDGET_UNVERIFIED",
-            "A strict budget cannot be checked until complete, correctly scoped costs are available.",
-        )
+        from app.planning.cost_coverage import project_costs
+
+        coverage = project_costs(plan, "check")
+        if not coverage.coverage_complete:
+            issue(
+                "STRICT_BUDGET_UNVERIFIED",
+                "A strict budget cannot be checked until your costs are complete: "
+                + " ".join(coverage.missing),
+            )
+        elif coverage.total > plan.budget.amount:
+            issue(
+                "STRICT_BUDGET_EXCEEDED",
+                f"Your entered costs total {plan.display_currency} {coverage.total}, "
+                f"above your strict limit of {plan.display_currency} "
+                f"{plan.budget.amount.normalize():f}.",
+            )
+        else:
+            issue(
+                "STRICT_BUDGET_FROM_ENTRIES",
+                f"Your entered costs total {plan.display_currency} {coverage.total}, "
+                "within your strict limit. This checks your own entries and rates, "
+                "not live prices.",
+                blocking=False,
+            )
     return {
         "status": "conflicted" if any(i["blocking"] for i in issues) else "provisional",
         "issues": issues,

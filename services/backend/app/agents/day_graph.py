@@ -123,7 +123,9 @@ def run_day_graph(
         "pace": plan.preferences.pace,
         "interests": [s[:200] for s in plan.preferences.interests[:10]],
         "planning_window": "09:00–18:00 local",
-        "existing": [a.model_dump(mode="json", exclude={"google_place_id"}) for a in items],
+        "existing": [
+            a.model_dump(mode="json", exclude={"google_place_id"}) for a in items
+        ],
     }
     if len(json.dumps(context)) > 40000:
         raise PlanningFailure("AI_DAY_TOO_LARGE")

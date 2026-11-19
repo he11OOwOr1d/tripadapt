@@ -33,9 +33,9 @@ def move_activity(base, scope, command):
         or target.local_day_offset != scope["local_day_offset"]
     ):
         raise ValueError("Choose one activity on the selected day in Plan first.")
-    if target.fixed or target.booked or target.completed:
+    if target.fixed or target.booked or target.resolved:
         raise ValueError(
-            "That activity is fixed, booked or completed. It cannot be moved through chat. Review its protection in the plan editor first."
+            "That activity is fixed, booked, completed or skipped. It cannot be moved through chat. Review its protection in the plan editor first."
         )
     start = time.fromisoformat(command.local_start_time)
     destination = next(s for s in base.stops if s.client_id == scope["stop_logical_id"])

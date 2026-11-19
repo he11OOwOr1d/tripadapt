@@ -21,9 +21,9 @@ def resize_activity(base, scope, command):
         raise ValueError(
             "Select the activity’s day in Plan first, then name one activity to resize."
         )
-    if target.fixed or target.booked or target.completed:
+    if target.fixed or target.booked or target.resolved:
         raise ValueError(
-            "That activity is fixed, booked or completed. Its duration cannot change through chat."
+            "That activity is fixed, booked, completed or skipped. Its duration cannot change through chat."
         )
     if command.duration_minutes <= 0:
         raise ValueError(

@@ -2,11 +2,12 @@ import base64
 import hashlib
 import json
 from datetime import date, datetime, timezone
+from decimal import Decimal
 from typing import Generic, TypeVar
 from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, Response
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 from sqlalchemy import and_, delete, or_, select
 from sqlalchemy.orm import Session
 
@@ -16,6 +17,7 @@ from app.discovery.references import ReferencedPlace, reference_view
 from app.persistence.models import (
     Activity,
     AppUser,
+    CostItem,
     CreateReceipt,
     DestinationStop,
     DiscoveredPlace,
@@ -26,10 +28,14 @@ from app.persistence.models import (
 from app.trips.schemas import (
     ActivityInput,
     CommandBatch,
+    CostInput,
     PlanInput,
+    StopInput,
     StrictModel,
     TripCreate,
     TripPatch,
+    reconcile_costs,
+    route_legs,
 )
 
 
@@ -87,6 +93,13 @@ class VersionView(PlanInput):
     source: str
     validation_status: str
     validation_report: dict
+
+    @model_validator(mode="after")
+    def consistency(self):
+        # This is a partial read model: stops have their own endpoint. Never
+        # run input reconciliation against an intentionally omitted route;
+        # doing so detaches paid costs and drops estimates during serialization.
+        return self
 
 
 class StopView(StrictModel):
@@ -167,7 +180,7 @@ def create(
     trip = Trip(owner_id=user.id, title=body.title)
     db.add(trip)
     db.flush()
-    settings = body.plan.model_dump(exclude={"stops", "activities", "budget"})
+    settings = body.plan.model_dump(exclude={"stops", "activities", "costs", "budget"})
     for key in ("preferences", "origin", "return_location"):
         value = getattr(body.plan, key)
         settings[key] = value.model_dump(mode="json") if value is not None else None
@@ -181,7 +194,14 @@ def create(
     )
     db.add(version)
     db.flush()
-    sync_route(db, version, body.plan.stops, body.plan.activities, cascade=True)
+    sync_route(
+        db,
+        version,
+        body.plan.stops,
+        body.plan.activities,
+        cascade=True,
+        costs=body.plan.costs,
+    )
     trip.draft_version_id = version.id
     db.flush()
     if idempotency_key:
@@ -275,6 +295,12 @@ def patch(
         raise HTTPException(428, "PRECONDITION_REQUIRED")
     if if_match != etag(trip):
         raise HTTPException(412, "PRECONDITION_FAILED")
+    if (
+        body.lifecycle == "active"
+        and trip.lifecycle != "active"
+        and trip.current_version_id is None
+    ):
+        raise HTTPException(409, "TRIP_ACCEPTED_PLAN_REQUIRED")
     for key, value in body.model_dump(exclude_unset=True).items():
         setattr(trip, key, value)
     trip.lock_version += 1
@@ -310,6 +336,7 @@ def version(
     row = get_version(db, user, trip_id, version_id)
     data = {column.name: getattr(row, column.name) for column in row.__table__.columns}
     data["activities"] = activity_inputs(db, row)
+    data["costs"] = cost_inputs(db, row)
     data["place_details"] = places_by_ids(
         db, {UUID(a["place_id"]) for a in data["activities"] if a["place_id"]}
     )
@@ -401,12 +428,93 @@ def activity_inputs(db, row):
             fixed=a.fixed,
             completed=a.completed,
             booked=a.booked,
+            skipped=a.skipped,
         ).model_dump(mode="json")
         for a in activities
     ]
 
 
-def sync_route(db, version, stops, activities, cascade=False):
+def cost_inputs(db, row):
+    return [
+        CostInput(
+            id=c.logical_item_id,
+            category=c.category,
+            label=c.label,
+            unit=c.unit,
+            quantity=c.quantity,
+            amount="" if c.amount is None else f"{c.amount:.2f}",
+            status=c.amount_status,
+            activity_id=c.activity_logical_id,
+            stop_id=c.stop_logical_id,
+            leg_key=c.leg_key,
+            link_removed=c.link_removed,
+            currency=c.currency,
+            conversion_rate=None
+            if c.conversion_rate is None
+            else format(c.conversion_rate.normalize(), "f"),
+            rate_note=c.rate_note,
+            rate_date=c.rate_date,
+            tax_status=c.tax_status,
+            tax_percent=None
+            if c.tax_percent is None
+            else format(c.tax_percent.normalize(), "f"),
+        ).model_dump(mode="json")
+        for c in db.scalars(
+            select(CostItem)
+            .where(CostItem.version_id == row.id)
+            .order_by(CostItem.position)
+        )
+    ]
+
+
+def sync_costs(db, version, costs, stop_ids, activity_ids, stops):
+    """Rewrite cost rows after the schedule; links to removed items follow the
+    removal rule, so a paid cost is never dropped by an unrelated edit."""
+    if costs is None:
+        costs = [CostInput(**c) for c in cost_inputs(db, version)]
+    if len({c.id for c in costs}) != len(costs):
+        raise HTTPException(422, "DUPLICATE_COST_ID")
+    preferences = version.preferences or {}
+    legs = route_legs(
+        (version.origin or {}).get("label", ""),
+        preferences.get("return_to_origin", True),
+        (version.return_location or {}).get("label", ""),
+        [(str(i), stop.name) for i, stop in zip(stop_ids, stops, strict=True)],
+    )
+    costs = reconcile_costs(
+        costs, set(stop_ids), set(activity_ids), {leg["key"] for leg in legs}
+    )
+    db.execute(delete(CostItem).where(CostItem.version_id == version.id))
+    for position, cost in enumerate(costs):
+        db.add(
+            CostItem(
+                version_id=version.id,
+                logical_item_id=cost.id,
+                position=position,
+                category=cost.category,
+                label=cost.label,
+                unit=cost.unit,
+                quantity=cost.quantity,
+                amount=Decimal(cost.amount) if cost.amount else None,
+                amount_status=cost.status,
+                activity_logical_id=cost.activity_id,
+                stop_logical_id=cost.stop_id,
+                leg_key=cost.leg_key,
+                link_removed=cost.link_removed,
+                currency=cost.currency,
+                conversion_rate=Decimal(cost.conversion_rate)
+                if cost.conversion_rate
+                else None,
+                rate_note=cost.rate_note,
+                rate_date=cost.rate_date,
+                tax_status=cost.tax_status,
+                tax_percent=Decimal(cost.tax_percent) if cost.tax_percent else None,
+            )
+        )
+    db.flush()
+
+
+def sync_route(db, version, stops, activities, cascade=False, costs=None):
     reference_ids = {s.place_reference_id for s in stops if s.place_reference_id}
     references = {
         r.id: r
@@ -434,11 +542,8 @@ def sync_route(db, version, stops, activities, cascade=False):
     for activity in activities:
         if activity.place_id:
             place = places.get(activity.place_id)
-            if (
-                place is None
-                or place.destination_reference_id
-                != stop_refs.get(str(activity.stop_logical_id))
-                or place.payload["name"] != activity.user_label
+            if place is None or place.destination_reference_id != stop_refs.get(
+                str(activity.stop_logical_id)
             ):
                 raise HTTPException(422, "ACTIVITY_PLACE_MISMATCH")
     ids = []
@@ -499,9 +604,11 @@ def sync_route(db, version, stops, activities, cascade=False):
                 fixed=activity.fixed,
                 completed=activity.completed,
                 booked=activity.booked,
+                skipped=activity.skipped,
             )
         )
     db.flush()
+    sync_costs(db, version, costs, ids, [a.logical_id for a in activities], stops)
 
 
 @router.post("/trips/{trip_id}/draft/commands", response_model=Envelope[VersionView])
@@ -528,47 +635,19 @@ def commands(
     activity_command = next(
         (c for c in body.commands if c.type == "activity.replace_user_schedule"), None
     )
-    if route_command or activity_command:
-        from app.trips.schemas import StopInput
-
-        stops = (
-            route_command.stops
-            if route_command
-            else [
-                StopInput(
-                    client_id=str(s.logical_item_id),
-                    name=s.name,
-                    timezone=s.timezone,
-                    place_reference_id=s.place_reference_id,
-                    desired_nights=s.suggested_nights,
-                    arrival_date=s.arrival_date,
-                    departure_date=s.departure_date,
-                )
-                for s in db.scalars(
-                    select(DestinationStop)
-                    .where(DestinationStop.version_id == row.id)
-                    .order_by(DestinationStop.position)
-                )
-            ]
-        )
-        activities = (
-            activity_command.activities
-            if activity_command
-            else [ActivityInput(**a) for a in activity_inputs(db, row)]
-        )
-        sync_route(
-            db,
-            row,
-            stops,
-            activities,
-            cascade=route_command.cascade if route_command else False,
-        )
+    cost_command = next(
+        (c for c in body.commands if c.type == "cost.replace_records"), None
+    )
     for command in body.commands:
         if command.type == "plan.update_settings":
-            if command.changes.stops or command.changes.activities:
+            if (
+                command.changes.stops
+                or command.changes.activities
+                or command.changes.costs
+            ):
                 raise HTTPException(422, "USE_ROUTE_AND_ACTIVITY_COMMANDS")
             values = command.changes.model_dump(
-                exclude={"stops", "activities", "budget"}, mode="python"
+                exclude={"stops", "activities", "costs", "budget"}, mode="python"
             )
             for key in ("preferences", "origin", "return_location"):
                 value = getattr(command.changes, key)
@@ -581,6 +660,41 @@ def commands(
             row.budget_mode = (
                 command.changes.budget.mode if command.changes.budget else "target"
             )
+    # Always resync: settings can change journeys (origin, finish, return), and
+    # costs linked to a journey that no longer exists must follow the rule.
+    stops = (
+        route_command.stops
+        if route_command
+        else [
+            StopInput(
+                client_id=str(s.logical_item_id),
+                name=s.name,
+                timezone=s.timezone,
+                place_reference_id=s.place_reference_id,
+                desired_nights=s.suggested_nights,
+                arrival_date=s.arrival_date,
+                departure_date=s.departure_date,
+            )
+            for s in db.scalars(
+                select(DestinationStop)
+                .where(DestinationStop.version_id == row.id)
+                .order_by(DestinationStop.position)
+            )
+        ]
+    )
+    activities = (
+        activity_command.activities
+        if activity_command
+        else [ActivityInput(**a) for a in activity_inputs(db, row)]
+    )
+    sync_route(
+        db,
+        row,
+        stops,
+        activities,
+        cascade=route_command.cascade if route_command else False,
+        costs=cost_command.costs if cost_command else None,
+    )
     row.edit_sequence += 1
     row.validation_status = "unchecked"
     trip.updated_at = datetime.now(timezone.utc)

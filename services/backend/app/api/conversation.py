@@ -17,8 +17,17 @@ from app.api.planning_jobs import (
     admit_job,
     job_view,
 )
+from app.api.proposals import plan_input
 from app.api.trips import Envelope, owned, router, wrap
-from app.persistence.models import AppUser, ConversationTurn, PlanningJob
+from app.persistence.models import (
+    AppUser,
+    ConversationTurn,
+    PlanningJob,
+    PlanVersion,
+    Trip,
+)
+from app.planning.remaining_handoff import RemainingHandoff, validate_remaining_handoff
+from app.planning.weather_handoff import WeatherHandoff, validate_handoff
 from app.trips.schemas import StrictModel
 
 
@@ -30,6 +39,10 @@ class MessageInput(StrictModel):
 
 
 class TurnView(StrictModel):
+    remaining_handoff: RemainingHandoff | None = None
+    remaining_handoff_stale: bool = False
+    weather_handoff: WeatherHandoff | None = None
+    weather_handoff_stale: bool = False
     id: UUID
     user_text: str
     assistant_text: str | None
@@ -45,7 +58,64 @@ class ConversationPage(StrictModel):
 
 
 def turn_view(db, turn, job=None):
+    job = job if job is not None else db.get(PlanningJob, turn.job_id)
+    action = None
+    stale = False
+    if (
+        job.status == "succeeded"
+        and turn.kind == "weather_handoff"
+        and (job.result_metadata or {}).get("weather_handoff")
+    ):
+        action = WeatherHandoff.model_validate(job.result_metadata["weather_handoff"])
+        trip = db.get(Trip, job.trip_id)
+        draft = (
+            db.get(PlanVersion, trip.draft_version_id)
+            if trip.draft_version_id
+            else None
+        )
+        try:
+            if draft is None:
+                raise ValueError("Missing draft")
+            validate_handoff(
+                plan_input(db, draft),
+                job.input["request"]["scope"],
+                action,
+                f'"draft:{draft.id}:{draft.edit_sequence}"',
+            )
+        except (ValueError, KeyError, TypeError):
+            stale = True
+    remaining = None
+    remaining_stale = False
+    if (
+        job.status == "succeeded"
+        and turn.kind == "remaining_handoff"
+        and (job.result_metadata or {}).get("remaining_handoff")
+    ):
+        remaining = RemainingHandoff.model_validate(
+            job.result_metadata["remaining_handoff"]
+        )
+        trip = db.get(Trip, job.trip_id)
+        draft = (
+            db.get(PlanVersion, trip.draft_version_id)
+            if trip.draft_version_id
+            else None
+        )
+        try:
+            if draft is None or trip.lifecycle not in ("planning", "active"):
+                raise ValueError("Unavailable trip")
+            validate_remaining_handoff(
+                plan_input(db, draft),
+                job.input["request"]["scope"],
+                remaining,
+                f'"draft:{draft.id}:{draft.edit_sequence}"',
+            )
+        except (ValueError, KeyError, TypeError):
+            remaining_stale = True
     return {
+        "remaining_handoff": remaining,
+        "remaining_handoff_stale": remaining_stale,
+        "weather_handoff": action,
+        "weather_handoff_stale": stale,
         **{
             key: getattr(turn, key)
             for key in (

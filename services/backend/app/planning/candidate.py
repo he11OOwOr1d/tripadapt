@@ -10,6 +10,8 @@ def validate_job_candidate(payload, candidate, job_id, metadata, db=None):
     from app.planning.reschedule import MOVE_ISSUE, validate_move
     from app.planning.resize import validate_resize
 
+    if payload.get("trip_lifecycle", "planning") != "planning":
+        raise ValueError("Active-trip jobs cannot authorize itinerary candidates")
     base = PlanInput.model_validate(payload["plan"])
     request = payload["request"]
     scope = request["scope"]

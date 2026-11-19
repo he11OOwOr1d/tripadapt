@@ -5,7 +5,8 @@ import json
 from datetime import datetime, timezone
 from uuid import UUID
 
-from fastapi import Depends, Header, HTTPException, Query, Request
+from fastapi import Depends, Header, HTTPException, Query, Request, Response
+from fastapi.responses import JSONResponse
 from pydantic import Field
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -14,6 +15,7 @@ from app.api.identity import current_user, session
 from app.api.trips import (
     Envelope,
     activity_inputs,
+    cost_inputs,
     get_version,
     owned,
     router,
@@ -29,13 +31,25 @@ from app.persistence.models import (
     PlanVersion,
     Trip,
 )
+from app.planning.day_delay import (
+    DELAY_ISSUE,
+    DayDelayInput,
+    DelayConflict,
+    delay_day,
+    validate_delay,
+)
 from app.planning.live_acceptance import (
+    DayCheckProblem,
+    DelayLiveAcceptance,
     LiveAcceptance,
+    delay_check_scope,
     planned_visit_date,
+    recheck_delay,
     recheck_move,
 )
 from app.planning.reschedule import MoveActivity, move_activity, validate_move
 from app.planning.validation import same_plan, validate_plan
+from app.planning.weather_revision import validate_weather_revision, weather_issue
 from app.trips.schemas import PlanInput, StrictModel
 
 
@@ -43,6 +57,7 @@ class AcceptProposal(StrictModel):
     expected_current_version_id: UUID | None
     acknowledged_issue_ids: list[str] = []
     live_check: LiveAcceptance | None = None
+    day_live_check: DelayLiveAcceptance | None = None
 
 
 class ValidationIssue(StrictModel):
@@ -87,6 +102,7 @@ def plan_input(db, row):
         else None
     )
     data["activities"] = activity_inputs(db, row)
+    data["costs"] = cost_inputs(db, row)
     data["stops"] = [
         dict(
             client_id=str(s.logical_item_id),
@@ -118,18 +134,63 @@ def proposal_view(db, proposal):
             **requested_move,
             "provisional_date": check_date.isoformat() if check_date else None,
         }
+    weather_revision = candidate.validation_report.get("weather_revision")
+    remaining = candidate.validation_report.get("remaining_day")
+    if remaining:
+        from app.persistence.models import DiscoveredPlace
+
+        context = remaining["request"]
+        location = db.get(DiscoveredPlace, UUID(context["current_location_place_id"]))
+        stop = next(
+            s
+            for s in plan_input(db, candidate).stops
+            if s.client_id == context["stop_id"]
+        )
+        remaining = {
+            **remaining,
+            "remaining_context": {
+                "location_name": location.payload["name"]
+                if location
+                else "Reported map location",
+                "local_date": context["local_date"],
+                "local_time": context["local_time"],
+                "timezone": stop.timezone,
+                "mode": context["mode"],
+                "buffer_minutes": context["buffer_minutes"],
+            },
+        }
+    delay = candidate.validation_report.get("day_delay")
+    if delay:
+        _, _, scope = delay_check_scope(plan_input(db, candidate), delay)
+        check_date = planned_visit_date(plan_input(db, candidate), scope)
+        delay = {
+            **delay,
+            "provisional_date": check_date.isoformat() if check_date else None,
+        }
     trip = db.get(Trip, proposal.trip_id)
     draft = (
         db.get(PlanVersion, trip.draft_version_id) if trip.draft_version_id else None
     )
     return dict(
-        stale=proposal.status == "pending" and is_stale(proposal, trip, draft),
+        stale=proposal.status == "pending"
+        and is_stale(proposal, trip, draft, candidate, job),
         place_details=plan_places(db, plan_input(db, candidate)),
         location_references=references_for_plan(db, plan_input(db, candidate)),
         generation=job.result_metadata
         if job
         else requested_move
         if requested_move
+        else (
+            {
+                **weather_revision,
+                "provisional_date": weather_revision["weather"]["visit_date"],
+            }
+        )
+        if weather_revision
+        else remaining
+        if remaining
+        else delay
+        if delay
         else (
             {
                 "operation": "restore_plan",
@@ -163,9 +224,21 @@ def proposal_view(db, proposal):
     )
 
 
-def is_stale(proposal, trip, draft):
+def is_stale(proposal, trip, draft, candidate=None, job=None):
     return (
         draft is None
+        or (
+            candidate is not None
+            and candidate.source == "agent"
+            and (
+                trip.lifecycle != "planning"
+                or (
+                    job is not None
+                    and "trip_lock_version" in job.input
+                    and trip.lock_version != job.input["trip_lock_version"]
+                )
+            )
+        )
         or proposal.base_current_id != trip.current_version_id
         or proposal.base_draft_id != draft.id
         or proposal.base_edit_sequence != draft.edit_sequence
@@ -213,9 +286,25 @@ def pending_reviews(
     for proposal, candidate in rows[:limit]:
         move = candidate.validation_report.get("requested_move")
         restoration = candidate.validation_report.get("restoration")
+        delay = candidate.validation_report.get("day_delay")
         if move:
             title = move["change"]["label"]
             summary = f"Day {move['change']['day']}: {move['change']['before']} → {move['change']['after']}. Same duration."
+        elif candidate.validation_report.get("remaining_day"):
+            metadata = candidate.validation_report["remaining_day"]
+            title = f"Remaining day in {metadata['destination']}"
+            summary = f"Day {metadata['day']}: flexible timings; fresh starting context required."
+        elif delay:
+            title = f"Delay adjustment in {delay['destination']}"
+            summary = f"Day {delay['day']}: {len(delay['changes'])} flexible start times change."
+        elif candidate.validation_report.get("weather_revision"):
+            metadata = candidate.validation_report["weather_revision"]
+            title = (
+                f"Replace: {metadata['replacement']['before']}"
+                if metadata.get("replacement")
+                else f"Leave time open: {metadata['removal']['label']}"
+            )
+            summary = f"Weather context for {metadata['weather']['visit_date']}. Review one requested change."
         elif restoration:
             title = f"Restore version {restoration['version_number']}"
             summary = (
@@ -235,7 +324,7 @@ def pending_reviews(
                 source=candidate.source,
                 title=title,
                 summary=summary,
-                stale=is_stale(proposal, trip, draft),
+                stale=is_stale(proposal, trip, draft, candidate),
             )
         )
     return wrap(
@@ -261,7 +350,9 @@ def find_proposal(db, trip_id, proposal_id):
 
 
 def apply_plan(row, plan):
-    values = plan.model_dump(exclude={"stops", "activities", "budget"}, mode="python")
+    values = plan.model_dump(
+        exclude={"stops", "activities", "costs", "budget"}, mode="python"
+    )
     for key in ("preferences", "origin", "return_location"):
         value = getattr(plan, key)
         values[key] = value.model_dump(mode="json") if value else None
@@ -304,7 +395,9 @@ def persist_candidate(db, trip, draft, plan, key, report, source="user"):
     apply_plan(candidate, plan)
     db.add(candidate)
     db.flush()
-    sync_route(db, candidate, plan.stops, plan.activities, cascade=True)
+    sync_route(
+        db, candidate, plan.stops, plan.activities, cascade=True, costs=plan.costs
+    )
     proposal = PlanProposal(
         trip_id=trip.id,
         candidate_version_id=candidate.id,
@@ -340,8 +433,14 @@ def submit(
         )
     )
     if previous:
-        if db.get(PlanVersion, previous.candidate_version_id).validation_report.get(
-            "requested_move"
+        if any(
+            db.get(PlanVersion, previous.candidate_version_id).validation_report.get(k)
+            for k in (
+                "requested_move",
+                "day_delay",
+                "weather_revision",
+                "remaining_day",
+            )
         ):
             raise HTTPException(409, "IDEMPOTENCY_KEY_REUSED")
         if (
@@ -451,6 +550,70 @@ def propose_time_change(
     return wrap(request, proposal_view(db, proposal))
 
 
+@router.post(
+    "/trips/{trip_id}/proposals/day-delay",
+    status_code=201,
+    response_model=Envelope[ProposalView],
+)
+def propose_day_delay(
+    trip_id: UUID,
+    body: DayDelayInput,
+    request: Request,
+    if_match: str | None = Header(None),
+    idempotency_key: UUID | None = Header(None),
+    user: AppUser = Depends(current_user),
+    db: Session = Depends(session),
+):
+    trip = owned(db, user, trip_id, lock=True)
+    if if_match is None or idempotency_key is None:
+        raise HTTPException(428, "PRECONDITION_REQUIRED")
+    previous = db.scalar(
+        select(PlanProposal).where(
+            PlanProposal.trip_id == trip.id, PlanProposal.submit_key == idempotency_key
+        )
+    )
+    if previous:
+        candidate = db.get(PlanVersion, previous.candidate_version_id)
+        if (
+            candidate.validation_report.get("day_delay", {}).get("command")
+            != body.model_dump(mode="json")
+            or if_match
+            != f'"draft:{previous.base_draft_id}:{previous.base_edit_sequence}"'
+        ):
+            raise HTTPException(409, "IDEMPOTENCY_KEY_REUSED")
+        return wrap(request, proposal_view(db, previous))
+    draft = (
+        db.get(PlanVersion, trip.draft_version_id) if trip.draft_version_id else None
+    )
+    if (
+        draft is None
+        or draft.status != "draft"
+        or if_match != f'"draft:{draft.id}:{draft.edit_sequence}"'
+    ):
+        raise HTTPException(412, "PRECONDITION_FAILED")
+    try:
+        candidate, metadata = delay_day(plan_input(db, draft), body)
+    except DelayConflict as error:
+        return JSONResponse(
+            status_code=409,
+            media_type="application/problem+json",
+            content={
+                "type": "urn:tripadapt:error:" + error.code.lower().replace("_", "-"),
+                "title": error.code.replace("_", " ").capitalize(),
+                "issues": [],
+                "code": error.code,
+                "detail": error.detail,
+                "status": 409,
+                "request_id": request.state.request_id,
+            },
+        )
+    report = validate_plan(candidate)
+    report["issues"].append(DELAY_ISSUE)
+    report["day_delay"] = metadata
+    proposal = persist_candidate(db, trip, draft, candidate, idempotency_key, report)
+    return wrap(request, proposal_view(db, proposal))
+
+
 @router.get(
     "/trips/{trip_id}/proposals/{proposal_id}", response_model=Envelope[ProposalView]
 )
@@ -468,6 +631,7 @@ def get_proposal(
 @router.post(
     "/trips/{trip_id}/proposals/{proposal_id}/accept",
     response_model=Envelope[ProposalView],
+    responses={status: {"model": DayCheckProblem} for status in (409, 422, 429, 503)},
 )
 def accept(
     trip_id: UUID,
@@ -487,6 +651,11 @@ def accept(
             {
                 "current": str(body.expected_current_version_id),
                 "ack": sorted(set(body.acknowledged_issue_ids)),
+                **(
+                    {"day_live_check": body.day_live_check.model_dump(mode="json")}
+                    if body.day_live_check
+                    else {}
+                ),
                 **(
                     {"live_check": body.live_check.model_dump(mode="json")}
                     if body.live_check
@@ -518,6 +687,8 @@ def accept(
     candidate_plan = plan_input(db, candidate)
     report = validate_plan(candidate_plan)
     if candidate.source == "agent":
+        if trip.lifecycle != "planning":
+            raise HTTPException(409, "AGENT_PLANNING_ONLY")
         from app.persistence.models import PlanningJob
         from app.planning.candidate import validate_job_candidate
 
@@ -526,6 +697,11 @@ def accept(
         )
         if job is None or job.status != "succeeded":
             raise HTTPException(409, "UNSUPPORTED_CANDIDATE")
+        if (
+            "trip_lock_version" in job.input
+            and trip.lock_version != job.input["trip_lock_version"]
+        ):
+            raise HTTPException(409, "STALE_PROPOSAL")
         try:
             report["issues"].append(
                 validate_job_candidate(
@@ -545,6 +721,64 @@ def accept(
             raise HTTPException(409, "PLAN_CONFLICT") from None
         report["issues"].append(TIME_CHANGE_ISSUE)
         report["requested_move"] = metadata
+    if candidate.validation_report.get("day_delay"):
+        metadata = candidate.validation_report["day_delay"]
+        try:
+            validate_delay(plan_input(db, draft), candidate_plan, metadata)
+        except (ValueError, KeyError, TypeError):
+            raise HTTPException(409, "PLAN_CONFLICT") from None
+        report["issues"].append(DELAY_ISSUE)
+        report["day_delay"] = metadata
+    if candidate.validation_report.get("remaining_day"):
+        from app.api.replanning import preview_remaining_day
+        from app.planning.remaining_proposal import (
+            REMAINING_ISSUE,
+            fatigue_issue,
+            frozen_routes_fit,
+            validate_remaining,
+        )
+
+        metadata = candidate.validation_report["remaining_day"]
+        base_row = db.get(PlanVersion, UUID(metadata["request"]["base_version_id"]))
+        if base_row is None or base_row.trip_id != trip.id:
+            raise HTTPException(409, "PLAN_CONFLICT")
+        try:
+            command = validate_remaining(
+                plan_input(db, base_row), candidate_plan, metadata
+            )
+        except (ValueError, KeyError, TypeError) as error:
+            raise HTTPException(
+                409,
+                "REPLAN_REVIEW_EXPIRED"
+                if str(error) == "REPLAN_REVIEW_EXPIRED"
+                else "PLAN_CONFLICT",
+            ) from None
+        report["issues"].append(REMAINING_ISSUE)
+        extra = fatigue_issue(metadata)
+        if extra:
+            report["issues"].append(extra)
+        report["remaining_day"] = metadata
+    if candidate.validation_report.get("weather_revision"):
+        if trip.lifecycle != "planning":
+            raise HTTPException(409, "WEATHER_PLANNING_ONLY")
+        metadata = candidate.validation_report["weather_revision"]
+        try:
+            validate_weather_revision(
+                plan_input(db, draft),
+                candidate_plan,
+                metadata,
+                datetime.now(timezone.utc),
+                db=db,
+            )
+        except (ValueError, KeyError, TypeError) as error:
+            raise HTTPException(
+                409,
+                "WEATHER_REVIEW_EXPIRED"
+                if str(error) == "WEATHER_REVIEW_EXPIRED"
+                else "PLAN_CONFLICT",
+            ) from None
+        report["issues"].append(weather_issue(metadata))
+        report["weather_revision"] = metadata
     if candidate.source == "restore":
         from app.planning.restoration import restoration_report
 
@@ -563,8 +797,47 @@ def accept(
     required = {i["id"] for i in report["issues"] if i["acknowledgeable"]}
     if set(body.acknowledged_issue_ids) != required:
         raise HTTPException(409, "ACKNOWLEDGEMENT_REQUIRED")
+    if report.get("remaining_day"):
+        if body.live_check:
+            raise HTTPException(422, "LIVE_CHECK_UNSUPPORTED")
+        metadata = report["remaining_day"]
+        from app.api.replanning import current_time
+        from app.planning.readiness import readiness_report
+
+        try:
+            readiness_report(plan_input(db, base_row), command, current_time())
+        except ValueError as error:
+            raise HTTPException(409, str(error)) from None
+        if body.day_live_check:
+            from app.planning.remaining_proposal import recheck_remaining_hours
+
+            recheck_remaining_hours(
+                db, user, request, candidate_plan, metadata, body.day_live_check
+            )
+        preview = preview_remaining_day(
+            trip.id, command, request, Response(), metadata["base_etag"], user, db
+        )["data"]
+        try:
+            frozen_routes_fit(candidate_plan, command, preview)
+        except ValueError:
+            raise HTTPException(409, "REPLAN_REVIEW_EXPIRED") from None
+    if body.live_check and body.day_live_check:
+        raise HTTPException(422, "LIVE_CHECK_UNSUPPORTED")
+    if body.day_live_check and not report.get("remaining_day"):
+        metadata = candidate.validation_report.get("day_delay")
+        if not metadata:
+            raise HTTPException(422, "LIVE_CHECK_UNSUPPORTED")
+        recheck_delay(db, user, request, candidate_plan, metadata, body.day_live_check)
     if body.live_check:
         metadata = candidate.validation_report.get("requested_move")
+        replacement = candidate.validation_report.get("weather_revision")
+        if replacement and replacement["request"]["intent"] == "replace_place":
+            if (
+                body.live_check.visit_date.isoformat()
+                != replacement["weather"]["visit_date"]
+            ):
+                raise HTTPException(422, "LIVE_CHECK_DATE_MISMATCH")
+            metadata = replacement
         if not metadata:
             raise HTTPException(422, "LIVE_CHECK_UNSUPPORTED")
         recheck_move(db, user, request, candidate_plan, metadata, body.live_check)
@@ -574,12 +847,21 @@ def accept(
     trip.current_version_id = candidate.id
     trip.lock_version += 1
     trip.updated_at = datetime.now(timezone.utc)
-    if candidate.source in ("agent", "restore") or candidate.validation_report.get(
-        "requested_move"
+    if (
+        candidate.source in ("agent", "restore")
+        or candidate.validation_report.get("requested_move")
+        or candidate.validation_report.get("day_delay")
+        or candidate.validation_report.get("weather_revision")
+        or candidate.validation_report.get("remaining_day")
     ):
         apply_plan(draft, candidate_plan)
         sync_route(
-            db, draft, candidate_plan.stops, candidate_plan.activities, cascade=True
+            db,
+            draft,
+            candidate_plan.stops,
+            candidate_plan.activities,
+            cascade=True,
+            costs=candidate_plan.costs,
         )
         draft.edit_sequence += 1
         draft.validation_status = "unchecked"
