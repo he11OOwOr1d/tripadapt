@@ -2,6 +2,15 @@
 
 Local implementation and verification status. The dated sections below preserve the evidence recorded at each stage.
 
+## Hosted release state — 19 November 2026
+
+PR #5 merged into `main` as `94bf8bb`, and CI on `main` passed. Before the release, production was misaligned: Render was still running the 13 November commit `6a20c30`, whose readiness check requires migration `0019`, while the hosted database had been upgraded to `0024` during local feature work. That API was probably returning `503 DATABASE_NOT_READY` since 15 November (inferred from the hardcoded check; Render logs were not inspected).
+
+- **Migration.** `make migrate-supabase` applied `0025_immutable_cost_items` to the hosted Supabase database with the owner's approval. `alembic current` showed head and `alembic check` found no drift; the helper reported browser API roles still have no table access.
+- **Deployment.** The owner redeployed the Render service with `GOOGLE_MAPS_API_KEY` and `ROUTES_API_KEY` added. External checks: `/health/ready` returned 200 at `0025`, `/health/live` returned 200, the CORS preflight for `elsewhere-ui-review.vercel.app` was allowed, an unauthenticated `/trips` request returned 401, and OpenAPI lists 37 paths including day-delay proposals.
+- **Signed-in production smoke test** (desktop-width preview browser and a 390px overflow check, dedicated QA trip `3812a381-7407-48dc-bb39-2b71c0c024f9`). Passed: trip list, create/save, live destination lookup, two saved activities, Geoapify nearby discovery, chat explanation, a Groq time-change proposal with correct before/after review, and discard leaving the draft unchanged. **Failed as expected:** Google Maps matching returned "rejected this backend key… allowed public IP". Google Routes and venue-hours acceptance were not exercised live on Render.
+- **Remaining.** Allowlist Render's outbound IPs on the Google keys, then re-test Places and Routes; the QA trip remains in the account (the app has no delete or rename); the Render free tier still sleeps and is not an always-on worker; the Render service's tracked branch was not re-confirmed after the owner's redeploy.
+
 ## Current verification update
 
 19 November 2026. The latest `make check-local` run passed 488 backend tests and 185 frontend tests, plus lint, migration drift detection, type checking and the production build. The backend checks ran on disposable PostgreSQL.
@@ -37,7 +46,7 @@ Tests use transactional rollback and mock providers for repeatable automated che
 
 ## Deployment status
 
-GitHub main includes merged PR #2 (`5e249c6`). The subsequent retained-place discovery, grounded planning, Google checks, day feasibility, time-change proposals/live guards and pending-review recovery are organized on `codex/planning-recovery-discovery` in separate backend, frontend and documentation commits. Vercel Git deployment remains explicitly disabled for this branch. Publication does not deploy API/worker services or change production configuration. Recent runtime verification is local; the public deployment has not been re-verified.
+Historical note (12 November): GitHub main then included merged PR #2 (`5e249c6`), with later work on `codex/planning-recovery-discovery`. That work has since merged through PRs #3 and #5; see "Hosted release state — 19 November 2026" above for the current deployment and verification state.
 
 ## CI correction after publication
 

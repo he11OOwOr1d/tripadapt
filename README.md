@@ -8,7 +8,7 @@ TripAdapt is the repository and engineering name. **Elsewhere** is the product n
 
 [Live UI review](https://elsewhere-ui-review.vercel.app) · [Trip planner](https://elsewhere-ui-review.vercel.app/trips/new) · [Design decisions](docs/architecture/design-decisions.md) · [Repository structure](docs/architecture/repository-structure.md)
 
-> **Current stage — 11 November 2026:** local development includes the approved landing and creation flow, Supabase account autosave, editable itineraries, reviewed Groq additions/moves/duration changes/removals, accepted-plan history and whole-plan recovery. Explicit destination lookup now uses Open-Meteo/GeoNames. AI activity evidence remains a sample catalog; live activity recommendations, routing, weather, prices and production API/worker operation remain integration gaps. Local verification does not establish production integration. See [current status](docs/development/status.md).
+> **Current stage — 19 November 2026:** `main` (PR #5) includes the landing and creation flow, Supabase account autosave, editable itineraries, grounded Groq planning with reviewed proposals, accepted-plan history and restoration, weather/delay/fatigue/remaining-day replanning, and cost records with currency, conversion and tax handling. The hosted Supabase database is at migration `0025_immutable_cost_items` and the Render API/worker runs this code; a signed-in production smoke test passed except Google Maps checks, which Google rejects until Render's outbound IPs are allowlisted. Still open: interactive map, accommodation, intercity/transit, reviews/discovery feed, full-trip generation and an always-on worker. See [current status](docs/development/status.md).
 
 ## What works now
 
@@ -56,7 +56,7 @@ npm --prefix apps/web run build
 npm --prefix apps/web test
 ```
 
-The npm regression suite has 53 tests; the backend suite has 230 tests. Checks cover account mapping, autosave, schedule logic, scoped proposals/recovery and provider lookup boundaries. Browser reviews cover desktop and 390px/320px phone layouts. [Journey implementation and verification](docs/trip-creation-journey.md).
+The npm regression suite has 185 tests; the backend suite has 488 tests (as of 19 November 2026). Checks cover account mapping, autosave, schedule logic, scoped proposals/recovery and provider lookup boundaries. Browser reviews cover desktop and 390px/320px phone layouts. [Journey implementation and verification](docs/trip-creation-journey.md).
 
 ## Full-stack local development
 

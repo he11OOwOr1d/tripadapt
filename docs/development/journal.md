@@ -699,3 +699,19 @@ Connected a usable day forecast to a traveler-selected removal request in chat. 
 19 November 2026. PR #5 reported conflicts after the Render-worker branch was merged into main. Merged origin/main into the feature branch and resolved the two worker conflicts: both were formatting-only differences in already equivalent code. Retained the feature branch's current API routes, migration-head readiness check and worker behavior, and deduplicated PLANNING_WORKER_EMBEDDED in the environment example. No user-facing behavior changed, so existing browser verification applies; no new browser mutations, hosted migration or deployment was requested. The feature branch is updated without merging PR #5 into main.
 
 The previous GitHub check also exposed Python-version-dependent OpenAPI output: CI selected Python 3.14, whose default 422 phrase is “Unprocessable Content,” while the reviewed snapshot uses “Unprocessable Entity.” Made the documented acceptance-response descriptions explicit, preserving the snapshot and runtime behavior rather than weakening contract verification. Local full checks passed before this correction; the focused contract check is rerun and the pushed GitHub check is followed separately.
+
+## 145. Find the hosted database ahead of the deployed API
+
+19 November 2026. After PR #5 merged into `main` (`94bf8bb`, CI green), compared hosted state with the code. The Render dashboard showed a single deploy of `6a20c30` from 13 November on the `codex/render-web-worker` branch. That commit's readiness check requires migration `0019`, while the hosted Supabase database was at `0024` after local feature work, so the deployed API was probably unready since 15 November. This is inferred from the code; Render logs were not read. **Lesson:** a hardcoded expected revision is only safe if schema changes and deployments move together. **Tradeoff:** the strict check is what exposes drift, so the process, not the check, needs fixing.
+
+## 146. Apply migration 0025 to the hosted database
+
+19 November 2026. With the owner's go-ahead, ran `make migrate-supabase`. The database moved from `0024_activity_skipped` to `0025_immutable_cost_items`; `alembic check` found no drift and the helper confirmed browser API roles still have no table access. The migration takes a plan-table lock; the helper finished without error. Existing trips were not edited.
+
+## 147. Verify the redeployed Render API from outside
+
+19 November 2026. The owner added the Google Places and Routes keys on Render and redeployed. External checks: readiness 200 at `0025`, liveness 200, CORS preflight allowed for the Vercel origin, unauthenticated trips request 401, and 37 OpenAPI paths including day-delay proposals. This verifies that the new code is running against the migrated database. It does not verify provider behavior.
+
+## 148. Signed-in production smoke test on a dedicated QA trip
+
+19 November 2026. The one existing trip in the signed-in account was not clearly a QA trip, so it was left alone and a new QA trip (`3812a381-7407-48dc-bb39-2b71c0c024f9`) was created. Live, through Vercel, Render and Supabase: trip list and create, destination lookup, two saved activities, Geoapify nearby discovery (ten San Francisco museums), chat explanation, a Groq time-change proposal (10:00 to 11:00) with correct before/after review, and discard leaving the draft at 10:00. A 390px width check found no horizontal scrolling on the itinerary page only. **Found:** Google Maps matching returned "rejected this backend key… allowed public IP", consistent with Render's outbound IPs not being on the key allowlist. Google Routes and live venue-hours acceptance were not exercised. **Limits:** desktop-width browser except the one overflow check; the QA trip remains because the app has no delete or rename; the account's other trip was only opened read-only. **Next:** allowlist Render's outbound IPs, then re-test Places and Routes.

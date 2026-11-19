@@ -86,3 +86,7 @@ References: https://render.com/docs/free and https://render.com/docs/deploy-fast
 The former Vercel API remains available as a rollback option. It does not run
 an embedded worker. The local uncommitted itinerary/delay features were not part
 of this deployment, and no migrations or changes to existing trips were applied.
+
+## Redeployment check — 19 November 2026
+
+The 13 November deploy above (`6a20c30`) required migration `0019`; the database had since moved to `0024`, so that deploy was probably unready. After migrating to `0025_immutable_cost_items` and redeploying, external checks passed: `/health/ready` 200 at `0025`, `/health/live` 200, Vercel-origin CORS allowed, 401 without a token, 37 OpenAPI paths. Production chat, a Groq proposal and Geoapify discovery worked in a signed-in browser. Google Maps matching was rejected for the backend key until Render's outbound IPs (service Connect menu, Outbound) are added to the key's allowed IPs; this also applies to `ROUTES_API_KEY` if restricted separately, and was not re-tested after allowlisting. Migrate before deploying a build that expects a newer revision, because readiness fails until they match.
