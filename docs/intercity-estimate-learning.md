@@ -83,3 +83,5 @@ I ran a manual security review of the new endpoints (the skill's own diff comman
 - **The AI paths.** The stay name and address reach the language model only as untrusted text with no coordinates, the model can add only supplied catalog ids, and the checks after it are unchanged, so a hostile name cannot add an arbitrary place or booking. Nothing from the route endpoints reaches the model.
 - **Left alone:** the per-process limits are in memory, so a multi-process deployment multiplies them; moving them to the database is a separate task. Frontend text is rendered by React (escaped), and no new link or `dangerouslySetInnerHTML` was added.
 
+Live check of the cache and the disclosure (disposable trip, signed in): pressing the same estimate twice showed "Checked 11/20/2026, 1:44:03 AM" both times, so the second answer came from the cache with its original time, and the disclosure sentence appears under the result. Not verified: expiry in a real process (covered by the unit test with a fake clock), or behavior across two server processes.
+
