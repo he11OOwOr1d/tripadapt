@@ -37,3 +37,19 @@ test('both ends must be mapped and different, in either form',()=>{
 test('the headline gives road time and whole kilometres',()=>{
   assert.equal(i.intercityHeadline({travel_minutes:270,distance_meters:281400}),'About 4 h 30 min by road · 281 km');
 });
+test('the estimate becomes the traveler\u2019s own hours, rounded up to a hundredth',()=>{
+  assert.equal(i.hoursFromMinutes(187),'3.12');
+  assert.equal(i.hoursFromMinutes(180),'3');
+  assert.equal(i.hoursFromMinutes(270),'4.5');
+  assert.equal(i.hoursFromMinutes(1),'0.02');
+  assert.equal(i.hoursFromMinutes(0),'0');
+  assert.equal(i.hoursFromMinutes(-4),'0');
+  assert.match(i.hoursFromMinutes(1234),/^\d+(\.\d{1,2})?$/);
+});
+test('withTravelHours adds, replaces and leaves other journeys and fields alone',()=>{
+  const prefs={a:{mode:'Rail',hours:'5',overnight:1,rate:'20',basis:'vehicle'},b:{mode:'',hours:'',overnight:0,rate:'',basis:'person'}};
+  assert.deepEqual(J(i.withTravelHours(prefs,'a','3.12')),{a:{mode:'Rail',hours:'3.12',overnight:1,rate:'20',basis:'vehicle'},b:prefs.b});
+  assert.deepEqual(J(i.withTravelHours(undefined,'k','2')),{k:{mode:'',hours:'2',overnight:0,rate:'',basis:'person'}});
+  assert.equal(prefs.a.hours,'5');
+});
+

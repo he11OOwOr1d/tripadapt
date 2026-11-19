@@ -34,3 +34,17 @@ export function intercityEndpoints(from?: JourneyPlace, to?: JourneyPlace): { or
 export function intercityHeadline(result: IntercityCheck): string {
   return `About ${formatTravelTime(result.travel_minutes)} by road · ${(result.distance_meters / 1000).toFixed(0)} km`;
 }
+
+/** Hours for the traveler's own "travel time" field: rounded up to the next hundredth, e.g. 187 min -> "3.12". */
+export function hoursFromMinutes(minutes: number): string {
+  return String(Math.ceil((Math.max(0, minutes) / 60) * 100) / 100);
+}
+
+type TravelPreferences = NonNullable<Trip["travelPreferences"]>;
+
+/** Immutable update of one journey's hours, creating the journey's default entry if it has none. */
+export function withTravelHours(prefs: Trip["travelPreferences"], key: string, hours: string): TravelPreferences {
+  const previous = prefs?.[key] ?? { mode: "", hours: "", overnight: 0, rate: "", basis: "person" as const };
+  return { ...prefs, [key]: { ...previous, hours } };
+}
+

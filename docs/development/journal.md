@@ -852,3 +852,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026. The first and finish journeys had no drive estimate because the starting location was plain text. The starting location now uses the destination map search; a match stores a map point (typing clears it), saved in the origin's existing optional coordinates (no schema or migration change). The intercity endpoint takes either a reference or coordinates at each end. Verified live and signed in (Delhi to Jaipur 3 h 7 min, 304 km; Jaipur back to Delhi 3 h 9 min, 306 km), axe clean, 390 px clean, origin restored to plain "Delhi". 586 backend and 217 frontend tests pass. Committed locally; not pushed. See [the intercity note](../intercity-estimate-learning.md).
 
+## 183. Offer the drive estimate as the traveler's own travel time
+
+20 November 2026. After a drive estimate, an explicit button copies the hours (rounded up to a hundredth) into that journey's own "Approximate hours" entry. It changes only that field and is never automatic. 2 frontend tests (219 total); verified live and signed in; axe clean. Restore caveat: clearing the field leaves an all-default preference entry because the app cannot delete one. Committed locally; not pushed. See [the intercity note](../intercity-estimate-learning.md).
+

@@ -31,7 +31,7 @@ import DayMapPanel from "./DayMapPanel";
 import LodgingPanel from "./LodgingPanel";
 import StayJourney from "./StayJourney";
 import IntercityEstimate from "./IntercityEstimate";
-import { originPlace, stopPlace } from "../../lib/trips/intercity";
+import { originPlace, stopPlace, withTravelHours } from "../../lib/trips/intercity";
 import { withLodging } from "../../lib/trips/lodging";
 const kindName = {
   custom: "Activity",
@@ -399,7 +399,7 @@ export default function ItineraryWorkspace({
                         <p className="day-transfer-caveat">
                           Departure time and arrival buffer not set.
                         </p>
-                        <IntercityEstimate key={JSON.stringify([from?.name, from?.end, to?.name, to?.end])} from={from} to={to} />
+                        <IntercityEstimate key={JSON.stringify([from?.name, from?.end, to?.name, to?.end])} from={from} to={to} currentHours={pref?.hours ?? ""} disabled={editorOpen} onUse={(hours) => onUpdate({ travelPreferences: withTravelHours(trip.travelPreferences, leg.key, hours) })} />
                       </div>
                       <button
                         aria-label={`Edit transfer from ${leg.from} to ${leg.to}`}
