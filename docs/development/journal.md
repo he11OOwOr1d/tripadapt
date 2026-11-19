@@ -820,3 +820,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026. Extended the axe audit to the chat, review plan and plan history screens: one muted chat color and one dialog-header color failed contrast (now darkened with the same hue), and the scrollable chat log was not keyboard-focusable (now `tabIndex={0}` with a focus outline). Axe reports none afterwards. No data changed; not seen by eye. 210 tests and the build pass. Committed locally; not pushed.
 
+## 175. Finish the contrast pass with the My trips library
+
+20 November 2026. Three more muted colors in the library darkened to at least 4.6:1; axe is clean on the creation form, day view, outline, chat, review, history and library. One heading-order skip on the day-1 transfer card remains. Not seen by eye. 210 tests and the build pass. Committed locally; not pushed.
+
