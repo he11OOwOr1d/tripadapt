@@ -442,7 +442,7 @@
 }
 .day-overview p {
   font-size: 12px;
-  color: #6f835e;
+  color: #5d6e4f;
 }
 .day-open-note {
   padding: 18px;
@@ -1040,3 +1040,10 @@ fieldset.live-acceptance { border-inline: 0; min-width: 0; }
 .intercity-estimate button { min-height: 44px; padding: .5rem .8rem; font: inherit; text-align: left; }
 .intercity-estimate p, .intercity-estimate small { max-width: 65ch; line-height: 1.5; overflow-wrap: anywhere; }
 .intercity-estimate small { display: block; margin-block: .4rem; }
+.route-drives { margin: 1.25rem 0; padding: 1rem; border: 1px solid #bdc4b4; border-radius: .25rem; }
+.route-drives h2 { margin: 0 0 .5rem; }
+.route-drives p, .route-drives small { max-width: 65ch; line-height: 1.5; overflow-wrap: anywhere; }
+.route-drives small { display: block; margin-block: .4rem; }
+.route-drives ol { list-style: none; margin: .75rem 0; padding: 0; display: grid; gap: .5rem; }
+.route-drives li { display: flex; flex-wrap: wrap; gap: .25rem .75rem; justify-content: space-between; }
+.route-drives button { min-height: 44px; padding: .5rem .9rem; font: inherit; }

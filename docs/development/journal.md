@@ -864,3 +864,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026. On the disposable QA trip (Delhi start; Jaipur, Agra, Varanasi) all six arrival and departure cards paired the right places, and two long estimates worked (634 km and 826 km). The main QA trip was not touched. No code changed. Committed locally; not pushed.
 
+## 186. Add a road-time panel for the whole route
+
+20 November 2026. "See the whole trip" gets a panel that estimates every mapped journey on the route on request and totals only what was estimated ("about 20 h 39 min, 2033 km across 4 journeys" on the disposable trip). 4 frontend tests (223 total); verified live and signed in, axe and 390 px clean; an unaudited contrast failure in the existing overview was fixed on the way. Committed locally; not pushed. See [the intercity note](../intercity-estimate-learning.md).
+

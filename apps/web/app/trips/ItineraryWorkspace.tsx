@@ -31,6 +31,7 @@ import DayMapPanel from "./DayMapPanel";
 import LodgingPanel from "./LodgingPanel";
 import StayJourney from "./StayJourney";
 import IntercityEstimate from "./IntercityEstimate";
+import RouteDrives from "./RouteDrives";
 import { originPlace, stopPlace, withTravelHours } from "../../lib/trips/intercity";
 import { withLodging } from "../../lib/trips/lodging";
 const kindName = {
@@ -293,6 +294,7 @@ export default function ItineraryWorkspace({
                   </button>
                 </section>
               ))}
+              <RouteDrives trip={trip} />
               {stats.unallocated !== null && stats.unallocated > 0 && (
                 <p className="day-open-note">
                   {stats.unallocated} nights are still open in your trip.{" "}

@@ -32,7 +32,8 @@ Use a dedicated QA trip, record its baseline, restore it afterwards, and do not 
 8. With a second destination on the QA trip (remove it afterwards): open the first destination's last day and press "Estimate the drive" on the "Moving on" card; expect a plausible road time and distance and the Geoapify credit. The first and finish legs (the trip origin) must show no button.
 9. Starting location: in the trip form choose a starting location from the map search; the first destination's first day and last day (when returning to the start) each show an estimate. Then retype the plain name to restore the trip, and confirm the buttons are gone.
 10. After an estimate, press "Use … hours as my travel time": the card shows the hours; clear them in the trip form afterwards (the journey keeps an empty default preference entry, which is harmless).
-11. Look at the page once on a visible window: the darker muted text and the stay pin have only been checked by numbers and DOM so far.
+11. "See the whole trip" on a trip with two or more mapped destinations: press "Estimate all … mapped journeys"; each journey gets a time and distance and the total equals their sum.
+12. Look at the page once on a visible window: the darker muted text and the stay pin have only been checked by numbers and DOM so far.
 
 ## Known gaps carried into the release
 
