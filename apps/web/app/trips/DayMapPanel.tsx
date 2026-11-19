@@ -15,7 +15,7 @@ export default function DayMapPanel({ stop, stops, activities, lodging, open, on
   const [scope, setScope] = useState<MapScope>("day");
   const model = useMemo(() => (scope === "day" ? dayMapModel(stop, activities, lodging) : routeMapModel(stops)), [scope, stop, stops, activities, lodging]);
   const selected = model.points.find((p) => p.id === selectedId);
-  return <section className="day-map-panel" aria-label="Map">
+  return <section className="day-map-panel" aria-label={`Map of ${stop.name}`}>
     <div className="day-map-head">
       <button type="button" aria-expanded={open} onClick={() => onOpenChange(!open)}>{open ? "Hide map" : "Show on map"}</button>
       {open && <div role="group" aria-label="Map view">

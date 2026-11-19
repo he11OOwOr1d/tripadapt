@@ -90,3 +90,13 @@ When a traveler reviews restoring an earlier version, the "Stay and travel prefe
 
 Verified only by the type check and the existing frontend suite (210 pass): the project has no component-render tests, and a live check needs an accepted earlier version to restore, which cannot be undone on the QA trip, so I did not create one. Treat this as unverified in the browser. A one-line addition to an existing panel.
 
+### Automated accessibility audit (20 November 2026, later)
+
+Until now the stay UI had only manual accessibility checks (control sizes, overflow). I loaded axe-core 4.10.2 into the live page (dev QA only; nothing is added to the app) on the QA trip with a located stay and a visit, with the stay-journey section open and a check result showing, and audited the stay panel, the stay-journey section, the map panel and the whole day workspace.
+
+- **Stay panel and stay-journey section:** no violations.
+- **Map panel:** one violation (`landmark-unique`): the section was labeled "Map", the same name as MapLibre's own canvas. It is now "Map of <destination>" (fixed; re-audit clean). The map pins show up as "incomplete" for color contrast because axe cannot read colors over map tiles; I compared the stay pin and selected colors by computed style earlier (cream on blue and white on orange), not with axe.
+- **Whole day workspace, not caused by this work:** 18 `color-contrast` findings in older text, all muted green on cream, between 2.9:1 and 4.45:1 (for example "Your route", "Day 2 in this place", gap labels such as "1h 30m to leave open" at 2.9:1, and "Your own plan. Opening hours..." at 2.9:1). They come from the shared muted-text colors of the approved palette. I did not restyle them in this slice because that is a design-token change across the day workspace and the locked landing is separate; raising those greens to at least 4.5:1 is a worthwhile follow-up that needs a visual check.
+
+Axe finds roughly a third of accessibility problems; it does not replace a keyboard and screen-reader pass. I re-checked the baseline after the run (the visit and stay removed, confirmed by a reload, session kept). Frontend suite 210 passing; build passes.
+

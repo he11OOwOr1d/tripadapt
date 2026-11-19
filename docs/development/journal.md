@@ -804,3 +804,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026. The restore review's preferences panel now mentions a recorded stay. Type-checked and the suite passes; not verified in a browser, because that needs an accepted version on the QA trip and accepting is irreversible. Committed locally; not pushed.
 
+## 171. Run an automated accessibility audit on the stay UI
+
+20 November 2026. Ran axe-core against the live stay panel, stay-journey section, map panel and day workspace. The stay features were clean; the map section shared its "Map" label with MapLibre's canvas and now reads "Map of <destination>". The audit also found 18 pre-existing contrast failures (2.9 to 4.45:1) in the day workspace's muted green text; recorded as a follow-up, not restyled here. Baseline restored; committed locally, not pushed. See [the learning note](../lodging-learning.md).
+
