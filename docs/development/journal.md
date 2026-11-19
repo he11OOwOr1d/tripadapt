@@ -892,3 +892,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026. Fixed a remount that dropped the save notice and keyboard focus, a stale "not set" caveat beside a saved booking, and an inverted planner window (now an honest empty proposal without calling the model). Overnight arrivals and cache accounting are deliberate and documented. 617 backend and 233 frontend tests pass; verified live and signed in. Committed locally; not pushed.
 
+## 193. List recorded journeys in the chat's route summary; re-run CI parity
+
+20 November 2026. The chat's route summary now lists recorded journeys as the traveler's own entries, built server-side (618 backend tests; verified live through the real chat). I also re-ran the CI-parity checks on the 38 local commits: 617 backend tests on Python 3.14.4, 233 frontend tests on Node 22, ruff, lock files, and `npm ci --dry-run` all pass. Committed locally; not pushed.
+

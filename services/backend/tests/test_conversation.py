@@ -13,7 +13,13 @@ from app.config import settings
 from app.jobs.worker import claim, publish_reply
 from app.main import app
 from app.persistence.models import AppUser, ConversationTurn
-from app.trips.schemas import Lodging, PlanInput, StayPreference
+from app.trips.schemas import (
+    Lodging,
+    PlanInput,
+    StayPreference,
+    TravelPreference,
+    plan_legs,
+)
 
 
 class FakeProvider:
@@ -463,3 +469,52 @@ def test_day_answer_mentions_the_stay_only_when_one_is_recorded():
     assert ask().endswith(
         "You are staying at Hotel Aurora; your own record, not confirmed with the stay."
     )
+
+
+def test_route_summary_lists_recorded_journeys_as_the_travelers_own_entries():
+    stop = str(uuid4())
+    plan = PlanInput.model_validate(
+        {
+            "stops": [
+                {
+                    "client_id": stop,
+                    "name": "Jaipur",
+                    "timezone": "UTC",
+                    "desired_nights": 2,
+                }
+            ]
+        }
+    )
+
+    def summary():
+        return respond(
+            plan,
+            {"stop_logical_id": stop, "local_day_offset": 0},
+            "Summarize my route",
+            [],
+            FakeProvider("answer", "summary"),
+        )["text"]
+
+    assert "Journeys, as you entered them" not in summary()
+    keys = [leg["key"] for leg in plan_legs(plan)]
+    plan.preferences.travel_preferences[keys[0]] = TravelPreference(
+        mode="Rail",
+        hours="3.5",
+        overnight=0,
+        rate="",
+        basis="person",
+        departure="08:00",
+        arrival="11:30",
+        reference="PNR 7",
+        booked=True,
+    )
+    plan.preferences.travel_preferences[keys[1]] = TravelPreference(
+        mode="", hours="", overnight=0, rate="", basis="person"
+    )  # nothing to say about this one
+    text = summary()
+    assert "Journeys, as you entered them (not checked with any supplier):" in text
+    assert (
+        "Starting point → Jaipur: Rail · about 3.5 hours · departs 08:00 · arrives 11:30 · marked as booked by you · reference PNR 7"
+        in text
+    )
+    assert text.count("→") == 1

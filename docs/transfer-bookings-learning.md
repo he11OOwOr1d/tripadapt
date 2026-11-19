@@ -55,3 +55,7 @@ Reviewed and left as designed:
 
 617 backend and 233 frontend tests pass; typecheck and build pass.
 
+## The chat's route summary lists recorded journeys
+
+"Summarize my route" now adds a "Journeys, as you entered them (not checked with any supplier)" section: for each journey where the traveler recorded anything, one line with the mode, the hours, the departure and arrival, "marked as booked by you" and the reference, for example "Delhi to Jaipur: departs 08:00, arrives 11:30, reference PNR 7". The text is built on the server from the saved plan, so the entries never go to the language model (the same rule as the stay), journeys with nothing recorded are left out, and at most twelve are listed. Verified: a backend test (nothing is listed without entries, an empty entry adds nothing, the line is exactly as entered; 618 backend tests pass) and live through the real chat on the disposable trip, which listed "Delhi, National Capital Territory of Delhi, India to Jaipur, Rajasthan, India: departs 08:00 arrives 11:30 reference PNR 7"; I then removed the details (the chat messages remain in that trip's history, which is not plan data).
+

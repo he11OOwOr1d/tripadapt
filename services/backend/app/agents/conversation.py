@@ -10,7 +10,7 @@ from app.planning.removal import RemoveActivity, remove_activity
 from app.planning.reschedule import MoveActivity, move_activity
 from app.planning.resize import ResizeActivity, resize_activity
 from app.planning.weather_handoff import ReplacementFocus, replacement_target
-from app.trips.schemas import StrictModel
+from app.trips.schemas import StrictModel, plan_legs
 
 
 class Decision(StrictModel):
@@ -39,6 +39,27 @@ def stay_note(plan, stop):
         return ""
     booked = ", marked as booked by you" if lodging.booked else ""
     return f"staying at {lodging.name}{booked}; your own record, not confirmed with the stay"
+
+
+def journey_lines(plan):
+    """What the traveler recorded for each journey, worded as their own entries."""
+    lines = []
+    for leg in plan_legs(plan)[:12]:
+        p = plan.preferences.travel_preferences.get(leg["key"])
+        if p is None:
+            continue
+        parts = [
+            p.mode,
+            f"about {p.hours} hours" if p.hours else "",
+            f"departs {p.departure}" if p.departure else "",
+            f"arrives {p.arrival}" if p.arrival else "",
+            "marked as booked by you" if p.booked else "",
+            f"reference {p.reference}" if p.reference else "",
+        ]
+        parts = [x for x in parts if x]
+        if parts:
+            lines.append(f"{leg['from']} → {leg['to']}: " + " · ".join(parts))
+    return lines
 
 
 def respond(
@@ -418,6 +439,12 @@ def respond(
             "kind": "answer",
             "text": "Your saved route, in travel order:\n"
             + "\n".join(parts)[:2200]
+            + (
+                "\nJourneys, as you entered them (not checked with any supplier):\n"
+                + "\n".join(journeys)
+                if (journeys := journey_lines(plan))
+                else ""
+            )
             + f"\nFor {plan.traveler_count} traveler(s). Stay nights describe overnight stays, not full sightseeing days. Travel schedules are not verified.",
             "choices": [],
         }
