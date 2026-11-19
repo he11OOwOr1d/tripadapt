@@ -197,6 +197,86 @@ def test_stay_journey_needs_known_place_and_sign_in(context, monkeypatch):
     assert client.post("/api/v1/journeys/from-stay", json=body).status_code == 401
 
 
+@pytest.mark.parametrize(
+    "end,status,arrive_by",
+    [
+        ("18:00", "arrive_by", "18:20"),
+        ("23:39", "arrive_by", "23:59"),
+        ("23:40", "after_midnight", None),
+        ("23:59:30", "after_midnight", None),
+    ],
+)
+def test_return_to_stay_gives_an_arrive_by_time(
+    context, monkeypatch, end, status, arrive_by
+):
+    client, db, _ = context
+    _, source = test_activity_discovery.discovered(client, monkeypatch)
+    calls = []
+
+    def route(*args):
+        calls.append(args)
+        return RouteEstimate(20, 1300, [])
+
+    monkeypatch.setattr(journeys, "geoapify_checks", SimpleNamespace(route=route))
+    body = {
+        "latitude": 26.9,
+        "longitude": 75.8,
+        "origin_place_id": source["id"],
+        "mode": "DRIVE",
+        "origin_end": end,
+    }
+    response = client.post("/api/v1/journeys/to-stay", json=body)
+    assert response.status_code == 200, response.text
+    assert response.headers["cache-control"] == "private, no-store"
+    result = response.json()["data"]
+    assert (result["status"], result["arrive_by"]) == (status, arrive_by)
+    assert calls[0][1] == "DRIVE" and calls[0][3] == (26.9, 75.8)
+    assert len(db.new) == 0
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"latitude": 0, "longitude": 0},
+        {"longitude": 181},
+        {"mode": "TRANSIT"},
+        {"origin_end": "18:00:00+02:00"},
+        {"extra": 1},
+    ],
+)
+def test_return_to_stay_rejects_bad_input(context, monkeypatch, change):
+    client, _, _ = context
+    _, source = test_activity_discovery.discovered(client, monkeypatch)
+    monkeypatch.setattr(
+        journeys,
+        "geoapify_checks",
+        SimpleNamespace(route=lambda *a: RouteEstimate(1, 1, [])),
+    )
+    body = {
+        "latitude": 26.9,
+        "longitude": 75.8,
+        "origin_place_id": source["id"],
+        "mode": "WALK",
+        "origin_end": "18:00",
+        **change,
+    }
+    assert client.post("/api/v1/journeys/to-stay", json=body).status_code == 422
+
+
+def test_return_to_stay_needs_known_place_and_sign_in(context):
+    client, _, _ = context
+    body = {
+        "latitude": 26.9,
+        "longitude": 75.8,
+        "origin_place_id": str(uuid4()),
+        "mode": "WALK",
+        "origin_end": "18:00",
+    }
+    assert client.post("/api/v1/journeys/to-stay", json=body).status_code == 404
+    app.dependency_overrides.pop(verified_identity)
+    assert client.post("/api/v1/journeys/to-stay", json=body).status_code == 401
+
+
 class Response:
     def __init__(self, body):
         self.body = body

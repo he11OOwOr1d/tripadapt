@@ -21,3 +21,18 @@ test('the headline gives a leave-by time or says the visit starts too early',()=
   assert.equal(s.stayJourneyHeadline({status:'leave_by',leave_by:'08:30'},'Fort','09:00'),'Leave by 08:30 to reach Fort at 09:00');
   assert.match(s.stayJourneyHeadline({status:'needs_earlier_start',leave_by:null},'Fort','00:10'),/too early/);
 });
+test('the last visit is the one that ends latest, ignoring skipped ones',()=>{
+  assert.equal(s.lastVisit([]),undefined);
+  assert.equal(s.lastVisit([act('a','09:00'),act('b','14:00')]).id,'b');
+  assert.equal(s.lastVisit([act('a','09:00',{minutes:600}),act('b','14:00')]).id,'a');
+  assert.equal(s.lastVisit([act('a','09:00'),act('b','20:00',{skipped:true})]).id,'a');
+});
+test('a visit running past midnight has no end clock time',()=>{
+  assert.equal(s.visitEnd(act('a','09:05')),'10:05');
+  assert.equal(s.visitEnd(act('a','23:00',{minutes:59})),'23:59');
+  assert.equal(s.visitEnd(act('a','23:00')),null);
+});
+test('the return headline gives an arrive-by time or says after midnight',()=>{
+  assert.match(s.stayReturnHeadline({status:'arrive_by',arrive_by:'18:20'},'Fort','18:00'),/back at your stay by 18:20/);
+  assert.match(s.stayReturnHeadline({status:'after_midnight',arrive_by:null},'Fort','23:50'),/after midnight/);
+});

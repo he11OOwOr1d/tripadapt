@@ -1,5 +1,6 @@
 """Transient route estimates; no itinerary mutation or provider payload retention."""
 
+import math
 from datetime import datetime, time, timezone
 from typing import Literal
 from uuid import UUID
@@ -57,6 +58,26 @@ class StayJourneyCheck(StrictModel):
     buffer_minutes: int
     leave_by: str | None
     status: Literal["leave_by", "needs_earlier_start"]
+    warnings: list[str]
+
+
+class StayReturnInput(StrictModel):
+    """From a retained place back to a traveler-recorded stay."""
+
+    latitude: float = Field(ge=-90, le=90, allow_inf_nan=False)
+    longitude: float = Field(ge=-180, le=180, allow_inf_nan=False)
+    origin_place_id: UUID
+    mode: Literal["WALK", "DRIVE"]
+    origin_end: time
+
+
+class StayReturnCheck(StrictModel):
+    retrieved_at: datetime
+    mode: Literal["WALK", "DRIVE"]
+    travel_minutes: int
+    distance_meters: int
+    arrive_by: str | None
+    status: Literal["arrive_by", "after_midnight"]
     warnings: list[str]
 
 
@@ -147,6 +168,45 @@ def check_journey_from_stay(
             buffer_minutes=body.buffer_minutes,
             leave_by=f"{leave // 60:02d}:{leave % 60:02d}" if leave >= 0 else None,
             status="leave_by" if leave >= 0 else "needs_earlier_start",
+            warnings=warnings,
+        ),
+    )
+
+
+@router.post("/journeys/to-stay", response_model=Envelope[StayReturnCheck])
+def check_journey_to_stay(
+    body: StayReturnInput,
+    request: Request,
+    user: AppUser = Depends(current_user),
+    db: Session = Depends(session),
+):
+    """Estimate the trip back to the stay and when the traveler would arrive."""
+    if body.latitude == 0 and body.longitude == 0:
+        raise HTTPException(422, "STAY_LOCATION_INVALID")
+    if body.origin_end.tzinfo:
+        raise HTTPException(422, "JOURNEY_LOCAL_TIME_REQUIRED")
+    origin = source_place(db, body.origin_place_id)
+    try:
+        minutes, meters, warnings = geoapify_checks.route(
+            str(user.id),
+            body.mode,
+            (origin.payload["latitude"], origin.payload["longitude"]),
+            (body.latitude, body.longitude),
+        )
+    except CheckFailure as error:
+        fail(error)
+    arrive = math.ceil(clock_minutes(body.origin_end)) + minutes
+    return wrap(
+        request,
+        StayReturnCheck(
+            retrieved_at=datetime.now(timezone.utc),
+            mode=body.mode,
+            travel_minutes=minutes,
+            distance_meters=meters,
+            arrive_by=f"{arrive // 60:02d}:{arrive % 60:02d}"
+            if arrive < 1440
+            else None,
+            status="arrive_by" if arrive < 1440 else "after_midnight",
             warnings=warnings,
         ),
     )

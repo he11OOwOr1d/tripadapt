@@ -31,3 +31,18 @@ export const stayJourneyAdapter = {
     return (await accountRequest<StayJourneyCheck>("/journeys/from-stay", { method: "POST", signal: AbortSignal.any([signal, AbortSignal.timeout(12000)]), body: JSON.stringify(input) })).data;
   },
 };
+
+export type StayReturnCheck = {
+  retrieved_at: string;
+  mode: "WALK" | "DRIVE";
+  travel_minutes: number;
+  distance_meters: number;
+  arrive_by: string | null;
+  status: "arrive_by" | "after_midnight";
+  warnings: string[];
+};
+export const stayReturnAdapter = {
+  async check(input: { latitude: number; longitude: number; origin_place_id: string; mode: "WALK" | "DRIVE"; origin_end: string }, signal: AbortSignal) {
+    return (await accountRequest<StayReturnCheck>("/journeys/to-stay", { method: "POST", signal: AbortSignal.any([signal, AbortSignal.timeout(12000)]), body: JSON.stringify(input) })).data;
+  },
+};

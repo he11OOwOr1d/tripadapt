@@ -767,3 +767,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 ## 161. Check the trip from the stay to the first visit
 
 20 November 2026. Next gap from the stay record: it fed only the map. Added `POST /journeys/from-stay` (stay coordinates plus a retained place, mode, start and buffer; returns a leave-by time or `needs_earlier_start`) rather than loosening the pair check, which needs two retained places and a gap. The UI is a disclosure under the stay panel, shown only when a stay and a day with visits exist, and needs coordinates at both ends. 12 backend and 3 frontend tests; full suites pass (561 backend, 204 frontend). Verified live and signed in on the QA trip (walk 09:24, drive 09:44 for a 10:00 visit, 390 px clean) and restored to baseline. Committed locally; not pushed or deployed. See [the learning note](../lodging-learning.md). A second live run with four visits (two tied at 10:00) confirmed the first-visit tie-break and the stay pin beside numbered visits 1-4, then restored the baseline.
+
+## 162. Add the way back to the stay
+
+20 November 2026. Mirrored the leave-by check: `POST /journeys/to-stay` gives an arrival time from the day's last visit back to the stay, with an after-midnight status, and the stay section now covers both legs. A live run showed that running the return check wiped the outbound result; each check now clears only its own result. 571 backend and 207 frontend tests pass; verified live and signed in, baseline restored. Committed locally; not pushed. See [the learning note](../lodging-learning.md).
