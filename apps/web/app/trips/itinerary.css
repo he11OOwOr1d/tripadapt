@@ -18,7 +18,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  color: #6c7e5f;
+  color: #59684f;
   font-size: 13px;
 }
 .trip-app .day-route-title button {
@@ -74,7 +74,7 @@
 .day-route nav small {
   display: block;
   font-size: 11px;
-  color: #718365;
+  color: #5b6951;
   margin-top: 6px;
 }
 .trip-app .day-overview-button {
@@ -91,7 +91,7 @@
   display: grid;
   gap: 9px;
   font-size: 12px;
-  color: #6c805f;
+  color: #58694e;
 }
 .day-cost-note strong {
   font-size: 20px;
@@ -108,7 +108,7 @@
 .day-title > p {
   font-size: 14px;
   margin: 0 0 10px;
-  color: #5f7a53;
+  color: #536b49;
 }
 .trip-app .day-title h1 {
   font-size: clamp(33px, 3.6vw, 47px);
@@ -120,7 +120,7 @@
 }
 .day-title > span {
   font-size: 12px;
-  color: #6b7f60;
+  color: #596950;
 }
 .day-pagination {
   display: flex;
@@ -170,7 +170,7 @@
 }
 .day-date-note {
   font-size: 12px;
-  color: #6c805f;
+  color: #58694e;
   margin-bottom: 20px;
 }
 .day-date-note summary {
@@ -204,7 +204,7 @@
 }
 .day-transfers small {
   font-size: 11px;
-  color: #6c805d;
+  color: #5c6d4f;
 }
 .trip-app .day-transfers h3 {
   font-size: 16px;
@@ -213,12 +213,12 @@
 }
 .day-transfers p {
   font-size: 12px;
-  color: #58734b;
+  color: #546e48;
   margin: 5px 0;
 }
 .day-transfers .day-transfer-caveat {
   font-size: 11px;
-  color: #758867;
+  color: #5d6c52;
 }
 .trip-app .day-transfers button {
   background: none;
@@ -244,7 +244,7 @@
 }
 .day-plan-heading p {
   font-size: 13px;
-  color: #718263;
+  color: #5a684f;
   margin: 0;
 }
 .trip-app .day-primary {
@@ -258,7 +258,7 @@
 }
 .day-window {
   font-size: 11px;
-  color: #7a8a6d;
+  color: #5c6852;
   line-height: 1.6;
   margin: 16px 0;
 }
@@ -283,7 +283,7 @@
 .day-timeline time > span {
   display: block;
   font-size: 11px;
-  color: #829176;
+  color: #5c6753;
   margin-top: 5px;
 }
 .day-gap {
@@ -293,12 +293,12 @@
   display: block;
   font-weight: 400;
   font-size: 14px;
-  color: #718365;
+  color: #5b6951;
 }
 .day-gap div > span {
   display: block;
   font-size: 11px;
-  color: #8a967f;
+  color: #5d6755;
   margin-top: 4px;
 }
 .trip-app .day-gap > button {
@@ -329,12 +329,12 @@
 }
 .day-activity p {
   font-size: 12px;
-  color: #718263;
+  color: #5a684f;
   margin: 6px 0;
 }
 .day-item-kind {
   font-size: 11px;
-  color: #6e815c;
+  color: #5a694b;
 }
 .day-item-actions {
   display: flex;
@@ -422,7 +422,7 @@
   min-height: 44px;
 }
 .day-source-note {
-  color: #8a967e;
+  color: #5d6754;
   font-size: 11px;
   margin: 24px 0 0;
 }

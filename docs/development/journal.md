@@ -808,3 +808,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026. Ran axe-core against the live stay panel, stay-journey section, map panel and day workspace. The stay features were clean; the map section shared its "Map" label with MapLibre's canvas and now reads "Map of <destination>". The audit also found 18 pre-existing contrast failures (2.9 to 4.45:1) in the day workspace's muted green text; recorded as a follow-up, not restyled here. Baseline restored; committed locally, not pushed. See [the learning note](../lodging-learning.md).
 
+## 172. Raise the day workspace's muted text to readable contrast
+
+20 November 2026. Fixed the 21 contrast failures the audit found (muted greens at 2.9 to 4.5:1) by darkening 17 declarations in `itinerary.css` to at least 4.6:1 with the same hue. Axe now reports none in the day workspace. Remaining and untouched: the shared header label (3.75:1) and a heading-order issue. Not seen by eye (no screenshots). Committed locally; not pushed. See [the learning note](../lodging-learning.md).
+

@@ -100,3 +100,9 @@ Until now the stay UI had only manual accessibility checks (control sizes, overf
 
 Axe finds roughly a third of accessibility problems; it does not replace a keyboard and screen-reader pass. I re-checked the baseline after the run (the visit and stay removed, confirmed by a reload, session kept). Frontend suite 210 passing; build passes.
 
+### Contrast fix in the day workspace (20 November 2026, later)
+
+The audit's 18 pre-existing contrast failures, plus 3 more in the arrival transfer card that appear on day 1, are fixed. All came from muted green text declared in `apps/web/app/trips/itinerary.css` (the trip workspace; the locked landing is separate). For each of the 14 muted greens I kept the hue and saturation and lowered the lightness until it reached at least 4.6:1 on the darkest cream or sage background it sits on, and did the same for the three transfer-card colors against their sage background. The eleven different muted shades collapse to nearly one (about #5a6850), so the old three-tier "quieter" hierarchy among those labels is flatter; size and weight still carry the hierarchy.
+
+Verified by axe on the live day view (a located stay is not needed for this): after the change the day workspace has no `color-contrast` violations, with a visit on the day so the activity text is included. Only two findings remain on the page and are outside this change: the shared header label "/ your journey" at 3.75:1, and a heading-order issue (the transfer card uses an h3 where the previous heading is higher up the tree). **Not verified:** how it looks. Screenshots still fail because the window is hidden, so the darker text was judged by numbers, not by eye; a quick visual pass on desktop and phone is worth doing, and the change is a single file that is easy to adjust. Frontend tests (210) and the build pass. Baseline restored (the test visit removed, confirmed by a reload, session kept).
+
