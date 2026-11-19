@@ -9,7 +9,7 @@ from app.agents.groq_provider import PlanningFailure
 from app.config import settings
 from app.discovery.activities import retain
 from app.persistence.models import DiscoveredPlace, PlaceReference
-from app.providers.activities import DiscoveryFailure
+from app.providers.activities import DiscoveryFailure, distance
 
 BREAKS = [
     {"id": "meal", "label": "Meal break", "kind": "meal", "minutes": 60},
@@ -26,7 +26,8 @@ PLACE_ISSUE = {
 }
 
 
-def catalog_from_ids(db, stop, ids):
+def catalog_from_ids(db, stop, ids, stay=None):
+    """Server-retained evidence. A located stay adds straight-line distances."""
     if len(ids) > 12 or len(set(ids)) != len(ids):
         raise ValueError("Invalid evidence budget")
     rows = {
@@ -47,8 +48,21 @@ def catalog_from_ids(db, stop, ids):
             hours=24
         ) or stamp > datetime.now(timezone.utc) + timedelta(minutes=1):
             raise ValueError("Place evidence needs refresh")
+        near = {}
+        if stay and stay.get("latitude") is not None:
+            near["distance_from_stay_km"] = round(
+                distance(
+                    stay["latitude"],
+                    stay["longitude"],
+                    row.payload["latitude"],
+                    row.payload["longitude"],
+                )
+                / 1000,
+                1,
+            )
         catalog.append(
             {
+                **near,
                 "id": f"place:{ident}",
                 "place_id": ident,
                 "label": row.payload["name"],
@@ -63,7 +77,7 @@ def catalog_from_ids(db, stop, ids):
     return catalog + [dict(block) for block in BREAKS]
 
 
-def gather_places(db, stop, candidate_ids, progress):
+def gather_places(db, stop, candidate_ids, progress, stay=None):
     from app.api.places import activity_discovery
 
     if not settings.activity_search_enabled:
@@ -95,5 +109,21 @@ def gather_places(db, stop, candidate_ids, progress):
             ids.extend(str(p.id) for p in retained.results[:6])
         if not ids:
             raise PlanningFailure("AI_NO_PLACE_EVIDENCE")
-    catalog = catalog_from_ids(db, stop, ids)
+    catalog = catalog_from_ids(db, stop, ids, stay)
     return [c for c in catalog if c.get("place_id") or c["id"] in selected], ids
+
+
+def stay_for_ai(plan, stop):
+    """The traveler's recorded stay for this destination as plain evidence, or None."""
+    preference = plan.preferences.stay_preferences.get(stop.client_id)
+    lodging = preference.lodging if preference else None
+    if lodging is None:
+        return None
+    return {
+        "name": lodging.name,
+        "address": lodging.address,
+        "check_in": lodging.check_in,
+        "check_out": lodging.check_out,
+        "latitude": lodging.latitude,
+        "longitude": lodging.longitude,
+    }

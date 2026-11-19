@@ -771,3 +771,8 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 ## 162. Add the way back to the stay
 
 20 November 2026. Mirrored the leave-by check: `POST /journeys/to-stay` gives an arrival time from the day's last visit back to the stay, with an after-midnight status, and the stay section now covers both legs. A live run showed that running the return check wiped the outbound result; each check now clears only its own result. 571 backend and 207 frontend tests pass; verified live and signed in, baseline restored. Committed locally; not pushed. See [the learning note](../lodging-learning.md).
+
+## 163. Tell the AI planner where the traveler stays
+
+20 November 2026. The AI day planner ignored the stay. It now gets the recorded stay as untrusted plain evidence (no coordinates) and, for a located stay, a straight-line `distance_from_stay_km` on each mapped candidate, with a prompt line to prefer nearer places and leave time to return. Validation is unchanged. 4 new backend tests (574 total). A live Groq run through a local worker on the QA trip completed and its proposal was discarded; baseline restored without signing out. Whether the model actually prefers nearer places is not measured. Committed locally; not pushed. See [the learning note](../lodging-learning.md).
+

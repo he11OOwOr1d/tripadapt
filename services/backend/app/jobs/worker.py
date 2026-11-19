@@ -326,7 +326,7 @@ def run_once():
                     place_catalog = None
                     place_ids = []
                     if payload["request"].get("evidence", "sample") == "places":
-                        from app.agents.place_evidence import gather_places
+                        from app.agents.place_evidence import gather_places, stay_for_ai
 
                         stop = next(
                             s
@@ -339,6 +339,7 @@ def run_once():
                                 stop,
                                 reply.get("candidate_ids") if reply else None,
                                 progress,
+                                stay_for_ai(plan, stop),
                             )
                         if reply:
                             reply["text"] = (

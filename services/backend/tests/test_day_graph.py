@@ -5,7 +5,7 @@ import pytest
 
 from app.agents.day_graph import DayCandidate, run_day_graph
 from app.agents.groq_provider import PlanningFailure
-from app.trips.schemas import PlanInput
+from app.trips.schemas import Lodging, PlanInput, StayPreference
 
 
 class FakeProvider:
@@ -150,3 +150,41 @@ def test_candidate_evidence_guard_rejects_changed_labels():
     result.activities[-1].user_label = "Invented place with a confirmed booking"
     with pytest.raises(ValueError):
         validate_ai_candidate(plan, result, stop, 15, ident, metadata)
+
+
+class RecordingProvider(FakeProvider):
+    def __init__(self, outputs):
+        super().__init__(outputs)
+        self.seen = []
+
+    def complete(self, messages, *, tools=None, schema=None):
+        self.seen.append(json.dumps(messages))
+        return super().complete(messages, tools=tools, schema=schema)
+
+
+def test_recorded_stay_reaches_the_model_as_plain_evidence_without_coordinates():
+    plan, stop = base()
+    plan.preferences.stay_preferences[stop] = StayPreference(
+        style="",
+        rate="",
+        basis="room",
+        lodging=Lodging(
+            name="Hotel Aurora",
+            address="Gate 2",
+            latitude=26.9,
+            longitude=75.8,
+            check_in="14:00",
+        ),
+    )
+    provider = RecordingProvider([answer()])
+    run_day_graph(plan, stop, 15, uuid4(), provider)
+    text = "".join(provider.seen)
+    assert "Hotel Aurora" in text and "has_map_location" in text
+    assert "26.9" not in text and "75.8" not in text
+
+
+def test_no_stay_means_no_stay_context():
+    plan, stop = base()
+    provider = RecordingProvider([answer()])
+    run_day_graph(plan, stop, 15, uuid4(), provider)
+    assert "has_map_location" not in "".join(provider.seen)

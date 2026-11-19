@@ -9,13 +9,18 @@ import test_trips
 
 from app.agents.day_graph import run_day_graph
 from app.agents.groq_provider import PlanningFailure
-from app.agents.place_evidence import BREAKS, catalog_from_ids, gather_places
+from app.agents.place_evidence import (
+    BREAKS,
+    catalog_from_ids,
+    gather_places,
+    stay_for_ai,
+)
 from app.api import places
 from app.config import settings
 from app.persistence.models import DiscoveredPlace
 from app.planning.candidate import validate_job_candidate
 from app.providers.activities import DiscoveryFailure
-from app.trips.schemas import PlanInput
+from app.trips.schemas import Lodging, PlanInput, StayPreference
 
 
 @pytest.fixture
@@ -56,6 +61,26 @@ def output(place_id):
             ],
         }
     )
+
+
+def test_stay_for_ai_reads_only_this_destinations_recorded_stay(context, monkeypatch):
+    _, plan, stop, _ = evidence(context, monkeypatch)
+    assert stay_for_ai(plan, plan.stops[0]) is None
+    plan.preferences.stay_preferences[stop] = StayPreference(
+        style="", rate="", basis="room", lodging=Lodging(name="Inn", check_in="14:00")
+    )
+    assert stay_for_ai(plan, plan.stops[0]) == {
+        "name": "Inn",
+        "address": "",
+        "check_in": "14:00",
+        "check_out": "",
+        "latitude": None,
+        "longitude": None,
+    }
+    plan.preferences.stay_preferences[stop] = StayPreference(
+        style="", rate="", basis="room"
+    )
+    assert stay_for_ai(plan, plan.stops[0]) is None
 
 
 def test_real_catalog_is_grounded_and_checked_again_at_accept_boundary(
