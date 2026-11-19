@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import type { Stop } from "../../lib/trips/adapter";
+import type { CostRecord, Stop } from "../../lib/trips/adapter";
 import { activitySearchAdapter, type ActivityPlace, type ActivitySearch } from "../../lib/trips/activity-search";
-import { LODGING_ADDRESS_MAX, LODGING_NAME_MAX, isLodging, lodgingFromPlace, lodgingSummary, type Lodging } from "../../lib/trips/lodging";
+import { LODGING_ADDRESS_MAX, LODGING_NAME_MAX, isLodging, lodgingFromPlace, lodgingSummary, stayCostLines, type Lodging } from "../../lib/trips/lodging";
 import PlaceAttribution from "./PlaceAttribution";
 
 type Draft = { name: string; address: string; check_in: string; check_out: string; booked: boolean; place?: ActivityPlace };
@@ -10,8 +10,8 @@ type Draft = { name: string; address: string; check_in: string; check_out: strin
 const fromLodging = (l?: Lodging | null): Draft => ({ name: l?.name ?? "", address: l?.address ?? "", check_in: l?.check_in ?? "", check_out: l?.check_out ?? "", booked: l?.booked === true });
 
 /** Where the traveler sleeps in this destination. Their record, never a booking or a price. */
-export default function LodgingPanel({ stop, lodging, onSave, disabled = false }: {
-  stop: Stop; lodging?: Lodging | null; disabled?: boolean; onSave: (lodging: Lodging | null) => void;
+export default function LodgingPanel({ stop, lodging, onSave, disabled = false, costs, currency = "" }: {
+  stop: Stop; lodging?: Lodging | null; disabled?: boolean; onSave: (lodging: Lodging | null) => void; costs?: CostRecord[]; currency?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<Draft>(() => fromLodging(lodging));
@@ -57,6 +57,7 @@ export default function LodgingPanel({ stop, lodging, onSave, disabled = false }
     close();
   }
   const filledName = draft.name.trim().length > 0;
+  const costLines = stayCostLines(costs, stop.id, currency);
   if (stop.nights === 0) return null;
   return <section className="lodging-panel" aria-label={`Where you're staying in ${stop.name}`}>
     <div className="lodging-head">
@@ -68,6 +69,7 @@ export default function LodgingPanel({ stop, lodging, onSave, disabled = false }
       {lodging?.address && <small>{lodging.address}</small>}
       {lodging && lodging.latitude == null && <small>No map location yet, so it is not on the map. Edit and use “Find stays nearby” to add one.</small>}
       {lodging?.source && <small>Location: {lodging.source}. Prices, availability and booking status are not checked.</small>}
+      {costLines.length > 0 && <div className="lodging-costs"><small>Costs you linked to this stay (totals are in your trip costs):</small><ul>{costLines.map((line, i) => <li key={i}>{line}</li>)}</ul></div>}
       {notice && <p role="status">{notice}</p>}
       {!lodging && <small>A stay you record here shows on the map and in your plan. Nothing is booked or priced.</small>}
     </>}

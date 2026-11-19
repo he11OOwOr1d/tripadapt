@@ -796,3 +796,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026. The way-back note on the departure day now compares the visit's end with check-out; the arrival-day boundary is strict; the stay's place id is trusted only when its external id matches the retained record; a stray generated file was reverted. 3 more test assertions (582 / 209 pass). Browser not re-run; the changes are small pure-function and query-filter fixes covered by tests. Committed locally; not pushed.
 
+## 169. Show linked costs in the stay panel
+
+20 November 2026. Costs could already be linked to a stay but the stay panel did not show them. It now lists them as entered (no total, to avoid a figure that could disagree with the cost summary). 1 frontend test (210 pass); verified live and signed in with a temporary linked cost, which I removed (the two earlier QA cost records were untouched). Committed locally; not pushed. See [the learning note](../lodging-learning.md).
+

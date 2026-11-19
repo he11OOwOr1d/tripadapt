@@ -47,3 +47,14 @@ test('a retained place id is accepted as a uuid on a searched stay and rejected 
   assert.equal(out.isLodging({...searched,place_id:5}),false);
   assert.equal(out.isLodging({name:'A',place_id:PID}),false);
 });
+test('costs linked to a stay are listed as entered, with no totals',()=>{
+  const recs=[
+    {id:'1',category:'accommodation',label:'Room',unit:'per_group',quantity:2,amount:'120.00',status:'estimated',stop_id:'s1'},
+    {id:'2',category:'food',label:'Breakfast',unit:'per_person',quantity:1,amount:'',status:'estimated',stop_id:'s1'},
+    {id:'3',category:'accommodation',label:'Deposit',unit:'per_group',quantity:1,amount:'50',status:'paid',stop_id:'s1',currency:'usd'},
+    {id:'4',category:'accommodation',label:'Other stay',unit:'per_group',quantity:1,amount:'9',status:'estimated',stop_id:'s2'},
+    {id:'5',category:'activity',label:'Tour',unit:'per_person',quantity:1,amount:'9',status:'estimated',activity_id:'a1'}];
+  assert.deepEqual(J(out.stayCostLines(recs,'s1','INR')),['Room · INR 120.00 per group × 2 · estimated','Breakfast · amount not entered · estimated','Deposit · usd 50 per group · marked paid by you']);
+  assert.deepEqual(J(out.stayCostLines(undefined,'s1','INR')),[]);
+  assert.deepEqual(J(out.stayCostLines(recs,'none','INR')),[]);
+});

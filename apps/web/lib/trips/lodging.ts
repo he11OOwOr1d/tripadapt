@@ -1,4 +1,5 @@
 import type { ActivityPlace } from "./activity-search";
+import type { CostRecord } from "./adapter";
 import { validCoordinates } from "./day-map";
 
 /**
@@ -84,4 +85,17 @@ export function lodgingSummary(lodging: Lodging | null | undefined): string {
   if (!lodging) return "No place to stay recorded yet.";
   const times = [lodging.check_in && `check-in ${lodging.check_in}`, lodging.check_out && `check-out ${lodging.check_out}`].filter(Boolean).join(", ");
   return `${lodging.name}${lodging.booked ? " · marked as booked by you" : " · not marked as booked"}${times ? ` · ${times}` : ""}`;
+}
+
+/**
+ * One plain line for each cost record the traveler linked to this stay. It lists
+ * what was entered, with no totals: units and tax make a sum a separate calculation.
+ */
+export function stayCostLines(records: CostRecord[] | undefined, stopId: string, tripCurrency: string): string[] {
+  return (records ?? [])
+    .filter((r) => r.stop_id === stopId)
+    .map((r) => {
+      const amount = r.amount === "" ? "amount not entered" : `${(r.currency ?? "").trim() || tripCurrency} ${r.amount} ${r.unit === "per_person" ? "per person" : "per group"}${r.quantity > 1 ? ` × ${r.quantity}` : ""}`;
+      return `${r.label} · ${amount} · ${r.status === "paid" ? "marked paid by you" : "estimated"}`;
+    });
 }

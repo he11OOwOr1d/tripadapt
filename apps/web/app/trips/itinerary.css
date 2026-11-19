@@ -1034,3 +1034,4 @@ fieldset.live-acceptance { border-inline: 0; min-width: 0; }
 .stay-journey-body small { display: block; margin-block: .4rem; }
 .stay-journey-body h4 { margin: .5rem 0; }
 .stay-journey-body button { min-height: 2.75rem; }
+.lodging-costs ul { margin: .25rem 0 0; padding-left: 1.1rem; max-width: 65ch; line-height: 1.5; overflow-wrap: anywhere; }
