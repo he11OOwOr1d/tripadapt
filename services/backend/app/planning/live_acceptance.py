@@ -252,14 +252,14 @@ def recheck_visits_and_journeys(db, user, request, visits, legs, listings, check
                 error.detail
                 if error.detail
                 in {
-                    "GOOGLE_ROUTES_UNAVAILABLE",
-                    "GOOGLE_ROUTES_ACCESS_DENIED",
-                    "GOOGLE_ROUTES_NOT_CONFIGURED",
-                    "GOOGLE_ROUTES_RATE_LIMITED",
-                    "GOOGLE_ROUTES_BUSY",
+                    "ROUTES_UNAVAILABLE",
+                    "ROUTES_ACCESS_DENIED",
+                    "ROUTES_NOT_CONFIGURED",
+                    "ROUTES_RATE_LIMITED",
+                    "ROUTES_BUSY",
                     "JOURNEY_DIFFERENT_DESTINATIONS",
                 }
-                else "GOOGLE_ROUTES_UNAVAILABLE"
+                else "ROUTES_UNAVAILABLE"
             )
             day_check_failure(
                 code,

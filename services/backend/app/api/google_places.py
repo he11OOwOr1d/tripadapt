@@ -8,8 +8,9 @@ from pydantic import Field, field_validator
 from sqlalchemy.orm import Session
 
 from app.api.identity import current_user, session
+from app.api.place_checks import fail, source_place
 from app.api.trips import Envelope, router, wrap
-from app.persistence.models import AppUser, DiscoveredPlace, PlaceReference
+from app.persistence.models import AppUser, PlaceReference
 from app.planning.opening_hours import check_hours
 from app.providers.activities import distance
 from app.providers.google_places import (
@@ -63,21 +64,6 @@ class GoogleCheck(StrictModel):
     price_level: str | None = None
     price_range: dict | None = None
     attributions: list[str]
-
-
-def source_place(db, ident):
-    source = db.get(DiscoveredPlace, ident)
-    if source is None:
-        raise HTTPException(404, "RESOURCE_NOT_FOUND")
-    return source
-
-
-def fail(error):
-    raise HTTPException(
-        error.status,
-        error.code,
-        headers={"Retry-After": "60"} if error.status == 429 else None,
-    ) from None
 
 
 @router.post("/google-places/matches", response_model=Envelope[list[NearbyGoogleMatch]])

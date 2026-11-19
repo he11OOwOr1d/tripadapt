@@ -11,6 +11,7 @@ from sqlalchemy import select
 
 from app.api import journeys, replanning
 from app.persistence.models import Activity, DiscoveredPlace, PlanVersion, Trip
+from app.providers.geoapify_checks import parse_route
 
 
 @pytest.fixture
@@ -79,21 +80,26 @@ def setup(context, monkeypatch):
     ).json()["data"]
     base = f"/api/v1/trips/{trip['id']}"
 
-    def request(*args, **kwargs):
+    def route(*args, **kwargs):
         state.calls += 1
-        return {
-            "routes": []
+        # Run the real parser so malformed or missing routes fail like production.
+        estimate = parse_route(
+            {"features": []}
             if state.duration is None
-            else [
-                {
-                    "duration": state.duration,
-                    "distanceMeters": 2000,
-                    "warnings": state.warnings,
-                }
-            ]
-        }
+            else {
+                "features": [
+                    {
+                        "properties": {
+                            "time": float(state.duration[:-1]),
+                            "distance": 2000,
+                        }
+                    }
+                ]
+            }
+        )
+        return estimate._replace(warnings=state.warnings)
 
-    monkeypatch.setattr(journeys, "google_places", SimpleNamespace(request=request))
+    monkeypatch.setattr(journeys, "geoapify_checks", SimpleNamespace(route=route))
     params = dict(basis="draft", stop_id=stop, local_day_offset=12)
     ctx = client.get(base + "/replanning/context", params=params).json()["data"]
     body = dict(
@@ -214,7 +220,7 @@ def test_acceptance_failures_leave_proposal_pending(context, monkeypatch, failur
         "clock": "REPLAN_TIME_STALE",
         "warning": "REPLAN_ROUTE_WARNING",
         "route_drift": "REPLAN_REVIEW_EXPIRED",
-        "no_route": "GOOGLE_ROUTES_UNAVAILABLE",
+        "no_route": "ROUTES_UNAVAILABLE",
     }
     if failure in expected_codes:
         assert response.json()["code"] == expected_codes[failure]

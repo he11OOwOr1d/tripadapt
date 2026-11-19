@@ -91,6 +91,7 @@ def test_owned_endpoint_checks_real_sources_and_provider_warnings(context, monke
 
     from app.api import journeys, replanning
     from app.persistence.models import DiscoveredPlace, PlanVersion
+    from app.providers.geoapify_checks import RouteEstimate
 
     client, db, _ = context
     plan, body, _ = fixture()
@@ -144,19 +145,11 @@ def test_owned_endpoint_checks_real_sources_and_provider_warnings(context, monke
     calls = []
     state = {"warnings": []}
 
-    def request(*args, **kwargs):
+    def route(*args, **kwargs):
         calls.append((args, kwargs))
-        return {
-            "routes": [
-                {
-                    "duration": "3600s",
-                    "distanceMeters": 2000,
-                    "warnings": state["warnings"],
-                }
-            ]
-        }
+        return RouteEstimate(60, 2000, state["warnings"])
 
-    monkeypatch.setattr(journeys, "google_places", SimpleNamespace(request=request))
+    monkeypatch.setattr(journeys, "geoapify_checks", SimpleNamespace(route=route))
     before = db.scalar(select(func.count()).select_from(PlanVersion))
     db.commit()
     assert client.post(base + "/preview", json=payload).status_code == 428
@@ -172,8 +165,8 @@ def test_owned_endpoint_checks_real_sources_and_provider_warnings(context, monke
     assert response.status_code == 200, response.text
     result = response.json()["data"]
     assert [a["after"] for a in result["changes"]] == ["11:25", "13:05"]
-    assert len(calls) == 2 and all(call[1]["routes"] for call in calls)
-    assert calls[0][0][3]["origin"]["location"]["latLng"]["latitude"] == 35.02
+    assert len(calls) == 2 and all(call[0][1] == "WALK" for call in calls)
+    assert calls[0][0][2][0] == 35.02
     assert db.scalar(select(func.count()).select_from(PlanVersion)) == before
     db.commit()
     state["warnings"] = ["Restricted road"]
@@ -183,7 +176,7 @@ def test_owned_endpoint_checks_real_sources_and_provider_warnings(context, monke
     assert failed.status_code == 409 and failed.json()["code"] == "REPLAN_ROUTE_WARNING"
 
     state["warnings"] = []
-    original_request = request
+    original_route = route
 
     def change_base(*args, **kwargs):
         from app.persistence.models import PlanVersion
@@ -191,9 +184,9 @@ def test_owned_endpoint_checks_real_sources_and_provider_warnings(context, monke
         draft = db.get(PlanVersion, UUID(ctx["base_version_id"]))
         draft.edit_sequence += 1
         db.flush()
-        return original_request(*args, **kwargs)
+        return original_route(*args, **kwargs)
 
-    monkeypatch.setattr(journeys, "google_places", SimpleNamespace(request=change_base))
+    monkeypatch.setattr(journeys, "geoapify_checks", SimpleNamespace(route=change_base))
     changed = client.post(
         base + "/preview", json=payload, headers={"If-Match": ctx["base_etag"]}
     )

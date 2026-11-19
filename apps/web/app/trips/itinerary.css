@@ -852,6 +852,7 @@
 .google-reported-details { color: #283d32; line-height: 1.6; }
 .google-reported-details h3 { margin-top: 0; }
 .google-maps-attribution { font: 400 1rem Arial, sans-serif; color: #5e5e5e; white-space: nowrap; margin: .8rem 0 0; }
+.provider-attribution { font-size: .8rem; color: #5e5e5e; margin: .8rem 0 0; }
 .google-place-check :is(summary,button,a):focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
 
 .journey-check { margin: 1.2rem 0; border-block: 1px solid var(--line, #c9cebb); padding: 1rem 0; }

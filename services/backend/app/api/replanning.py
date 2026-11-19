@@ -273,11 +273,11 @@ def preview_remaining_day(
     user: AppUser = Depends(current_user),
     db: Session = Depends(session),
 ):
-    # No Google route results or traveler-location report are persisted here.
-    from app.api.google_places import fail
-    from app.api.journeys import google_places, route_estimate
+    # No route results or traveler-location report are persisted here.
+    from app.api.journeys import geoapify_checks
+    from app.api.place_checks import fail
     from app.planning.remaining_day import PreviewConflict, remaining_day_preview
-    from app.providers.google_places import GoogleFailure
+    from app.providers.geoapify_checks import CheckFailure
 
     response.headers["Cache-Control"] = "private, no-store"
     trip = owned(db, user, trip_id)
@@ -315,33 +315,12 @@ def preview_remaining_day(
                 estimates[(origin_id, destination_id)] = 0
                 return 0
 
-            def waypoint(place):
-                return {
-                    "location": {
-                        "latLng": {
-                            "latitude": place.payload["latitude"],
-                            "longitude": place.payload["longitude"],
-                        }
-                    }
-                }
-
-            payload = dict(
-                origin=waypoint(origin),
-                destination=waypoint(destination),
-                travelMode=body.mode,
-                computeAlternativeRoutes=False,
-                languageCode="en",
-            )
-            if body.mode == "DRIVE":
-                payload["routingPreference"] = "TRAFFIC_UNAWARE"
-            data = google_places.request(
+            minutes, _, warnings = geoapify_checks.route(
                 str(user.id),
-                "",
-                "routes.duration,routes.distanceMeters,routes.warnings",
-                payload,
-                routes=True,
+                body.mode,
+                (origin.payload["latitude"], origin.payload["longitude"]),
+                (destination.payload["latitude"], destination.payload["longitude"]),
             )
-            minutes, _, warnings = route_estimate(data)
             if warnings:
                 raise PreviewConflict(
                     "REPLAN_ROUTE_WARNING",
@@ -369,12 +348,8 @@ def preview_remaining_day(
         raise HTTPException(409, error.code) from None
     except ValueError as error:
         raise HTTPException(409, str(error)) from None
-    except GoogleFailure as error:
-        fail(
-            GoogleFailure(
-                error.code.replace("GOOGLE_PLACES_", "GOOGLE_ROUTES_"), error.status
-            )
-        )
+    except CheckFailure as error:
+        fail(error)
     return wrap(
         request,
         dict(
@@ -386,7 +361,7 @@ def preview_remaining_day(
             mode=body.mode,
             checked_at=checked.isoformat(),
             **result,
-            notice="Read-only timing preview. No plan saved or changed. Google route estimates exclude traffic; venue hours, weather and reservations have not been checked.",
+            notice="Read-only timing preview. No plan saved or changed. Route estimates exclude traffic; venue hours, weather and reservations have not been checked.",
         ),
     )
 

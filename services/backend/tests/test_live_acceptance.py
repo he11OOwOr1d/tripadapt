@@ -304,7 +304,7 @@ def test_outgoing_route_failure_names_the_exact_edge_without_provider_text(monke
         recheck_move(None, None, None, value, metadata, checks())
     diagnostic = caught.value.diagnostic
     assert (
-        caught.value.detail == "GOOGLE_ROUTES_UNAVAILABLE"
+        caught.value.detail == "ROUTES_UNAVAILABLE"
         and caught.value.status_code == 503
     )
     assert diagnostic.kind == "journey" and diagnostic.reason == "provider_error"

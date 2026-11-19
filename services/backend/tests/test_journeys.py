@@ -1,4 +1,6 @@
 import json
+from types import SimpleNamespace
+from urllib.error import HTTPError
 from uuid import uuid4
 
 import pytest
@@ -10,8 +12,17 @@ from app.api import journeys
 from app.api.identity import verified_identity
 from app.config import settings
 from app.main import app
-from app.providers import google_places as transport
-from app.providers.google_places import GoogleFailure, GooglePlaces
+from app.providers import geoapify_checks as transport
+from app.providers.geoapify_checks import (
+    CheckFailure,
+    GeoapifyChecks,
+    RouteEstimate,
+    parse_route,
+)
+
+
+def geo(time, distance, **extra):
+    return {"features": [{"properties": {"time": time, "distance": distance, **extra}}]}
 
 
 @pytest.fixture
@@ -23,23 +34,31 @@ def context():
     "raw",
     [
         {},
-        {"routes": []},
-        {"routes": [{"duration": "NaNs", "distanceMeters": 1}]},
-        {"routes": [{"duration": "-1s", "distanceMeters": 1}]},
-        {"routes": [{"duration": "60s", "distanceMeters": True}]},
-        {"routes": [{"duration": "60s", "distanceMeters": -1}]},
-        {"routes": [{"duration": "60s", "distanceMeters": 1, "warnings": "bad"}]},
+        {"features": []},
+        {"features": [{}]},
+        {"features": [{"properties": {"time": 60}}]},
+        geo("60", 1),
+        geo(float("nan"), 1),
+        geo(float("inf"), 1),
+        geo(-1, 1),
+        geo(604801, 1),
+        geo(60, True),
+        geo(True, 1),
+        geo(60, -1),
+        geo(60, 20000001),
+        geo(60, 1, distance_units="miles"),
     ],
 )
 def test_bad_route_never_becomes_zero_time(raw):
-    with pytest.raises(GoogleFailure):
-        journeys.route_estimate(raw)
+    with pytest.raises(CheckFailure) as failure:
+        parse_route(raw)
+    assert failure.value.code == "ROUTES_UNAVAILABLE"
 
 
-def test_fractional_seconds_round_up():
-    assert journeys.route_estimate(
-        {"routes": [{"duration": "60.001s", "distanceMeters": 100}]}
-    ) == (2, 100, [])
+def test_fractional_seconds_round_up_and_distance_rounds():
+    assert parse_route(geo(60.001, 100.4)) == (2, 100, [])
+    assert parse_route(geo(0, 0)) == (0, 0, [])
+    assert parse_route(geo(4222.762, 4780, distance_units="meters")) == (71, 4780, [])
 
 
 @pytest.mark.parametrize(
@@ -56,15 +75,11 @@ def test_gap_checks_and_no_mutation(context, monkeypatch, start, buffer, status,
     _, source = test_activity_discovery.discovered(client, monkeypatch)
     calls = []
 
-    def request(*args, **kwargs):
+    def route(*args, **kwargs):
         calls.append((args, kwargs))
-        return {
-            "routes": [
-                {"duration": "1200s", "distanceMeters": 1300, "warnings": ["Use care."]}
-            ]
-        }
+        return RouteEstimate(20, 1300, ["Use care."])
 
-    monkeypatch.setattr(journeys.google_places, "request", request)
+    monkeypatch.setattr(journeys, "geoapify_checks", SimpleNamespace(route=route))
     body = {
         "origin_place_id": source["id"],
         "destination_place_id": source["id"],
@@ -80,13 +95,12 @@ def test_gap_checks_and_no_mutation(context, monkeypatch, start, buffer, status,
     result = response.json()["data"]
     assert (result["status"], result["spare_minutes"]) == (status, spare)
     assert result["warnings"] == ["Use care."]
-    assert calls[0][1] == {"routes": True}
-    assert calls[0][0][2] == "routes.duration,routes.distanceMeters,routes.warnings"
-    assert "routingPreference" not in calls[0][0][3]
+    owner, mode, origin, destination = calls[0][0]
+    assert mode == "WALK" and len(origin) == len(destination) == 2
     assert len(db.new) == 0
     body["mode"] = "DRIVE"
     assert client.post("/api/v1/journeys/check", json=body).status_code == 200
-    assert calls[-1][0][3]["routingPreference"] == "TRAFFIC_UNAWARE"
+    assert calls[-1][0][1] == "DRIVE"
     body["origin_start"] = "09:00:00+02:00"
     assert client.post("/api/v1/journeys/check", json=body).status_code == 422
     body["origin_start"] = "09:00"
@@ -99,33 +113,121 @@ def test_gap_checks_and_no_mutation(context, monkeypatch, start, buffer, status,
     assert client.post("/api/v1/journeys/check", json=body).status_code == 401
 
 
-def test_route_host_and_key_not_in_url(monkeypatch):
-    monkeypatch.setattr(settings, "google_maps_api_key", SecretStr("places-only"))
-    monkeypatch.setattr(settings, "routes_api_key", SecretStr("private-test"))
+class Response:
+    def __init__(self, body):
+        self.body = body
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        pass
+
+    def read(self, size):
+        assert size == transport.MAX_RESPONSE_BYTES + 1
+        return json.dumps(self.body).encode()
+
+
+def test_route_request_uses_geoapify_walk_drive_and_fixed_budget(monkeypatch):
+    monkeypatch.setattr(settings, "geoapify_api_key", SecretStr("private-test"))
     seen = []
 
-    class Response:
-        def __enter__(self):
-            return self
-
-        def __exit__(self, *args):
-            pass
-
-        def read(self, *args):
-            return json.dumps({"routes": []}).encode()
-
-    def open(request, **kwargs):
-        seen.append(request)
-        return Response()
+    def open(request, **options):
+        seen.append((request, options))
+        return Response(geo(600, 700))
 
     monkeypatch.setattr(transport, "urlopen", open)
-    GooglePlaces().request(
-        "owner", "", "routes.duration", {"travelMode": "WALK"}, routes=True
+    client = GeoapifyChecks()
+    assert client.route("owner", "WALK", (37.78, -122.4161), (37.77, -122.4862)) == (
+        10,
+        700,
+        [],
     )
+    client.route("owner", "DRIVE", (1, 2), (3, 4))
+    walk, options = seen[0]
+    assert walk.full_url.startswith("https://api.geoapify.com/v1/routing?")
+    assert "mode=walk" in walk.full_url
     assert (
-        seen[0].full_url == "https://routes.googleapis.com/directions/v2:computeRoutes"
+        "waypoints=37.780000%2C-122.416100%7C37.770000%2C-122.486200" in walk.full_url
     )
-    assert seen[0].get_header("X-goog-api-key") == "private-test"
+    assert "mode=drive" in seen[1][0].full_url
+    assert options["context"].check_hostname and options["timeout"] == 8
+    assert walk.get_method() == "GET" and walk.data is None
+
+
+@pytest.mark.parametrize(
+    "status,code",
+    [
+        (401, "ROUTES_ACCESS_DENIED"),
+        (403, "ROUTES_ACCESS_DENIED"),
+        (404, "ROUTES_NOT_FOUND"),
+        (429, "ROUTES_RATE_LIMITED"),
+        (400, "ROUTES_UNAVAILABLE"),
+        (500, "ROUTES_UNAVAILABLE"),
+    ],
+)
+def test_route_errors_do_not_expose_credential_or_response(monkeypatch, status, code):
+    monkeypatch.setattr(settings, "geoapify_api_key", SecretStr("test-secret"))
+
+    def failed(*args, **kwargs):
+        raise HTTPError("https://x/?apiKey=test-secret", status, "private", {}, None)
+
+    monkeypatch.setattr(transport, "urlopen", failed)
+    with pytest.raises(CheckFailure) as failure:
+        GeoapifyChecks().route("owner", "WALK", (1, 2), (3, 4))
+    assert failure.value.code == code
+    assert "test-secret" not in str(failure.value) and failure.value.__cause__ is None
+
+
+@pytest.mark.parametrize(
+    "body", [[], {"error": "bad"}, {"features": "x"}, "not json at all"]
+)
+def test_route_rejects_malformed_or_oversized_responses(monkeypatch, body):
+    monkeypatch.setattr(settings, "geoapify_api_key", SecretStr("test-secret"))
+    monkeypatch.setattr(transport, "urlopen", lambda *a, **k: Response(body))
+    with pytest.raises(CheckFailure) as failure:
+        GeoapifyChecks().route("owner", "WALK", (1, 2), (3, 4))
+    assert failure.value.code == "ROUTES_UNAVAILABLE"
+
+
+def test_route_response_over_limit_is_refused(monkeypatch):
+    monkeypatch.setattr(settings, "geoapify_api_key", SecretStr("test-secret"))
+    monkeypatch.setattr(transport, "MAX_RESPONSE_BYTES", 10)
+    monkeypatch.setattr(transport, "urlopen", lambda *a, **k: Response(geo(60, 1)))
+    with pytest.raises(CheckFailure, match="ROUTES_UNAVAILABLE"):
+        GeoapifyChecks().route("owner", "WALK", (1, 2), (3, 4))
+
+
+def test_route_not_configured_makes_no_call(monkeypatch):
+    monkeypatch.setattr(settings, "geoapify_api_key", SecretStr(""))
+    monkeypatch.setattr(
+        transport, "urlopen", lambda *a, **k: pytest.fail("must not call upstream")
+    )
+    with pytest.raises(CheckFailure) as failure:
+        GeoapifyChecks().route("owner", "WALK", (1, 2), (3, 4))
+    assert failure.value.code == "ROUTES_NOT_CONFIGURED"
+
+
+def test_route_quota_and_concurrency_do_not_call_upstream(monkeypatch):
+    monkeypatch.setattr(settings, "geoapify_api_key", SecretStr("test-secret"))
+    monkeypatch.setattr(
+        transport, "urlopen", lambda *a, **k: pytest.fail("must not call upstream")
+    )
+    client = GeoapifyChecks(clock=lambda: 0)
+    client.calls.extend([0] * 6)
+    with pytest.raises(CheckFailure) as limited:
+        client.route("owner", "WALK", (1, 2), (3, 4))
+    assert (limited.value.code, limited.value.status) == ("ROUTES_RATE_LIMITED", 429)
+    client = GeoapifyChecks(clock=lambda: 0)
+    client.owners["owner"].extend([0] * 30)
+    with pytest.raises(CheckFailure, match="ROUTES_RATE_LIMITED"):
+        client.route("owner", "WALK", (1, 2), (3, 4))
+    client = GeoapifyChecks()
+    client.slots.acquire()
+    client.slots.acquire()
+    with pytest.raises(CheckFailure) as busy:
+        client.route("owner", "WALK", (1, 2), (3, 4))
+    assert (busy.value.code, busy.value.status) == ("ROUTES_BUSY", 429)
 
 
 def test_route_failure_and_destination_boundary(context, monkeypatch):
@@ -137,9 +239,9 @@ def test_route_failure_and_destination_boundary(context, monkeypatch):
     _, source = test_activity_discovery.discovered(client, monkeypatch)
 
     def denied(*args, **kwargs):
-        raise GoogleFailure("GOOGLE_PLACES_ACCESS_DENIED")
+        raise CheckFailure("ROUTES_ACCESS_DENIED")
 
-    monkeypatch.setattr(journeys.google_places, "request", denied)
+    monkeypatch.setattr(journeys, "geoapify_checks", SimpleNamespace(route=denied))
     body = {
         "origin_place_id": source["id"],
         "destination_place_id": source["id"],
@@ -150,7 +252,7 @@ def test_route_failure_and_destination_boundary(context, monkeypatch):
     }
     failed = client.post("/api/v1/journeys/check", json=body)
     assert failed.status_code == 503
-    assert failed.json()["code"] == "GOOGLE_ROUTES_ACCESS_DENIED"
+    assert failed.json()["code"] == "ROUTES_ACCESS_DENIED"
     original = db.get(DiscoveredPlace, UUID(source["id"]))
     reference = db.get(PlaceReference, original.destination_reference_id)
     other = PlaceReference(
