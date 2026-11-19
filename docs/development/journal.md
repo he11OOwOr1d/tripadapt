@@ -836,3 +836,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026. Opening the stay form and choosing a search result both removed the focused button and dropped focus to the page body. Focus now moves to the name field in both cases. Verified live by reading the active element at each step; no data changed. Committed locally; not pushed.
 
+## 179. Check focus handling in the other day-view dialogs
+
+20 November 2026. After the stay-form focus fix, I read `document.activeElement` after opening "Add activity", "Add a meal or other cost" and "Plan this day with AI" in the day view: each opens a native dialog and puts focus on its first control (the activity forms on "What would you like to do?", the planner on "Close day planner"), and closing the planner returned focus to its trigger button. "Running late" did not appear on the QA trip (it needs a started trip), so it was not checked, and I did not record where focus lands after closing the two activity dialogs. No code changed and no data was changed. This was a scripted check, not a screen-reader session.
+
