@@ -832,3 +832,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026. The workflow (`.github/workflows/ci.yml`) runs `make setup`, `make migrate`, `alembic check`, then `make check` (ruff, pytest, frontend tests, typecheck, build) on Node 22 and the default uv Python. Locally I had used Node 25 and Python 3.12, so I repeated the matching steps on the CI versions with the 20 unpushed commits: the 582 backend tests passed on Python 3.14.4 in a throwaway environment against a fresh Postgres cluster (so `alembic upgrade head` and `alembic check` ran too); the 210 frontend tests passed on Node 22.23; ruff check, `npm run typecheck` and `npm run build` pass; `uv lock --check` shows the lock file consistent (no dependency was changed). The local Postgres is 17.11, the same major version as CI's `postgres:17` service. `npm ci --dry-run` also succeeds, so the web lock file is consistent. Not reproduced: a real `npm ci` install and the hosted deploy builds. This lowers, but does not remove, the chance that CI fails on a push. No code changed.
 
+## 178. Fix keyboard focus loss in the stay form
+
+20 November 2026. Opening the stay form and choosing a search result both removed the focused button and dropped focus to the page body. Focus now moves to the name field in both cases. Verified live by reading the active element at each step; no data changed. Committed locally; not pushed.
+

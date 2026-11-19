@@ -22,6 +22,9 @@ export default function LodgingPanel({ stop, lodging, onSave, disabled = false, 
   const abort = useRef<AbortController | null>(null);
   const request = useRef(0);
   const heading = useRef<HTMLButtonElement>(null);
+  const nameField = useRef<HTMLInputElement>(null);
+  // Opening the form removes the button that had focus, so move focus to the first field.
+  useEffect(() => { if (open) nameField.current?.focus(); }, [open]);
   useEffect(() => () => { request.current++; abort.current?.abort(); }, []);
 
   function begin() { setDraft(fromLodging(lodging)); setPage(null); setError(""); setNotice(""); setOpen(true); }
@@ -43,6 +46,8 @@ export default function LodgingPanel({ stop, lodging, onSave, disabled = false, 
     setDraft((d) => ({ ...d, name: place.name.slice(0, LODGING_NAME_MAX), place }));
     setPage(null);
     setNotice(`${place.name} chosen. Save to keep it.`);
+    // The results list, with the button that had focus, is gone; continue at the name field.
+    requestAnimationFrame(() => nameField.current?.focus());
   }
   function save() {
     const name = draft.name.trim();
@@ -74,7 +79,7 @@ export default function LodgingPanel({ stop, lodging, onSave, disabled = false, 
       {!lodging && <small>A stay you record here shows on the map and in your plan. Nothing is booked or priced.</small>}
     </>}
     {open && <form className="lodging-form" onSubmit={(e) => { e.preventDefault(); save(); }}>
-      <label>Name of the place<input value={draft.name} maxLength={LODGING_NAME_MAX} onChange={(e) => setDraft({ ...draft, name: e.target.value, place: draft.place && draft.place.name === e.target.value ? draft.place : undefined })} required /></label>
+      <label>Name of the place<input ref={nameField} value={draft.name} maxLength={LODGING_NAME_MAX} onChange={(e) => setDraft({ ...draft, name: e.target.value, place: draft.place && draft.place.name === e.target.value ? draft.place : undefined })} required /></label>
       <label>Address or note (optional)<input value={draft.address} maxLength={LODGING_ADDRESS_MAX} onChange={(e) => setDraft({ ...draft, address: e.target.value })} /></label>
       <div className="lodging-times">
         <label>Check-in<input type="time" value={draft.check_in} onChange={(e) => setDraft({ ...draft, check_in: e.target.value })} /></label>
