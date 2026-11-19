@@ -40,7 +40,7 @@ export default function ProposalReview({
   });
   const [dayCheck,setDayCheck] = useState<DayCheckDiagnostic>();
   const errorFocus = useRef<HTMLDivElement>(null);
-  const [liveChoice,setLiveChoice] = useState<LiveCheckChoice>({enabled:false,input:null});
+  const [liveChoice,setLiveChoice] = useState<LiveCheckChoice>({enabled:false,input:null,scope:"live_check"});
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [acknowledged, setAcknowledged] = useState<string[]>([]);
   const [busy, setBusy] = useState(true);
@@ -71,7 +71,7 @@ export default function ProposalReview({
       keys.current.submitScope = scope;
     }
     const submitKey = keys.current.submit;
-    setLiveChoice({enabled:false,input:null});
+    setLiveChoice({enabled:false,input:null,scope:"live_check"});
     setBusy(true);
     setError("");
     setDayCheck(undefined);
@@ -134,9 +134,10 @@ export default function ProposalReview({
           acknowledged,
           keys.current.accept,
           liveChoice.enabled ? liveChoice.input : null,
+          liveChoice.scope,
         );
         setProposal(result);
-        await onAccepted(liveChoice.enabled && liveChoice.input ? "Accepted after the requested fresh Google Maps checks for the displayed visits and journeys. Estimates do not confirm tickets, accessibility or the whole trip." : undefined, result);
+        await onAccepted(liveChoice.enabled && liveChoice.input ? "Accepted after the requested fresh hours and route checks for the displayed visits and journeys. Estimates do not confirm tickets, accessibility or the whole trip." : undefined, result);
       } else {
         await proposalAdapter.discard(account.id, proposal);
         onDiscarded?.(proposal);

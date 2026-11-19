@@ -9,7 +9,6 @@ export type Stop = {
   location?: PlaceResult;
 };
 export type Activity = {
-  googlePlaceId?: string;
   place?: ActivityPlace;
   kind?: "custom" | "meal" | "rest" | "free_time";
   id: string;
@@ -354,7 +353,6 @@ export function isTrip(value: unknown): value is Trip {
         /^([01]\d|2[0-3]):[0-5]\d$/.test(a.start) &&
         positive(a.day) &&
         positive(a.minutes) &&
-        (a.googlePlaceId === undefined || (typeof a.googlePlaceId === "string" && /^[A-Za-z0-9_-]{1,200}$/.test(a.googlePlaceId))) &&
         (a.place === undefined || isActivityPlace(a.place)) &&
         (a.kind === undefined || ["custom","meal","rest","free_time"].includes(a.kind)) &&
         [a.fixed, a.completed, a.booked].every((v) => typeof v === "boolean") &&

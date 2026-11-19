@@ -2,7 +2,7 @@
 import { recoveryChoices, type RecoveryChoice } from "../../lib/trips/activity-recovery";
 import ActivityLocationPicker from "./ActivityLocationPicker";
 import { attachActivityLocation, detachActivityLocation, patchActivity } from "../../lib/trips/activity-location";
-import GooglePlaceCheck from "./GooglePlaceCheck";
+import PlaceHoursCheck from "./PlaceHoursCheck";
 import { routeSchedule, provisionalDate } from "../../lib/trips/itinerary";
 import { useEffect, useRef, useState } from "react";
 import type { Activity, Trip } from "../../lib/trips/adapter";
@@ -209,7 +209,7 @@ export default function ActivityEditor({
             : clock(clockMinutes(draft.start) + draft.minutes)}
         </p>
         <div ref={locationFocus}><ActivityLocationPicker startOpen={focusLocation} key={`${draft.stopId}:${stop?.location?.reference_id ?? "unmapped"}`} activity={draft} stop={stop} onChoose={place => { if (stop) { setDraft(value => attachActivityLocation(value, stop, place)); setErrors([]); } }} onRemove={() => { setDraft(detachActivityLocation); setErrors([]); }} /></div>
-        {draft.place && <GooglePlaceCheck key={draft.place.id} sourceId={draft.place.id} googleId={draft.googlePlaceId} onSelect={id=>setDraft(value=>({...value,googlePlaceId:id}))} visitDate={visitDate} start={draft.start} minutes={draft.minutes} timezone={stop?.timezone ?? "UTC"} />}
+        {draft.place && <PlaceHoursCheck key={draft.place.id} sourceId={draft.place.id} visitDate={visitDate} start={draft.start} minutes={draft.minutes} timezone={stop?.timezone ?? "UTC"} />}
         <details ref={statusFocus} className="editor-options">
           <summary>Keep fixed, record what happened, or booked</summary>
           <label>

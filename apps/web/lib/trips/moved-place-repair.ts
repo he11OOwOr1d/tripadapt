@@ -62,7 +62,7 @@ export function reconcileMovedPlaceRepairs(trip:Trip,tripId:string,repair:MovedP
 export function movedPlaceTarget(trip:Trip,accountId:string,repair:MovedPlaceRepair,activityId:string):Activity|undefined {
  if(repair.tripId!==accountId)return;
  const item=repair.items.find(x=>x.activityId===activityId),a=trip.activities.find(x=>x.id===activityId);
- if(!item||!a||a.stopId!==item.stopId||a.day!==item.day||a.completed||a.skipped||a.place||a.googlePlaceId)return;
+ if(!item||!a||a.stopId!==item.stopId||a.day!==item.day||a.completed||a.skipped||a.place)return;
  const stop=trip.stops.find(s=>s.id===a.stopId);
  if(!stop||a.day<1||a.day>stop.nights+1)return;
  return {...a};

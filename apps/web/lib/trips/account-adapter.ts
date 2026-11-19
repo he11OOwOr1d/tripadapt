@@ -46,7 +46,6 @@ type Plan = {
   };
   costs?: Trip["costRecords"];
   activities: {
-    google_place_id?: string | null;
     place_id?: string | null;
     kind?: ActivityKind;
     logical_id: string;
@@ -149,12 +148,11 @@ export async function accountRequest<T>(
       /* Preserve safe status feedback for non-JSON outages. */
     }
     throw new AccountError(
-      code === "AUTH_PROVIDER_UNAVAILABLE" ? "Sign-in verification is temporarily unavailable. Your trip is still saved; retry when the connection returns." : code === "TRIP_ACCEPTED_PLAN_REQUIRED" ? "Review and accept a plan before starting this trip. Your draft is unchanged." : code === "TRIP_CHAT_CLOSED" ? "Completed or archived trips cannot start new planning requests. Your saved trip and conversation remain available." : code === "AGENT_PLANNING_ONLY" ? "AI itinerary changes are available while planning. For an active trip, chat can explain the day or open a remaining-day check." : code.startsWith("REPLAN_") ? `${remainingDayFeedback[code] ?? "This remaining-day check could not finish. Confirm fresh time and location and try a new preview."} Your saved trip is unchanged.` : code.startsWith("DELAY_") && detail ? detail : code === "LIVE_CHECK_HOURS_NOT_CONFIRMED" ? "Live acceptance stopped: the proposed visit does not fit confirmed current hours, or hours/date coverage is unknown. Your proposal is still pending."
+      code === "AUTH_PROVIDER_UNAVAILABLE" ? "Sign-in verification is temporarily unavailable. Your trip is still saved; retry when the connection returns." : code === "TRIP_ACCEPTED_PLAN_REQUIRED" ? "Review and accept a plan before starting this trip. Your draft is unchanged." : code === "TRIP_CHAT_CLOSED" ? "Completed or archived trips cannot start new planning requests. Your saved trip and conversation remain available." : code === "AGENT_PLANNING_ONLY" ? "AI itinerary changes are available while planning. For an active trip, chat can explain the day or open a remaining-day check." : code.startsWith("REPLAN_") ? `${remainingDayFeedback[code] ?? "This remaining-day check could not finish. Confirm fresh time and location and try a new preview."} Your saved trip is unchanged.` : code.startsWith("DELAY_") && detail ? detail : code === "LIVE_CHECK_HOURS_NOT_CONFIRMED" ? "Live acceptance stopped: the proposed visit does not fit the regular opening hours, or hours are unknown for that place. Your proposal is still pending."
         : code === "LIVE_CHECK_ROUTE_SHORTFALL" ? "Live acceptance stopped: an adjacent journey needs more time. Your proposal is still pending."
         : code === "LIVE_CHECK_ROUTE_WARNING" ? "Live acceptance stopped: the route service returned an access warning. Review the route; your proposal is still pending."
         : code === "LIVE_CHECK_LOCATION_REQUIRED" ? "Live acceptance needs mapped locations for this activity and its adjacent journeys. Your proposal is still pending."
         : code === "LIVE_CHECK_DAY_LIMIT" ? "Live day checks cover up to six affected visits per action. Your review is still pending."
-        : code === "LIVE_CHECK_LISTINGS_REQUIRED" ? "Choose a matching Google listing for every affected visit. Your review is still pending."
         : code === "LIVE_CHECK_DATE_MISMATCH" ? "Use the date from the saved trip for live acceptance. Your proposal is still pending."
         : code === "ROUTES_ACCESS_DENIED"
         ? "The route service rejected the request. Check the Geoapify key on the backend. Your schedule is unchanged."
@@ -166,18 +164,18 @@ export async function accountRequest<T>(
           ? "No usable route estimate was returned. Try another mode or check again later; your schedule is unchanged."
         : code === "JOURNEY_DIFFERENT_DESTINATIONS"
           ? "This check supports two places within the same destination. Intercity journeys need a separate check."
-        : code === "GOOGLE_PLACES_UNAVAILABLE"
-        ? "Google Maps is temporarily unavailable. Your activity is kept; try again later."
-        : code === "GOOGLE_PLACE_NOT_FOUND"
-          ? "That Google listing is no longer available. Choose a different matching place."
-      : code === "GOOGLE_PLACES_ACCESS_DENIED"
-        ? "Google Maps rejected this backend key. Check Places API (New), billing and the allowed public IP in Google Cloud."
-        : code === "GOOGLE_PLACES_NOT_CONFIGURED"
-          ? "Google Maps checks are not configured on this backend. Your activity is kept."
-          : code === "GOOGLE_PLACES_RATE_LIMITED" || code === "GOOGLE_PLACES_BUSY"
-            ? "Google Maps checks are busy or have reached the local usage limit. Try later; your activity is kept."
-            : code === "GOOGLE_PLACE_LOCATION_MISMATCH"
-              ? "That Google listing is too far from the selected place. Choose another matching listing."
+        : code === "PLACE_HOURS_UNAVAILABLE"
+        ? "Opening-hours data is temporarily unavailable. Your activity is kept; try again later."
+        : code === "PLACE_HOURS_NOT_FOUND"
+          ? "That place’s record is no longer available, so its hours cannot be checked. Your activity is kept."
+      : code === "PLACE_HOURS_ACCESS_DENIED"
+        ? "The place-data service rejected the request. Check the Geoapify key on the backend. Your activity is kept."
+        : code === "PLACE_HOURS_NOT_CONFIGURED"
+          ? "Opening-hours checks are not configured on this backend. Your activity is kept."
+          : code === "PLACE_HOURS_RATE_LIMITED" || code === "PLACE_HOURS_BUSY"
+            ? "Opening-hours checks are busy or have reached the local usage limit. Try later; your activity is kept."
+            : code === "PLACE_LOCATION_MISMATCH"
+              ? "The place record no longer matches the selected map location. Link the map location again."
       : code === "AI_LOCATION_REQUIRED"
         ? "Choose a map location for this destination in Explore nearby places, then try again."
         : code.startsWith("ACTIVITY_") && response.status === 429
@@ -269,7 +267,6 @@ function input(trip: Trip) {
       place_reference_id: s.location?.reference_id ?? null,
     })),
     activities: trip.activities.map((a) => ({
-      google_place_id: a.googlePlaceId ?? null,
       place_id: a.place?.id ?? null,
       kind: a.kind ?? "custom",
       logical_id: a.id,
@@ -346,7 +343,6 @@ export const accountTripAdapter = {
         location: s.place_reference ?? undefined,
       })),
       activities: p.activities.map((a) => ({
-        googlePlaceId: a.google_place_id ?? undefined,
         place: a.place_id ? p.place_details?.[a.place_id] : undefined,
         kind: a.kind ?? "custom",
         id: a.logical_id,

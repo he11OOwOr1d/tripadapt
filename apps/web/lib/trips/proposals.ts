@@ -2,8 +2,10 @@ import type { WeatherDay } from "./weather";
 import type { ActivityPlace } from "./activity-search";
 import { accountRequest } from "./account-adapter";
 import type { PlaceResult } from "./place-search";
-export type LiveAcceptance = {google_place_id:string;visit_date:string;mode:"WALK"|"DRIVE";buffer_minutes:number};
-export type DayLiveAcceptance = {listings:Record<string,string>;visit_date:string;mode:"WALK"|"DRIVE";buffer_minutes:number};
+// The server derives each visit and journey from the reviewed plan; only the date,
+// travel mode and arrival buffer are sent. `scope` picks the request field.
+export type LiveAcceptance = {visit_date:string;mode:"WALK"|"DRIVE";buffer_minutes:number};
+export type LiveCheckScope = "live_check" | "day_live_check";
 export type PendingReview = {id:string;version_number:number;source:string;title:string;summary:string;stale:boolean};
 export type PendingReviewPage = {reviews:PendingReview[];next_before:number|null};
 export type Proposal = {
@@ -62,7 +64,6 @@ export type Proposal = {
 
     stops: { client_id: string; name: string; desired_nights: number | null; timezone?: string; place_reference_id?: string | null }[];
     activities: {
-      google_place_id?:string|null;
       place_id?: string | null;
       logical_id: string;
       stop_logical_id: string;
@@ -118,7 +119,8 @@ export const proposalAdapter = {
     proposal: Proposal,
     acknowledged: string[],
     key: string,
-    liveCheck?: LiveAcceptance | DayLiveAcceptance | null,
+    liveCheck?: LiveAcceptance | null,
+    scope: LiveCheckScope = "live_check",
   ) {
     return (
       await accountRequest<Proposal>(
@@ -129,7 +131,7 @@ export const proposalAdapter = {
           body: JSON.stringify({
             expected_current_version_id: proposal.base_current_version_id,
             acknowledged_issue_ids: acknowledged,
-            ...(liveCheck ? ("listings" in liveCheck ? {day_live_check:liveCheck} : {live_check:liveCheck}):{}),
+            ...(liveCheck ? {[scope]:liveCheck}:{}),
           }),
         },
       )

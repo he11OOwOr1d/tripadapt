@@ -841,19 +841,15 @@
 .activity-picked-place p, .activity-discovery-credit { font-size: .85rem; line-height: 1.65; }
 .activity-discovery :is(button,select,summary,a):focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
 
-.google-place-check { border-block: 1px solid #c8cbb8; margin: 1rem 0; }
-.google-place-check summary { cursor: pointer; min-height: 44px; padding: .85rem 0; }
-.google-check-body { padding-bottom: 1rem; }
-.google-check-body > small { display: block; line-height: 1.6; margin: .4rem 0; }
-.google-check-body button { min-height: 44px; padding: .7rem .9rem; margin: .5rem .5rem .5rem 0; font: inherit; color: inherit; background: transparent; border: 1px solid currentColor; border-radius: .25rem; cursor: pointer; }
-.google-matches { list-style: none; padding: 0; display: grid; gap: 1rem; }
-.google-matches li, .google-reported-details { border: 1px solid #bdc4b4; padding: 1rem; background: #f8f7f1; }
-.google-matches :is(strong,span,a), .google-reported-details > :is(small,a) { display: block; margin: .4rem 0; overflow-wrap: anywhere; }
-.google-reported-details { color: #283d32; line-height: 1.6; }
-.google-reported-details h3 { margin-top: 0; }
-.google-maps-attribution { font: 400 1rem Arial, sans-serif; color: #5e5e5e; white-space: nowrap; margin: .8rem 0 0; }
+.place-hours-check { border-block: 1px solid #c8cbb8; margin: 1rem 0; }
+.place-hours-check summary { cursor: pointer; min-height: 44px; padding: .85rem 0; }
+.check-body { padding-bottom: 1rem; }
+.check-body > small { display: block; line-height: 1.6; margin: .4rem 0; }
+.check-body button { min-height: 44px; padding: .7rem .9rem; margin: .5rem .5rem .5rem 0; font: inherit; color: inherit; background: transparent; border: 1px solid currentColor; border-radius: .25rem; cursor: pointer; }
+.reported-details { color: #283d32; line-height: 1.6; }
+.reported-details h3 { margin-top: 0; }
 .provider-attribution { font-size: .8rem; color: #5e5e5e; margin: .8rem 0 0; }
-.google-place-check :is(summary,button,a):focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+.place-hours-check :is(summary,button,a):focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
 
 .journey-check { margin: 1.2rem 0; border-block: 1px solid var(--line, #c9cebb); padding: 1rem 0; }
 .journey-check > summary { cursor: pointer; font-size: 1.1rem; font-weight: 600; min-height: 44px; align-content: center; }
@@ -917,12 +913,6 @@ fieldset.live-acceptance { border-inline: 0; min-width: 0; }
 .delay-return:focus-visible { outline: 3px solid #476442; outline-offset: 3px; }
 .live-acceptance [aria-label="Activities needing map locations"] li { margin-block: .75rem; }
 .live-acceptance [aria-label="Activities needing map locations"] button { display: block; min-height: 44px; max-width: 100%; margin-block: .35rem; white-space: normal; }
-.google-match-search { margin-block: .75rem; }
-.google-match-search summary { cursor: pointer; min-height: 44px; padding-block: .6rem; }
-.google-match-search label { display: grid; gap: .5rem; margin-block: .5rem; }
-.google-match-search > small { display: block; margin-block: .6rem; line-height: 1.5; }
-.google-match-search button { min-height: 44px; max-width: 100%; white-space: normal; }
-.google-match-search :is(input,button,summary):focus-visible { outline: 3px solid #476442; outline-offset: 3px; }
 .day-weather { border-block: 1px solid #c5cbb5; margin-block: 1rem; }
 .day-weather > summary { cursor: pointer; min-height: 44px; padding: 1rem 0; }
 .day-weather > summary small { display: block; margin-top: .35rem; }

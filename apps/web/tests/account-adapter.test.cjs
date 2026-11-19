@@ -103,22 +103,21 @@ test('selected location writes only its server reference and is restored from th
 test('discovered activities send an opaque place ID and rehydrate server attribution',async()=>{
  const h=harness(), stop=randomUUID(), reference=randomUUID();
  const place={id:reference,destination_reference_id:randomUUID(),external_id:'node/12',name:'Mapped museum',category:'museum',latitude:35,longitude:135,source:'OpenStreetMap contributors via Overpass',retrieved_at:'2026-11-11T00:00:00Z'};
- const saved=await h.adapter.create({...h.empty,stops:[{id:stop,name:'Kyoto',timezone:'Asia/Tokyo',nights:3}],activities:[{id:randomUUID(),stopId:stop,title:place.name,googlePlaceId:'ChIJ_test',day:1,start:'10:00',minutes:60,fixed:false,booked:false,completed:false,place}]});
+ const saved=await h.adapter.create({...h.empty,stops:[{id:stop,name:'Kyoto',timezone:'Asia/Tokyo',nights:3}],activities:[{id:randomUUID(),stopId:stop,title:place.name,day:1,start:'10:00',minutes:60,fixed:false,booked:false,completed:false,place}]});
  assert.equal(h.posted().plan.activities[0].place_id,reference);
  assert.equal('source' in h.posted().plan.activities[0],false);
  h.setPlaces({[reference]:place});
  const loaded=await h.adapter.load(saved.id);
  assert.equal(loaded.trip.activities[0].place.external_id,'node/12');
  assert.equal(loaded.trip.activities[0].place.source,place.source);
- assert.equal(loaded.trip.activities[0].googlePlaceId,'ChIJ_test');
- assert.equal(h.posted().plan.activities[0].google_place_id,'ChIJ_test');
+ assert.equal('google_place_id' in h.posted().plan.activities[0],false);
 });
 
 
 test('structured day-check context travels with the safe account error',async()=>{
- const h=harness(),activity_id=randomUUID();h.fail(409,'LIVE_CHECK_HOURS_NOT_CONFIRMED',{kind:'visit',reason:'closed',activity_id,from_activity_id:null,provider_payload:'must not leak'});
- await assert.rejects(h.adapter.list(),error=>error.constructor.name==='AccountError'&&error.dayCheck.activity_id===activity_id&&error.dayCheck.reason==='closed'&&!JSON.stringify(error.dayCheck).includes('must not leak'));
- h.fail(503,'GOOGLE_PLACES_UNAVAILABLE',{kind:'visit',reason:'injected',activity_id});
+ const h=harness(),activity_id=randomUUID();h.fail(409,'LIVE_CHECK_HOURS_NOT_CONFIRMED',{kind:'visit',reason:'outside_hours',activity_id,from_activity_id:null,provider_payload:'must not leak'});
+ await assert.rejects(h.adapter.list(),error=>error.constructor.name==='AccountError'&&error.dayCheck.activity_id===activity_id&&error.dayCheck.reason==='outside_hours'&&!JSON.stringify(error.dayCheck).includes('must not leak'));
+ h.fail(503,'PLACE_HOURS_UNAVAILABLE',{kind:'visit',reason:'injected',activity_id});
  await assert.rejects(h.adapter.list(),error=>error.dayCheck===undefined&&error.message.includes('temporarily unavailable'));
 });
 

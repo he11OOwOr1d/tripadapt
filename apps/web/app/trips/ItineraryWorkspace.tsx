@@ -462,7 +462,7 @@ export default function ItineraryWorkspace({
               {transfers.length ? " · allow for untimed transfers" : ""}
             </p>
             <DayWeather key={`${current.stop.id}:${localDay}:${date??"flexible"}:${current.stop.location?.reference_id??"unmapped"}:${weatherSeed?.key??"manual"}`} stop={current.stop} visitDate={date} activities={activities} review={timeChangeReview} initial={weatherSeed} />
-            <JourneyCheck key={JSON.stringify(activities.map(a => [a.id, a.start, a.minutes, a.place?.id, a.googlePlaceId, a.kind, a.title]).concat([[date, current.stop.timezone]]))} activities={activities} onEdit={onEdit} timeChangeReview={timeChangeReview} visitDate={date} timezone={current.stop.timezone} />
+            <JourneyCheck key={JSON.stringify(activities.map(a => [a.id, a.start, a.minutes, a.place?.id, a.kind, a.title]).concat([[date, current.stop.timezone]]))} activities={activities} onEdit={onEdit} timeChangeReview={timeChangeReview} visitDate={date} timezone={current.stop.timezone} />
             {activities.some(a=>a.completed||a.skipped)&&<div className="day-recorded-controls"><label><input type="checkbox" checked={showRecorded} onChange={e=>setShowRecorded(e.target.checked)}/> Show recorded outcomes</label>{!showRecorded&&<p role="status">{activities.filter(a=>a.completed||a.skipped).length} completed or missed {activities.filter(a=>a.completed||a.skipped).length===1?"record":"records"} hidden. Completed time stays occupied; missed activities leave their time open.</p>}</div>}
             <div className="day-timeline">
               {visibleDayEntries(entries, showRecorded).map((entry) =>
