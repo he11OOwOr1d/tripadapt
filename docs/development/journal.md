@@ -824,3 +824,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026. Three more muted colors in the library darkened to at least 4.6:1; axe is clean on the creation form, day view, outline, chat, review, history and library. One heading-order skip on the day-1 transfer card remains. Not seen by eye. 210 tests and the build pass. Committed locally; not pushed.
 
+## 176. Fix the heading order on the transfer cards
+
+20 November 2026. The arrival and departure card headings are h2 instead of h3 so they no longer skip a level under the day's h1; computed style is unchanged. Axe is clean on the whole day-1 page. Committed locally; not pushed.
+

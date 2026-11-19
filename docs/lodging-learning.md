@@ -120,3 +120,7 @@ The screens the previous audit missed were audited by reloading the day view bef
 
 The "My trips" panel had three muted colors under 4.5:1 (3.64 to 4.34) in `journey-refinement.css`: the panel intro, a card detail and the footnote. They now reach at least 4.6:1 with the same hue, and axe reports no violations on the open library. This completes the audit of the screens reachable without changing data: creation form, day view, trip outline, chat, review plan, plan history and the library. The shared header label "/ your journey" had 3.5 to 3.75:1 at the start; it is now covered by the earlier `workspace.css` change and passes. The one remaining known issue is a heading-order skip in the arrival transfer card on day 1 (an h3 without a preceding h2 in that section), which I have not changed. Frontend suite (210) and build pass; not seen by eye.
 
+### Heading order on the day-1 transfer card (20 November 2026, later)
+
+The one remaining axe finding was a heading skip: the day title is an h1 and the arrival and departure cards under it used an h3, skipping the h2 level. The cards' route headings ("Delhi → Jaipur, Rajasthan, India") are now h2, and the stylesheet rule that styled them as h3 covers both. The computed style on the live page is unchanged (16 px, weight 550, 5 px margin), so nothing should look different, and axe now reports no violations on the whole day-1 page, which includes the transfer cards, the stay panel and the map. Frontend tests (210) and build pass. Not seen by eye.
+

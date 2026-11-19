@@ -384,9 +384,9 @@ export default function ItineraryWorkspace({
                       <span aria-hidden="true">↗</span>
                       <div>
                         <small>{label}</small>
-                        <h3>
+                        <h2>
                           {leg.from} → {leg.to}
-                        </h3>
+                        </h2>
                         <p>
                           {pref?.mode || "Transport to decide"}
                           {pref?.hours ? ` · about ${pref.hours} hours` : ""}
