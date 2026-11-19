@@ -776,3 +776,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026. The AI day planner ignored the stay. It now gets the recorded stay as untrusted plain evidence (no coordinates) and, for a located stay, a straight-line `distance_from_stay_km` on each mapped candidate, with a prompt line to prefer nearer places and leave time to return. Validation is unchanged. 4 new backend tests (574 total). A live Groq run through a local worker on the QA trip completed and its proposal was discarded; baseline restored without signing out. Whether the model actually prefers nearer places is not measured. Committed locally; not pushed. See [the learning note](../lodging-learning.md).
 
+## 164. Mention the stay in the chat's route and day answers
+
+20 November 2026. The chat's deterministic answers now include the recorded stay, worded as the traveler's own record, built server-side so the model never sees the stay text. 2 backend tests (576 total); verified live and signed in, baseline restored, session kept. Committed locally; not pushed. See [the learning note](../lodging-learning.md).
+

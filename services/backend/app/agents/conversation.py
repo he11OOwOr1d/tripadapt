@@ -31,6 +31,16 @@ class Decision(StrictModel):
     focus_stop_id: str
 
 
+def stay_note(plan, stop):
+    """Where the traveler says they stay, worded as their own record, never a booking."""
+    preference = plan.preferences.stay_preferences.get(stop.client_id)
+    lodging = preference.lodging if preference else None
+    if lodging is None:
+        return ""
+    booked = ", marked as booked by you" if lodging.booked else ""
+    return f"staying at {lodging.name}{booked}; your own record, not confirmed with the stay"
+
+
 def respond(
     plan, scope, text, history, provider, evidence="sample", lifecycle="planning"
 ):
@@ -401,6 +411,7 @@ def respond(
     if decision.topic == "summary":
         parts = [
             f"{s.name}: {s.desired_nights if s.desired_nights is not None else 'unallocated'} stay nights"
+            + (f" ({stay_note(plan, s)})" if stay_note(plan, s) else "")
             for s in plan.stops[:8]
         ]
         return {
@@ -450,4 +461,6 @@ def respond(
     )
     if len(activities) > 12:
         reply += "\nMore items are visible in Plan."
+    if decision.topic == "day" and stay_note(plan, stop):
+        reply += f"\nYou are {stay_note(plan, stop)}."
     return {"kind": "answer", "text": reply[:2900], "choices": []}

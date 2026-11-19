@@ -13,7 +13,7 @@ from app.config import settings
 from app.jobs.worker import claim, publish_reply
 from app.main import app
 from app.persistence.models import AppUser, ConversationTurn
-from app.trips.schemas import PlanInput
+from app.trips.schemas import Lodging, PlanInput, StayPreference
 
 
 class FakeProvider:
@@ -391,4 +391,75 @@ def test_relaxation_in_another_destination_keeps_the_selected_scope():
         reply["kind"] == "clarify"
         and "Select Udaipur" in reply["text"]
         and reply["choices"] == []
+    )
+
+
+def route_summary(lodging):
+    stop = str(uuid4())
+    plan = PlanInput.model_validate(
+        {
+            "stops": [
+                {
+                    "client_id": stop,
+                    "name": "Jaipur",
+                    "timezone": "UTC",
+                    "desired_nights": 2,
+                }
+            ]
+        }
+    )
+    if lodging:
+        plan.preferences.stay_preferences[stop] = StayPreference(
+            style="", rate="", basis="room", lodging=lodging
+        )
+    return respond(
+        plan,
+        {"stop_logical_id": stop, "local_day_offset": 0},
+        "Summarize my route",
+        [],
+        FakeProvider("answer", "summary"),
+    )["text"]
+
+
+def test_route_summary_mentions_a_recorded_stay_as_the_travelers_own_record():
+    text = route_summary(Lodging(name="Hotel Aurora", booked=True))
+    assert (
+        "Jaipur: 2 stay nights (staying at Hotel Aurora, marked as booked by you;"
+        in text
+    )
+    assert "not confirmed with the stay" in text
+    assert "marked as booked" not in route_summary(Lodging(name="Hotel Aurora"))
+    assert "staying at" not in route_summary(None)
+
+
+def test_day_answer_mentions_the_stay_only_when_one_is_recorded():
+    stop = str(uuid4())
+    plan = PlanInput.model_validate(
+        {
+            "stops": [
+                {
+                    "client_id": stop,
+                    "name": "Jaipur",
+                    "timezone": "UTC",
+                    "desired_nights": 2,
+                }
+            ]
+        }
+    )
+
+    def ask():
+        return respond(
+            plan,
+            {"stop_logical_id": stop, "local_day_offset": 0},
+            "Explain this day",
+            [],
+            FakeProvider("answer", "day"),
+        )["text"]
+
+    assert "staying at" not in ask()
+    plan.preferences.stay_preferences[stop] = StayPreference(
+        style="", rate="", basis="room", lodging=Lodging(name="Hotel Aurora")
+    )
+    assert ask().endswith(
+        "You are staying at Hotel Aurora; your own record, not confirmed with the stay."
     )
