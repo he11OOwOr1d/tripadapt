@@ -968,3 +968,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 ## 211. Fix the layout of the road-time and calendar panels
 
 20 November 2026. First real screenshots (headless Chrome) showed the two new panels in the whole-trip view squeezed into flex rows. Now stacked blocks. The day view with two stays on day 3 also looks coherent. 261 frontend tests, typecheck and build pass. Phone (390 px) overview and day 3 also viewed: panels stacked, no horizontal overflow. Committed locally; not pushed.
+
+## 212. Look at the stay pins on a real map
+
+20 November 2026. With two mapped stays in a guest draft (no network lookups apart from map tiles) the day map shows two pins; clicking one turns it orange and the status line names the stay and its nights. The two pins look the same, so they are told apart only by hover text, a click or the status line; I left that as is. No code changed. Committed locally; not pushed.
