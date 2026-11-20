@@ -952,3 +952,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026. Closed the three gaps left by phase 3 on the disposable trip: both stays are offered in the fresh-start check, a real Groq proposal for a stay-change day cited "returning to the evening stay", and the restore review lists both stays (and showed "nights 1" for one night, now fixed). Accepted one proposal on the disposable trip to get a restorable version (it stays in its history). 252 frontend tests pass. Committed locally; not pushed.
 
+## 208. Check the several-stays and journey-lock UI at phone width
+
+20 November 2026. At 390 px the stay panels and forms and the journey form have no overflow and no short controls, and axe is clean. No code changed; stays removed. Committed locally; not pushed.
+

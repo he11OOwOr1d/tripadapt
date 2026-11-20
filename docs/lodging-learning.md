@@ -232,3 +232,7 @@ On the disposable trip (Jaipur, 2 nights) with two searched stays, ITC Rajputana
 
 Afterwards I removed the five accepted activities and both stays. The accepted version (version 3) stays in that trip's history because accepted versions cannot be removed; the trip is disposable. Two mistakes of mine along the way, noted for honesty: I force-closed dialogs from the script, which desynchronised the page until I reloaded it, and my first attempt to read the proposal missed because of that. Not verified: the hosted app, a screenshot.
 
+### Phone check of the several-stays UI (20 November 2026)
+
+AGENTS.md asks for phone checks when layout changes, and the several-stays panels, the stay lock and reference fields, and the journey lock had only been audited at desktop width. At 390 px on the disposable trip, with a main stay whose name was deliberately long and a second stay for night 2: the closed panels, the open stay form (both night fields, the booked checkbox, the lock and the reference) and the open journey form all had no horizontal overflow (panels end at 338 px, the journey form at 288 px) and no input or button under 44 px (the checkboxes sit inside 44 px labels); axe with the WCAG 2.0 to 2.2 and best-practice rules reported nothing for either form. I removed both stays afterwards. Not verified: a real touch device and a screenshot.
+
