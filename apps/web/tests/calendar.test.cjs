@@ -68,3 +68,27 @@ test('a journey between two destinations needs a recorded time and uses each end
   const first=planning.routeLegs(base)[0].key;
   assert.equal(c.icsCalendar(trip({stops:base.stops,travelPreferences:{[first]:{mode:'Air',hours:'',overnight:0,rate:'',basis:'person',departure:'08:00',arrival:'10:00'}}}),now),null);
 });
+test('malformed times skip that event instead of breaking the file, and a lone carriage return is escaped',()=>{
+  const r=c.icsCalendar(trip({activities:[act('Good','s1',1,'10:00',60),act('NoTime','s1',1,'',60),act('Odd','s1',1,'TBD',60),act('Zero','s1',1,'11:00',0),act('Nan','s1',1,'11:00',NaN),act('Old\rMac','s1',2,'09:00',30)]}),now);
+  const t=unfold(r.text);
+  assert.equal(r.events,2);assert.match(t,/SUMMARY:Good/);assert.doesNotMatch(t,/NoTime|Odd|Zero|Nan/);
+  assert.match(t,/SUMMARY:Old\\nMac/);assert.ok(!/\r(?!\n)/.test(r.text));
+  const base=trip({stops:[stop('s1','Jaipur',2),stop('s2','Agra',1)]});
+  const key=planning.routeLegs(base)[1].key;
+  const bad=(p)=>trip({stops:base.stops,travelPreferences:{[key]:{mode:'',hours:'',overnight:0,rate:'',basis:'person',...p}}});
+  assert.equal(c.icsCalendar(bad({departure:'9:0',arrival:'12:00'}),now),null);
+  assert.equal(c.icsCalendar(bad({departure:'25:00'}),now),null);
+});
+test('a journey keeps the same id when stops are added elsewhere, and an unnamed stay still has a title',()=>{
+  const a=trip({stops:[stop('s1','Jaipur',2),stop('s2','Agra',1)]});
+  const key=(t)=>planning.routeLegs(t).find(l=>l.key.includes('s1')&&l.key.includes('s2')).key;
+  const with3=trip({stops:[stop('s0','Delhi',1),stop('s1','Jaipur',2),stop('s2','Agra',1)]});
+  const mk=(t)=>trip({stops:t.stops,travelPreferences:{[key(t)]:{mode:'',hours:'',overnight:0,rate:'',basis:'person',departure:'09:00',arrival:'10:00'}}});
+  const idOf=(t)=>unfold(c.icsCalendar(mk(t),now).text).match(/UID:(journey-[^@]+)@/)[1];
+  assert.equal(idOf(a),'journey-s1-s2');assert.equal(idOf(with3),'journey-s1-s2');
+  const noName=unfold(c.icsCalendar(trip({stayPreferences:{s1:{style:'',rate:'',basis:'room',lodging:{name:'',address:'Old Town'}}}}),now).text);
+  assert.match(noName,/SUMMARY:Stay: where you are staying/);
+  const beyond=c.icsCalendar(trip({stayPreferences:{s1:{style:'',rate:'',basis:'room',lodging:{name:'Far',first_night:5,last_night:6}}}}),now);
+  assert.equal(beyond,null);
+});
+

@@ -23,7 +23,7 @@ export function zonedToUtc(date: string, time: string, timeZone: string): Date {
 const stamp = (d: Date) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
 const day = (iso: string) => iso.replace(/-/g, "");
 /** RFC 5545 text escaping. */
-export const escapeText = (s: string) => s.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
+export const escapeText = (s: string) => s.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r\n|\r|\n/g, "\\n");
 
 /** Fold a content line at 75 octets, never inside a multi-byte character. */
 export function fold(line: string): string {
@@ -56,25 +56,28 @@ export function icsCalendar(trip: Trip, now: Date = new Date()): CalendarResult 
   const events: string[][] = [];
   const note = "From your Elsewhere plan. Times and places are your plan, not confirmed bookings.";
   const stampNow = stamp(now);
-  const add = (uid: string, lines: string[]) => events.push(["BEGIN:VEVENT", `UID:${uid}@elsewhere.local`, `DTSTAMP:${stampNow}`, ...lines, "END:VEVENT"]);
+  const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
+  const valid = (...d: Date[]) => d.every((x) => !Number.isNaN(x.valueOf()));
+  const add = (uid: string, lines: string[]) => events.push(["BEGIN:VEVENT", `UID:${uid.replace(/[^A-Za-z0-9._-]/g, "-")}@elsewhere.local`, `DTSTAMP:${stampNow}`, ...lines, "END:VEVENT"]);
 
   for (const s of schedule) {
     const activities = trip.activities.filter((a) => a.stopId === s.stop.id && !a.skipped);
     for (const a of activities) {
       const date = provisionalDate(trip, s.arrivalDay + a.day - 1);
-      if (!date) continue;
+      if (!date || !TIME.test(a.start) || !Number.isFinite(a.minutes) || a.minutes <= 0) continue;
       const start = zonedToUtc(date, a.start, s.stop.timezone);
       const end = new Date(start.getTime() + a.minutes * 60000);
+      if (!valid(start, end)) continue;
       add(`activity-${a.id}`, [`DTSTART:${stamp(start)}`, `DTEND:${stamp(end)}`, `SUMMARY:${escapeText(a.title)}`, `LOCATION:${escapeText(a.place?.name ?? s.stop.name)}`, `DESCRIPTION:${escapeText(sentences([s.stop.name, note]))}`]);
     }
     const pref = trip.stayPreferences?.[s.stop.id];
     for (const stay of staysOf(pref)) {
       const span: [number, number] | null = stay.first_night != null && stay.last_night != null ? [stay.first_night, stay.last_night] : unclaimedSpan(pref, stay, s.stop.nights);
-      if (!span || s.stop.nights < 1) continue;
+      if (!span || s.stop.nights < 1 || span[0] > s.stop.nights) continue;
       const inDate = provisionalDate(trip, s.arrivalDay + span[0] - 1), outDate = provisionalDate(trip, s.arrivalDay + Math.min(span[1], s.stop.nights));
       if (!inDate || !outDate) continue;
       const times = [stay.check_in && `check-in from ${stay.check_in}`, stay.check_out && `check-out by ${stay.check_out}`].filter(Boolean).join(", ");
-      add(`stay-${s.stop.id}-${span[0]}`, [`DTSTART;VALUE=DATE:${day(inDate)}`, `DTEND;VALUE=DATE:${day(outDate)}`, `SUMMARY:${escapeText(`Stay: ${stay.name}`)}`, `LOCATION:${escapeText(stay.address || s.stop.name)}`, `DESCRIPTION:${escapeText(sentences([times, stay.reference && `Your reference: ${stay.reference}`, stay.booked ? "You marked this as booked" : "Not marked as booked", note]))}`]);
+      add(`stay-${s.stop.id}-${span[0]}`, [`DTSTART;VALUE=DATE:${day(inDate)}`, `DTEND;VALUE=DATE:${day(outDate)}`, `SUMMARY:${escapeText(`Stay: ${stay.name || "where you are staying"}`)}`, `LOCATION:${escapeText(stay.address || s.stop.name)}`, `DESCRIPTION:${escapeText(sentences([times, stay.reference && `Your reference: ${stay.reference}`, stay.booked ? "You marked this as booked" : "Not marked as booked", note]))}`]);
     }
   }
 
@@ -84,6 +87,7 @@ export function icsCalendar(trip: Trip, now: Date = new Date()): CalendarResult 
     if (i < 1 || i >= schedule.length) return;
     const pref = trip.travelPreferences?.[leg.key];
     if (!pref || (!pref.departure && !pref.arrival)) return;
+    if ((pref.departure && !TIME.test(pref.departure)) || (pref.arrival && !TIME.test(pref.arrival))) return;
     const from = schedule[i - 1], to = schedule[i];
     const departDate = provisionalDate(trip, to.arrivalDay - (pref.overnight ?? 0)), arriveDate = provisionalDate(trip, to.arrivalDay);
     if (!departDate || !arriveDate) return;
@@ -93,12 +97,14 @@ export function icsCalendar(trip: Trip, now: Date = new Date()): CalendarResult 
       const start = zonedToUtc(departDate, pref.departure, from.stop.timezone);
       let end = zonedToUtc(arriveDate, pref.arrival, to.stop.timezone);
       if (end <= start) end = zonedToUtc(addDays(arriveDate, 1), pref.arrival, to.stop.timezone);
-      add(`journey-${i}`, [`DTSTART:${stamp(start)}`, `DTEND:${stamp(end)}`, `SUMMARY:${escapeText(title)}`, `DESCRIPTION:${escapeText(details)}`]);
+      if (!valid(start, end)) return;
+      add(`journey-${from.stop.id}-${to.stop.id}`, [`DTSTART:${stamp(start)}`, `DTEND:${stamp(end)}`, `SUMMARY:${escapeText(title)}`, `DESCRIPTION:${escapeText(details)}`]);
     } else {
       const point = pref.departure ?? pref.arrival ?? "00:00";
       const zone = pref.departure ? from.stop.timezone : to.stop.timezone;
       const start = zonedToUtc(pref.departure ? departDate : arriveDate, point, zone);
-      add(`journey-${i}`, [`DTSTART:${stamp(start)}`, `DTEND:${stamp(new Date(start.getTime() + 15 * 60000))}`, `SUMMARY:${escapeText(`${pref.departure ? "Departs" : "Arrives"}: ${title}`)}`, `DESCRIPTION:${escapeText(details)}`]);
+      if (!valid(start)) return;
+      add(`journey-${from.stop.id}-${to.stop.id}`, [`DTSTART:${stamp(start)}`, `DTEND:${stamp(new Date(start.getTime() + 15 * 60000))}`, `SUMMARY:${escapeText(`${pref.departure ? "Departs" : "Arrives"}: ${title}`)}`, `DESCRIPTION:${escapeText(details)}`]);
     }
   });
   if (!events.length) return null;

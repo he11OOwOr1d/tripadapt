@@ -1,14 +1,17 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Trip } from "../../lib/trips/adapter";
 import { icsCalendar } from "../../lib/trips/calendar";
 
 /** A calendar file of the plan, made on this device. Nothing is uploaded and nothing in the plan changes. */
 export default function CalendarExport({ trip }: { trip: Trip }) {
   const [notice, setNotice] = useState("");
+  // A count or a message about an earlier plan would be wrong once the plan changes.
+  useEffect(() => { setNotice(""); }, [trip]);
   const dated = trip.mode === "exact" && /^\d{4}-\d{2}-\d{2}$/.test(trip.start);
   function download() {
-    const result = icsCalendar(trip);
+    let result: ReturnType<typeof icsCalendar>;
+    try { result = icsCalendar(trip); } catch { setNotice("The calendar file could not be made from this plan. Nothing was changed."); return; }
     if (!result) { setNotice("There is nothing to put in a calendar yet. Add activities, a stay, or a journey with a departure or arrival time."); return; }
     const blob = new Blob([result.text], { type: "text/calendar;charset=utf-8" });
     const url = URL.createObjectURL(blob);

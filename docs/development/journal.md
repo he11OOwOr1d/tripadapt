@@ -960,3 +960,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026. "See the whole trip" can download a .ics of activities, stays and journeys, made in the browser for trips with exact dates. A check against an independent validator found unescaped semicolons that my own test had mirrored (fixed). 258 frontend tests pass; verified live on the disposable trip (file intercepted, 2 events, axe clean). Not verified in a real calendar app. Committed locally; not pushed. See [the calendar note](../calendar-export-learning.md).
 
+## 210. Fix what the review of the calendar export found
+
+20 November 2026. Malformed items are skipped instead of breaking the file (with a message on failure), journey ids are stable, line breaks and ids are sanitized, an unnamed stay has a title, and the notice clears when the plan changes. 260 frontend tests pass. Committed locally; not pushed.
+

@@ -21,3 +21,16 @@
 - **A bug the tests had hidden.** I checked a generated sample against a small independent validator (CRLF, 75-octet lines, balanced events, and no unescaped comma, semicolon or backslash in any text field). It showed semicolons were not escaped: the code and its own test both wrote `"\;"`, which JavaScript reads as a plain `;`, so the test agreed with the bug. Both now use `"\;"`, and the validator reports nothing wrong on a sample with commas, semicolons, backslashes, accents and a snowman in every text field. Lesson recorded: a test written from the same belief as the code can pass on a bug; check output against something independent.
 - **Live, signed in, on the disposable trip** (exact dates 4 to 7 December): with a booked stay (reference and times) and a booked journey Jaipur to Agra (departs 09:00, arrives 12:30), the button reported "Downloaded 2 events" and the file, intercepted from the page, held the stay (4 to 6 December, all-day) and the journey (03:30 to 07:00 UTC, which is 09:00 to 12:30 India time). Axe found no violations and the button is 44 px tall. I removed the stay and journey details afterwards.
 - **Not verified:** that Google Calendar, Apple Calendar or Outlook accept the file (none was available; the independent check is structural, not a real import), a real browser download to disk (the file was captured before saving), and a screenshot.
+
+## Review follow-up (20 November 2026)
+
+A review of the calendar commit found, and I fixed:
+
+- **One bad item could break the whole download.** An activity with an empty or malformed start time, a zero or non-numeric length, or a journey with a half-typed time produced an invalid date and the export threw with no message. Such items are now skipped, the rest of the file is still made, and if anything else goes wrong the page says "The calendar file could not be made from this plan. Nothing was changed." instead of failing silently.
+- **Journey ids were positional.** A journey's id was its position in the route, so adding a stop earlier would hand its id to a different journey and a re-import into a calendar app would overwrite the wrong event. It is now built from the two stops' ids (`journey-<from>-<to>`), checked by adding a stop elsewhere.
+- **A lone carriage return** in a title or note was not escaped and would break a line; line breaks of every kind are now escaped. A test of this found a second hole the review did not name: the event id used the raw activity id, so a control character there reached the file. Ids are now reduced to letters, digits, dot, dash and underscore.
+- **An unnamed stay** reads "Stay: where you are staying" instead of a blank title, and a stay whose first night is beyond the destination's nights is left out instead of being given dates outside it.
+- **A stale notice.** "Downloaded 5 events." stayed on screen after the plan changed; it is now cleared whenever the plan changes.
+
+260 frontend tests pass (2 new for these cases); typecheck and build pass. Not re-run live (pure-function changes covered by tests and the independent validator).
+
