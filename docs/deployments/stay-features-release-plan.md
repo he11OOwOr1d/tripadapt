@@ -40,4 +40,4 @@ Use a dedicated QA trip, record its baseline, restore it afterwards, and do not 
 
 ## Known gaps carried into the release
 
-No screenshot of any of this has been seen; the hosted app has not been checked; the restore-review stay line is type-checked only; whether the AI prefers nearer places is unmeasured; a first visit before 00:30 and states needing more data than the QA trip were not exercised.
+Screenshots of the day view (days 1 and 3), the whole-trip view and the two-stay day were looked at on the local app (desktop and 390 px, guest draft, no network lookups), which found and fixed one layout bug; the map pin, the chat and the signed-in states have not been seen in a screenshot; the hosted app has not been checked; the restore-review stay line is type-checked only; whether the AI prefers nearer places is unmeasured; a first visit before 00:30 and states needing more data than the QA trip were not exercised.
