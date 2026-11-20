@@ -5,9 +5,9 @@ import { activitySearchAdapter, type ActivityPlace, type ActivitySearch } from "
 import { LODGING_ADDRESS_MAX, LODGING_NAME_MAX, isLodging, lodgingFromPlace, lodgingSummary, stayCostLines, bookedNightsNote, type Lodging } from "../../lib/trips/lodging";
 import PlaceAttribution from "./PlaceAttribution";
 
-type Draft = { name: string; address: string; check_in: string; check_out: string; booked: boolean; booked_nights: string; first_night: string; last_night: string; place?: ActivityPlace };
+type Draft = { name: string; address: string; check_in: string; check_out: string; booked: boolean; locked: boolean; booked_nights: string; first_night: string; last_night: string; place?: ActivityPlace };
 
-const fromLodging = (l?: Lodging | null): Draft => ({ name: l?.name ?? "", address: l?.address ?? "", check_in: l?.check_in ?? "", check_out: l?.check_out ?? "", booked: l?.booked === true, booked_nights: l?.booked_nights ? String(l.booked_nights) : "", first_night: l?.first_night != null ? String(l.first_night) : "", last_night: l?.last_night != null ? String(l.last_night) : "" });
+const fromLodging = (l?: Lodging | null): Draft => ({ name: l?.name ?? "", address: l?.address ?? "", check_in: l?.check_in ?? "", check_out: l?.check_out ?? "", booked: l?.booked === true, locked: l?.locked === true, booked_nights: l?.booked_nights ? String(l.booked_nights) : "", first_night: l?.first_night != null ? String(l.first_night) : "", last_night: l?.last_night != null ? String(l.last_night) : "" });
 
 /** Where the traveler sleeps in this destination. Their record, never a booking or a price. */
 export default function LodgingPanel({ stop, lodging, onSave, disabled = false, costs, currency = "", dates, title = "Where you’re staying", addLabel = "Add where you’re staying", range, startOpen = false, onDone, expectedNights, taken = [] }: {
@@ -82,7 +82,7 @@ export default function LodgingPanel({ stop, lodging, onSave, disabled = false, 
     }
     const { booked_nights: _drop, first_night: _f, last_night: _l, ...rest } = base;
     void _drop; void _f; void _l;
-    const next: Lodging = { ...rest, ...nightRange, name, address: draft.address.trim(), booked: draft.booked, check_in: draft.check_in, check_out: draft.check_out, ...(draft.booked && nightsText !== "" ? { booked_nights: Number(nightsText) } : {}) };
+    const next: Lodging = { ...rest, ...nightRange, name, address: draft.address.trim(), booked: draft.booked, ...(draft.locked ? { locked: true } : {}), check_in: draft.check_in, check_out: draft.check_out, ...(draft.booked && nightsText !== "" ? { booked_nights: Number(nightsText) } : {}) };
     if (!isLodging(next)) { setError("Enter a name up to 120 characters, with plain text only."); return; }
     onSave(next);
     setNotice(`Saved ${name}. This is your own record: no booking was made or checked.`);
@@ -121,6 +121,8 @@ export default function LodgingPanel({ stop, lodging, onSave, disabled = false, 
         <label>Check-out<input type="time" value={draft.check_out} onChange={(e) => setDraft({ ...draft, check_out: e.target.value })} /></label>
       </div>
       <label className="lodging-booked"><input type="checkbox" checked={draft.booked} onChange={(e) => setDraft({ ...draft, booked: e.target.checked, ...(e.target.checked ? {} : { booked_nights: "" }) })} /> I have booked this myself</label>
+      <label className="lodging-booked"><input type="checkbox" checked={draft.locked} onChange={(e) => setDraft({ ...draft, locked: e.target.checked })} /> Keep this stay fixed</label>
+      <small>A fixed stay keeps its nights: “Change nights between stays” will not change them until you untick this. It is not a booking and nothing is reserved.</small>
       {draft.booked && <label>Nights you booked (optional)<input inputMode="numeric" value={draft.booked_nights} onChange={(e) => setDraft({ ...draft, booked_nights: e.target.value })} /></label>}
       <small>This only records what you tell us. The app cannot confirm a booking. If you enter the nights you booked, you are told when your plan no longer matches.</small>
       {stop.location ? <div className="lodging-search">

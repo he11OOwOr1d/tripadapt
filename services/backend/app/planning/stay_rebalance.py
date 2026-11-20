@@ -104,6 +104,18 @@ def rebalance_stays(plan: PlanInput, body: RebalanceInput):
                 f"{stops[client_id].name} doesn't have enough nights to give.",
             )
 
+    for stop in plan.stops:
+        if new_nights[stop.client_id] == stop.desired_nights:
+            continue
+        for stay in stays_of(plan.preferences.stay_preferences.get(stop.client_id)):
+            if stay.locked:
+                raise RebalanceConflict(
+                    "REBALANCE_STAY_LOCKED",
+                    f"Your stay \u201c{stay.name}\u201d in {stop.name} is kept fixed, so its "
+                    "nights are not changed automatically. Unlock it in the stay panel "
+                    "first, or choose other stays. Nothing changed.",
+                )
+
     # A stay with N nights spans local day offsets 0..N (arrival to departure).
     displaced = [
         a

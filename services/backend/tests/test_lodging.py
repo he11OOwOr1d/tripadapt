@@ -228,3 +228,9 @@ def test_a_single_stay_without_a_range_is_unchanged():
     assert stays(dict(name="Haveli")).extra_lodgings == []
     with pytest.raises(ValidationError):
         Lodging.model_validate(dict(name="A", first_night=2))
+
+
+def test_a_stay_is_not_locked_by_default_and_a_lock_is_not_a_booking():
+    assert stay(name="Haveli").lodging.locked is False
+    locked = stay(name="Haveli", locked=True).lodging
+    assert locked.locked is True and locked.booked is False

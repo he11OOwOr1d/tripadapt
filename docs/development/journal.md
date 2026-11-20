@@ -928,3 +928,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026. Kept the main stay's night fields available (no silent range loss), told the AI planner about tonight's stay on a stay-change day, made the other-stay panels stable and distinguishable, removed a duplicate comment. 638 backend and 248 frontend tests pass; not re-run live. Committed locally; not pushed.
 
+## 202. Let a stay be kept fixed
+
+20 November 2026. PRD FR-07: a lock is separate from a booking. Stays get "Keep this stay fixed"; "Change nights between stays" refuses to alter a destination with a locked stay until it is unlocked. 640 backend and 249 frontend tests pass; verified live and signed in (blocked, then allowed after unlocking, axe clean, stay removed). Journeys are not lockable yet. Committed locally; not pushed. See [the learning note](../lodging-learning.md).
+

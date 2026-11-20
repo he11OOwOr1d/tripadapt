@@ -8120,6 +8120,11 @@
             "title": "Booked",
             "default": false
           },
+          "locked": {
+            "type": "boolean",
+            "title": "Locked",
+            "default": false
+          },
           "booked_nights": {
             "anyOf": [
               {

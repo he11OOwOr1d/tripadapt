@@ -199,3 +199,11 @@ Reviewed and left as is: when "Change nights between stays" shortens a destinati
 
 638 backend and 248 frontend tests pass; typecheck and build pass. Not re-run live.
 
+### Keeping a stay fixed (20 November 2026)
+
+PRD FR-07 separates **locking** from **booking**: an item marked "keep fixed" must not be changed by automatic replanning unless the traveler unlocks it, and a lock "does not make an activity a confirmed booking". Activities had that; stays did not. Each stay now has **Keep this stay fixed** (a `locked` flag on the stay record, no migration), independent of "I have booked this myself", with the text "A fixed stay keeps its nights: "Change nights between stays" will not change them until you untick this. It is not a booking and nothing is reserved." The summary says "kept fixed".
+
+The only automatic change to a stay's nights is "Change nights between stays", so that is where the lock bites: if the change would alter a destination that has a locked stay (main or other), it is refused before anything is computed, with 'Your stay "Fixed Haveli" in Jaipur is kept fixed, so its nights are not changed automatically. Unlock it in the stay panel first, or choose other stays. Nothing changed.' A change that leaves the locked stay's destination alone is unaffected, and unlocking lets the same change through. Booked and locked are independent: a booked stay is warned about, a fixed one is protected, and a stay can be either, both or neither.
+
+Verification: backend tests for the default, for lock not implying booked, and for the rebalance (blocked with the stay's and destination's names, allowed when another destination changes, allowed once unlocked; 640 backend tests) and a frontend test for the validator and summary (249 frontend tests); typecheck and build. Live, signed in, on the disposable trip: with a fixed stay, previewing "remove 1 night" showed "This needs your decision" with the message above and nothing changed; after unticking the lock the same preview came back ("Jaipur: 2 to 1 nights"), I cancelled without applying, axe found no violations, and I removed the stay. Not done: locking a journey (the PRD also lists transfers), which no automatic change touches today.
+

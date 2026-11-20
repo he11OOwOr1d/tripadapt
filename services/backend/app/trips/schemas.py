@@ -37,6 +37,10 @@ class Lodging(StrictModel):
     # traveler's reported location. Server-checked wherever it is used.
     place_id: UUID | None = None
     booked: bool = False
+    # "Keep fixed": automatic changes to this stay's nights are refused until the
+    # traveler unlocks it. Separate from booked: a lock protects the plan's details,
+    # it does not make the stay a confirmed booking.
+    locked: bool = False
     # How many nights the traveler's own booking covers, as they entered it, so a
     # later change to the plan's nights can be flagged. Never checked with the supplier.
     booked_nights: int | None = Field(default=None, ge=1, le=365)

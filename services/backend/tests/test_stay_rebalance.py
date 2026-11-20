@@ -157,6 +157,37 @@ def test_only_the_booked_stays_whose_nights_actually_change_are_flagged():
     ] == [("Hostel", 2, 1)]
 
 
+def test_a_locked_stay_blocks_a_change_to_its_nights_until_unlocked():
+    p, one, two, _ = plan()
+    prefs = p.preferences.stay_preferences
+    prefs[one] = prefs[one].model_copy(
+        update=dict(
+            extra_lodgings=[
+                Lodging(name="Hostel", first_night=4, last_night=4, locked=True)
+            ]
+        )
+    )
+    # Jaipur would change from 4 to 3 nights.
+    with pytest.raises(RebalanceConflict) as blocked:
+        rebalance_stays(p, RebalanceInput(stop_id=two, delta_nights=1, counterpart=one))
+    assert blocked.value.code == "REBALANCE_STAY_LOCKED"
+    assert "Hostel" in blocked.value.detail and "Jaipur" in blocked.value.detail
+    # A change that leaves the locked stay's destination alone is fine.
+    rebalance_stays(
+        p, RebalanceInput(stop_id=two, delta_nights=1, counterpart="trip_length")
+    )
+    # Unlocked, the same change goes through.
+    prefs[one] = prefs[one].model_copy(
+        update=dict(
+            extra_lodgings=[Lodging(name="Hostel", first_night=4, last_night=4)]
+        )
+    )
+    candidate, _ = rebalance_stays(
+        p, RebalanceInput(stop_id=two, delta_nights=1, counterpart=one)
+    )
+    assert [s.desired_nights for s in candidate.stops] == [3, 5]
+
+
 def test_shrinking_a_stay_never_drops_activities_silently():
     p, one, two, acts = plan()
     body = dict(stop_id=one, delta_nights=1, counterpart=two)

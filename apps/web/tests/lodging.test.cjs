@@ -134,3 +134,11 @@ test('a stay without nights spans the unclaimed nights when they form one run',(
   assert.equal(out.unclaimedSpan({lodging:main,extra_lodgings:[{name:'B',first_night:2,last_night:2}]},main,3),null,'split run');
   assert.equal(out.unclaimedSpan({lodging:main,extra_lodgings:[{name:'B',first_night:1,last_night:2}]},main,2),null,'nothing left');
 });
+test('a fixed stay is validated, shown in the summary, and is not a booking',()=>{
+  assert.equal(out.isLodging({name:'A',locked:true}),true);
+  assert.equal(out.isLodging({name:'A',locked:false}),true);
+  for(const bad of ['yes',1,null])assert.equal(out.isLodging({name:'A',locked:bad}),false,String(bad));
+  assert.equal(out.lodgingSummary({name:'Haveli',locked:true}),'Haveli · not marked as booked · kept fixed');
+  assert.equal(out.lodgingSummary({name:'Haveli',locked:true,booked:true,booked_nights:2,check_in:'14:00'}),'Haveli · marked as booked by you for 2 nights · kept fixed · check-in 14:00');
+  assert.equal(out.lodgingSummary({name:'Haveli',locked:false}),'Haveli · not marked as booked');
+});
