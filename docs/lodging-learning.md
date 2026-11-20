@@ -147,3 +147,13 @@ Verification: backend tests for the field (valid, optional, invalid 0, 366 and n
 - **Verification.** A backend test (a booked stay whose nights change is listed with its entered nights; an unbooked one and an unchanged one are not; 623 backend tests pass) and a frontend test of the reply validator (optional, empty, with and without entered nights, malformed entries refused; 238 frontend tests pass). Live, signed in, on the disposable trip: with a booked 2-night stay in Jaipur, previewing "remove 1 night, shorten the trip" showed the "Check your booking" line with the right numbers and the standard draft notice; I cancelled without applying, then removed the stay. Axe found one existing issue, the preview's headings were h4 directly under an h2 (heading-order); they are now h3, after which axe reports nothing with the preview open.
 - **Not verified:** applying a change (not tried, to keep the disposable trip's nights), the hosted app, and a screenshot.
 
+### Review follow-up on booked nights and the timeline (20 November 2026)
+
+A review of the booked-nights, rebalance-warning and timeline commits found three things worth fixing, now fixed:
+
+- **The rebalance warning disagreed with the stay panel.** The preview said "Check your booking" for every booked stay whose nights changed, even when the new nights now equaled the nights the traveler booked, while the stay panel showed no warning for the same state. The preview now skips a stay whose new nights match its entered booked nights (backend test: a 4-night stay booked for 3 that is rebalanced to 3 is not listed).
+- **Overlapping timeline rows.** With inconsistent recorded times (an arrival later than the departure on the same day) the journey rows could overlap and hide the open gap. The split now computes before-arrival, open and after-departure intervals from the gap's own bounds, never overlapping, and a gap that starts after the departure is all journey time (two frontend tests).
+- **Stale nights text.** Typing an invalid "nights you booked", unchecking "booked" and saving dropped it silently, and re-checking brought the old text back. Unchecking now clears the field.
+
+Left as is: the heading level in the rebalance preview (h3 under the panel's h2; axe was clean with it open). 624 backend and 240 frontend tests pass; the build passes. Not re-run in the browser (pure functions and a validation tweak).
+

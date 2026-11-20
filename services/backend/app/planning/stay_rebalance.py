@@ -315,6 +315,8 @@ def rebalance_stays(plan: PlanInput, body: RebalanceInput):
             and (preference := plan.preferences.stay_preferences.get(s.client_id))
             and preference.lodging
             and preference.lodging.booked
+            # A change that lands on the nights the traveler said they booked needs no warning.
+            and preference.lodging.booked_nights != new_nights[s.client_id]
         ],
         notice="A draft change you chose. Stay allowances follow the new nights; "
         "nothing is booked, cancelled or refunded. Review and accept the draft to "

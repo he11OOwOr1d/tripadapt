@@ -92,7 +92,7 @@ export default function LodgingPanel({ stop, lodging, onSave, disabled = false, 
         <label>Check-in<input type="time" value={draft.check_in} onChange={(e) => setDraft({ ...draft, check_in: e.target.value })} /></label>
         <label>Check-out<input type="time" value={draft.check_out} onChange={(e) => setDraft({ ...draft, check_out: e.target.value })} /></label>
       </div>
-      <label className="lodging-booked"><input type="checkbox" checked={draft.booked} onChange={(e) => setDraft({ ...draft, booked: e.target.checked })} /> I have booked this myself</label>
+      <label className="lodging-booked"><input type="checkbox" checked={draft.booked} onChange={(e) => setDraft({ ...draft, booked: e.target.checked, ...(e.target.checked ? {} : { booked_nights: "" }) })} /> I have booked this myself</label>
       {draft.booked && <label>Nights you booked (optional)<input inputMode="numeric" value={draft.booked_nights} onChange={(e) => setDraft({ ...draft, booked_nights: e.target.value })} /></label>}
       <small>This only records what you tell us. The app cannot confirm a booking. If you enter the nights you booked, you are told when your plan no longer matches.</small>
       {stop.location ? <div className="lodging-search">

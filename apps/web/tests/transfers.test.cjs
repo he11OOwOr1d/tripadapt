@@ -98,3 +98,14 @@ test('time taken by a recorded journey shows as travel, not as open time, and ac
   assert.deepEqual(brief(t.splitForJourneys([gap(480,1320)],trp,'missing',1)),['gap 480-1320']);
   assert.match(J(t.splitForJourneys([gap(480,1320)],trp,'s1',1))[0].label,/until your recorded arrival at 10:00/);
 });
+test('inconsistent times never produce overlapping rows',()=>{
+  const one=trip([stop('s1',0)],{},[]);
+  const odd=trip([stop('s1',0)],{[legKey(one,0)]:{mode:'',hours:'',overnight:0,rate:'',basis:'person',arrival:'18:00'},[legKey(one,1)]:{mode:'',hours:'',overnight:0,rate:'',basis:'person',departure:'09:00'}},[]);
+  const rows=J(t.splitForJourneys([{type:'gap',start:480,end:1320}],odd,'s1',1));
+  for(let i=1;i<rows.length;i++)assert.ok(rows[i].start>=rows[i-1].end,JSON.stringify(rows));
+  assert.equal(rows.some(r=>r.type==='gap'),false);
+  // a gap that starts after the departure is all journey
+  const late=trip([stop('s1',0)],{[legKey(one,1)]:{mode:'',hours:'',overnight:0,rate:'',basis:'person',departure:'10:00'}},[]);
+  assert.deepEqual(J(t.splitForJourneys([{type:'gap',start:660,end:1080}],late,'s1',1)),[{type:'journey',start:660,end:1080,label:'On the move from your recorded departure at 10:00'}]);
+});
+

@@ -908,3 +908,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026. Open gaps before a recorded arrival (first day) and after a recorded departure (last day) now read as "On the move" instead of "time to leave open"; activities are untouched. One pure function, 239 frontend tests; verified live and signed in, axe clean, arrival removed afterwards. Committed locally; not pushed. See [the booking note](../transfer-bookings-learning.md).
 
+## 197. Fix what the review of the nights and timeline work found
+
+20 November 2026 (resumed after a gap; the clock showed the 5-hour mark had passed, and the stop hook asked for active work up to it, so I resumed active work). The rebalance warning now matches the stay panel when the new nights equal the booked nights, the timeline split no longer overlaps on inconsistent times, and unchecking "booked" clears stale nights text. 624 backend and 240 frontend tests pass. Committed locally; not pushed.
+

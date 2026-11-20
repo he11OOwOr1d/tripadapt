@@ -99,14 +99,14 @@ export function splitForJourneys(entries: DayEntry[], trip: Trip, stopId: string
   const out: DayEntry[] = [];
   for (const entry of entries) {
     if (entry.type !== "gap") { out.push(entry); continue; }
-    let { start, end } = entry;
-    if (arrival && start < arrive) {
-      out.push({ type: "journey", start, end: Math.min(end, arrive), label: `On the move until your recorded arrival at ${arrival}` });
-      start = Math.min(end, arrive);
-    }
-    const open = start < Math.min(end, leave) ? { type: "gap" as const, start, end: Math.min(end, leave) } : null;
-    if (open) out.push(open);
-    if (departure && end > leave) out.push({ type: "journey", start: Math.max(start, leave), end, label: `On the move from your recorded departure at ${departure}` });
+    const { start, end } = entry;
+    // Three intervals from the gap's own bounds, never overlapping: before the arrival, open, after the departure.
+    const beforeEnd = arrival ? Math.min(end, Math.max(start, arrive)) : start;
+    const openStart = Math.max(start, arrive), openEnd = Math.min(end, leave);
+    const afterStart = departure ? Math.max(start, leave, beforeEnd) : end;
+    if (beforeEnd > start) out.push({ type: "journey", start, end: beforeEnd, label: `On the move until your recorded arrival at ${arrival}` });
+    if (openEnd > openStart && openStart >= beforeEnd && openEnd <= afterStart) out.push({ type: "gap", start: openStart, end: openEnd });
+    if (departure && end > afterStart) out.push({ type: "journey", start: afterStart, end, label: `On the move from your recorded departure at ${departure}` });
   }
   return out;
 }
