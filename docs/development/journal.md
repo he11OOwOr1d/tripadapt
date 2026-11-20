@@ -936,3 +936,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026. The "Change nights between stays" preview now lists booked journeys that fall on a different day, with how far and the traveler's own details. 641 backend and 250 frontend tests pass; verified live and signed in. Committed locally; not pushed. See [the booking note](../transfer-bookings-learning.md).
 
+## 204. Fix what the review of the lock and booked-journey work found
+
+20 November 2026. Confirmed the rebalance is the only automatic writer of nights; the refusal lists every locked stay; the picker flags a destination with a fixed stay; the journey line is tidied. 641 backend and 250 frontend tests pass. Committed locally; not pushed.
+

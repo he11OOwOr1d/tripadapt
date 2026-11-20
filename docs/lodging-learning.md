@@ -207,3 +207,12 @@ The only automatic change to a stay's nights is "Change nights between stays", s
 
 Verification: backend tests for the default, for lock not implying booked, and for the rebalance (blocked with the stay's and destination's names, allowed when another destination changes, allowed once unlocked; 640 backend tests) and a frontend test for the validator and summary (249 frontend tests); typecheck and build. Live, signed in, on the disposable trip: with a fixed stay, previewing "remove 1 night" showed "This needs your decision" with the message above and nothing changed; after unticking the lock the same preview came back ("Jaipur: 2 to 1 nights"), I cancelled without applying, axe found no violations, and I removed the stay. Not done: locking a journey (the PRD also lists transfers), which no automatic change touches today.
 
+### Review follow-up on the lock (20 November 2026)
+
+- **Is the rebalance the only automatic writer of nights?** I searched the backend for everything that sets a destination's nights: besides the rebalance there are only constructors that copy stored values and a read in the cost code. Whole-plan replacement (accepting or restoring a proposal) restores nights as a reviewed, explicit step, and the trip form is the traveler's own manual edit, which the PRD allows ("Users can explicitly unlock or edit it"). So the rebalance is the one automatic path, and the label ("Change nights between stays will not change them") is accurate.
+- **Every locked stay is named at once.** The refusal used to name only the first locked stay found, so a destination with several would need several retries. It now lists all of them ("These stays are kept fixed ... "Haveli" in Jaipur; "Hostel" in Jaipur. Unlock them ...").
+- **The picker says so up front.** A destination that has a stay kept fixed is labelled "has a stay kept fixed" in the "Stay" list, so the refusal is not a surprise.
+- **Cleaner code.** The booked-journey line computes its details once, and the shift calculation uses a safe lookup instead of a possible key error.
+
+641 backend and 250 frontend tests pass; build passes. Not re-run live (a label, a message list and a refactor covered by tests).
+

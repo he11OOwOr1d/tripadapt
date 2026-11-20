@@ -249,7 +249,7 @@ export default function ItineraryWorkspace({
             tripId={timeChangeReview.account.id}
             etag={timeChangeReview.account.versionEtag}
             currency={trip.currency}
-            stops={trip.stops.map((s) => ({ id: s.id, name: s.name, nights: s.nights }))}
+            stops={trip.stops.map((s) => ({ id: s.id, name: s.name, nights: s.nights, locked: staysOf(trip.stayPreferences?.[s.id]).some((x) => x.locked) }))}
             onApplied={async(message,result)=>{await timeChangeReview.onAccepted(message);onRebalanced?.(result);}}
           />
         )}

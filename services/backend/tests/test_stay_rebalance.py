@@ -172,6 +172,27 @@ def test_a_locked_stay_blocks_a_change_to_its_nights_until_unlocked():
         rebalance_stays(p, RebalanceInput(stop_id=two, delta_nights=1, counterpart=one))
     assert blocked.value.code == "REBALANCE_STAY_LOCKED"
     assert "Hostel" in blocked.value.detail and "Jaipur" in blocked.value.detail
+    # Every locked stay is named at once, so one retry is enough.
+    prefs[one] = prefs[one].model_copy(
+        update=dict(
+            lodging=Lodging(name="Haveli", first_night=1, last_night=3, locked=True),
+            extra_lodgings=[
+                Lodging(name="Hostel", first_night=4, last_night=4, locked=True)
+            ],
+        )
+    )
+    with pytest.raises(RebalanceConflict) as both:
+        rebalance_stays(p, RebalanceInput(stop_id=two, delta_nights=1, counterpart=one))
+    assert "Haveli" in both.value.detail and "Hostel" in both.value.detail
+    assert both.value.detail.startswith("These stays are kept fixed")
+    prefs[one] = prefs[one].model_copy(
+        update=dict(
+            lodging=None,
+            extra_lodgings=[
+                Lodging(name="Hostel", first_night=4, last_night=4, locked=True)
+            ],
+        )
+    )
     # A change that leaves the locked stay's destination alone is fine.
     rebalance_stays(
         p, RebalanceInput(stop_id=two, delta_nights=1, counterpart="trip_length")

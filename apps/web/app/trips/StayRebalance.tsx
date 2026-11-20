@@ -3,7 +3,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { costMoney } from "../../lib/trips/cost-coverage";
 import { RebalanceBlocked, rebalanceStays, type RebalanceActivity, type RebalanceRequest, type RebalanceSummary } from "../../lib/trips/stay-rebalance";
 
-type Stop = { id: string; name: string; nights: number };
+type Stop = { id: string; name: string; nights: number; /** A stay here is kept fixed, so its nights are not changed automatically. */ locked?: boolean };
 
 /** Confirmation after apply; names activities that now need a place chosen. */
 export function appliedMessage(result: RebalanceSummary): string {
@@ -115,7 +115,7 @@ export default function StayRebalance({ tripId, etag, currency, stops, onApplied
           Stay
           <select value={stopId} onChange={(e) => { setStopId(e.target.value); if (counterpart === e.target.value) setCounterpart("trip_length"); reset(); }}>
             {stops.map((s, i) => (
-              <option key={s.id} value={s.id}>{`${i + 1}. ${s.name} · ${s.nights} nights`}</option>
+              <option key={s.id} value={s.id}>{`${i + 1}. ${s.name} · ${s.nights} nights${s.locked ? " · has a stay kept fixed" : ""}`}</option>
             ))}
           </select>
         </label>
@@ -210,9 +210,11 @@ export default function StayRebalance({ tripId, etag, currency, stops, onApplied
             ))}
             <li>Your estimates: {costMoney(preview.estimated_before, currency)} → {costMoney(preview.estimated_after, currency)}</li>
             {preview.kept_payments.length > 0 && <li>Kept as recorded payments: {preview.kept_payments.join(", ")}</li>}
-            {(preview.booked_journeys ?? []).map((j) => (
-              <li key={`journey:${j.key}`} className="rebalance-booked"><strong>Check your ticket.</strong> Your journey from {j.origin} to {j.destination}, marked as booked by you{[j.departure && `departs ${j.departure}`, j.arrival && `arrives ${j.arrival}`, j.reference && `reference ${j.reference}`].filter(Boolean).length ? ` (${[j.departure && `departs ${j.departure}`, j.arrival && `arrives ${j.arrival}`, j.reference && `reference ${j.reference}`].filter(Boolean).join(", ")})` : ""}, moves {Math.abs(j.shift_nights)} {Math.abs(j.shift_nights) === 1 ? "night" : "nights"} {j.shift_nights < 0 ? "earlier" : "later"} with this change. Your booking is not changed or checked by this; contact the operator or update it yourself.</li>
-            ))}
+            {(preview.booked_journeys ?? []).map((j) => {
+              const details = [j.departure && `departs ${j.departure}`, j.arrival && `arrives ${j.arrival}`, j.reference && `reference ${j.reference}`].filter(Boolean).join(", ");
+              const n = Math.abs(j.shift_nights);
+              return <li key={`journey:${j.key}`} className="rebalance-booked"><strong>Check your ticket.</strong> Your journey from {j.origin} to {j.destination}, marked as booked by you{details ? ` (${details})` : ""}, moves {n} {n === 1 ? "night" : "nights"} {j.shift_nights < 0 ? "earlier" : "later"} with this change. Your booking is not changed or checked by this; contact the operator or update it yourself.</li>;
+            })}
             {(preview.booked_stays ?? []).map((b, i) => (
               <li key={`booked:${b.stop_id}:${i}`} className="rebalance-booked"><strong>Check your booking.</strong> You marked your stay “{b.stay}” in {b.name} as booked{b.booked_nights ? ` for ${b.booked_nights} ${b.booked_nights === 1 ? "night" : "nights"}` : ""}, and this change moves its nights from {b.nights_before} to {b.nights_after}. Your booking is not changed or checked by this; contact the stay or update it yourself.</li>
             ))}
