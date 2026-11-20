@@ -1068,3 +1068,12 @@ fieldset.live-acceptance { border-inline: 0; min-width: 0; }
 .calendar-export h2 { margin: 0 0 .5rem; }
 .calendar-export p { max-width: 65ch; line-height: 1.5; }
 .calendar-export button { min-height: 44px; padding: .5rem .9rem; font: inherit; }
+/* The overview lays its destination rows out as flex rows; these two panels are stacked blocks. */
+.day-overview > section.route-drives,
+.day-overview > section.calendar-export { display: block; padding: 1rem; border: 1px solid #bdc4b4; }
+.day-overview > section.route-drives > * + *,
+.day-overview > section.calendar-export > * + * { margin-top: .6rem; }
+.day-overview > section.route-drives h2,
+.day-overview > section.calendar-export h2 { margin: 0; }
+.day-overview > section.route-drives p,
+.day-overview > section.calendar-export p { font-size: 13px; }

@@ -34,3 +34,7 @@ A review of the calendar commit found, and I fixed:
 
 260 frontend tests pass (2 new for these cases); typecheck and build pass. Not re-run live (pure-function changes covered by tests and the independent validator).
 
+
+## A layout bug only a screenshot showed (20 November 2026)
+
+The whole-trip view lays its destination rows out as flex rows. The new "Road time across your route" and "Take your plan with you" panels were put in the same container, so their text and buttons were squeezed side by side. Tests, axe and DOM checks all passed; it showed up only when I took real screenshots of the page. Both panels are now stacked bordered blocks (CSS override scoped to `.day-overview`). Lesson: a passing DOM check does not tell you how a page looks. Checked on a desktop screenshot only; the phone-width overview has not been looked at yet.

@@ -964,3 +964,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026. Malformed items are skipped instead of breaking the file (with a message on failure), journey ids are stable, line breaks and ids are sanitized, an unnamed stay has a title, and the notice clears when the plan changes. 260 frontend tests pass. Committed locally; not pushed.
 
+
+## 211. Fix the layout of the road-time and calendar panels
+
+20 November 2026. First real screenshots (headless Chrome) showed the two new panels in the whole-trip view squeezed into flex rows. Now stacked blocks. The day view with two stays on day 3 also looks coherent. 261 frontend tests, typecheck and build pass. Desktop only; phone overview not yet viewed. Committed locally; not pushed.
