@@ -940,3 +940,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026. Confirmed the rebalance is the only automatic writer of nights; the refusal lists every locked stay; the picker flags a destination with a fixed stay; the journey line is tidied. 641 backend and 250 frontend tests pass. Committed locally; not pushed.
 
+## 205. Let a stay carry a confirmation reference
+
+20 November 2026. PRD FR-07: an optional confirmation number or note on a stay, as entered, never checked or sent to the AI. 644 backend and 251 frontend tests pass; verified live and signed in. Committed locally; not pushed.
+

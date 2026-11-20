@@ -19,6 +19,8 @@ export type Lodging = {
   booked?: boolean;
   /** "Keep fixed": the nights of this stay are not changed automatically until the traveler unlocks it. Not a booking. */
   locked?: boolean;
+  /** The traveler's own confirmation number or note, as entered; never checked. */
+  reference?: string;
   /** Nights the traveler's own booking covers, as entered; never checked with the supplier. */
   booked_nights?: number | null;
   /** Which of the destination's nights this stay covers (1-based, inclusive); a stay without a range covers every night no other stay claims. */
@@ -32,6 +34,7 @@ export type StayPreferences = Record<string, { style: string; rate: string; basi
 
 export const LODGING_NAME_MAX = 120;
 export const LODGING_ADDRESS_MAX = 200;
+export const LODGING_REFERENCE_MAX = 100;
 const TIME = /^$|^([01][0-9]|2[0-3]):[0-5][0-9]$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const EXTERNAL = /^((node|way|relation)\/[1-9][0-9]*|geoapify\/[A-Za-z0-9_-]{1,400})$/;
@@ -41,7 +44,7 @@ const plain = (v: unknown, max: number) => typeof v === "string" && v.length <= 
 export function isLodging(value: unknown): value is Lodging {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const l = value as Record<string, unknown>;
-  const allowed = ["name", "address", "latitude", "longitude", "external_id", "source", "place_id", "booked", "locked", "booked_nights", "first_night", "last_night", "check_in", "check_out"];
+  const allowed = ["name", "address", "latitude", "longitude", "external_id", "source", "place_id", "booked", "locked", "reference", "booked_nights", "first_night", "last_night", "check_in", "check_out"];
   const has = (k: string) => l[k] !== undefined && l[k] !== null;
   const mapped = has("latitude") || has("longitude");
   return (
@@ -49,6 +52,7 @@ export function isLodging(value: unknown): value is Lodging {
     plain(l.name, LODGING_NAME_MAX) && String(l.name).trim().length > 0 &&
     (l.address === undefined || plain(l.address, LODGING_ADDRESS_MAX)) &&
     (l.source === undefined || plain(l.source, 120)) &&
+    (l.reference === undefined || plain(l.reference, LODGING_REFERENCE_MAX)) &&
     (l.booked === undefined || typeof l.booked === "boolean") &&
     (l.locked === undefined || typeof l.locked === "boolean") &&
     has("first_night") === has("last_night") &&
@@ -98,7 +102,7 @@ export function lodgingSummary(lodging: Lodging | null | undefined): string {
   const times = [lodging.check_in && `check-in ${lodging.check_in}`, lodging.check_out && `check-out ${lodging.check_out}`].filter(Boolean).join(", ");
   const nights = lodging.booked && lodging.booked_nights ? ` for ${lodging.booked_nights} ${lodging.booked_nights === 1 ? "night" : "nights"}` : "";
   const span = lodging.first_night != null && lodging.last_night != null ? ` · ${range(lodging.first_night, lodging.last_night)}` : "";
-  return `${lodging.name}${span}${lodging.booked ? ` · marked as booked by you${nights}` : " · not marked as booked"}${lodging.locked ? " · kept fixed" : ""}${times ? ` · ${times}` : ""}`;
+  return `${lodging.name}${span}${lodging.booked ? ` · marked as booked by you${nights}` : " · not marked as booked"}${lodging.locked ? " · kept fixed" : ""}${lodging.reference ? ` · reference ${lodging.reference}` : ""}${times ? ` · ${times}` : ""}`;
 }
 
 /**

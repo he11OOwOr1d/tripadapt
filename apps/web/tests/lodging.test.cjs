@@ -142,3 +142,9 @@ test('a fixed stay is validated, shown in the summary, and is not a booking',()=
   assert.equal(out.lodgingSummary({name:'Haveli',locked:true,booked:true,booked_nights:2,check_in:'14:00'}),'Haveli · marked as booked by you for 2 nights · kept fixed · check-in 14:00');
   assert.equal(out.lodgingSummary({name:'Haveli',locked:false}),'Haveli · not marked as booked');
 });
+test('a confirmation reference is plain text up to 100 characters and shown as entered',()=>{
+  assert.equal(out.isLodging({name:'A',reference:'Conf 88/12'}),true);
+  for(const bad of ['x'.repeat(101),'a\nb','a\x07',5,null])assert.equal(out.isLodging({name:'A',reference:bad}),false,String(bad));
+  assert.equal(out.lodgingSummary({name:'Haveli',booked:true,reference:'Conf 88/12'}),'Haveli · marked as booked by you · reference Conf 88/12');
+  assert.equal(out.lodgingSummary({name:'Haveli',reference:''}),'Haveli · not marked as booked');
+});

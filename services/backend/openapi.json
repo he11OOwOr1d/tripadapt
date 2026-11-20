@@ -8125,6 +8125,12 @@
             "title": "Locked",
             "default": false
           },
+          "reference": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Reference",
+            "default": ""
+          },
           "booked_nights": {
             "anyOf": [
               {

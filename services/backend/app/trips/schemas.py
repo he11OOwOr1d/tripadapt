@@ -41,6 +41,9 @@ class Lodging(StrictModel):
     # traveler unlocks it. Separate from booked: a lock protects the plan's details,
     # it does not make the stay a confirmed booking.
     locked: bool = False
+    # The traveler's own confirmation number or note for the booking, as entered.
+    # Never checked, never required, no document upload.
+    reference: str = Field(default="", max_length=100)
     # How many nights the traveler's own booking covers, as they entered it, so a
     # later change to the plan's nights can be flagged. Never checked with the supplier.
     booked_nights: int | None = Field(default=None, ge=1, le=365)
@@ -51,7 +54,7 @@ class Lodging(StrictModel):
     check_in: str = Field(default="", pattern=r"^$|^([01][0-9]|2[0-3]):[0-5][0-9]$")
     check_out: str = Field(default="", pattern=r"^$|^([01][0-9]|2[0-3]):[0-5][0-9]$")
 
-    @field_validator("name", "address", "source")
+    @field_validator("name", "address", "source", "reference")
     @classmethod
     def plain_text(cls, value):
         return no_controls(value)

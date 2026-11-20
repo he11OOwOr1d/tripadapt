@@ -216,3 +216,9 @@ Verification: backend tests for the default, for lock not implying booked, and f
 
 641 backend and 250 frontend tests pass; build passes. Not re-run live (a label, a message list and a refactor covered by tests).
 
+### A confirmation reference on a stay (20 November 2026)
+
+PRD FR-07 asks for optional external confirmation references on committed items, "without requiring document uploads". Journeys had one; stays did not. A stay now has an optional **Confirmation number or note** (up to 100 plain characters, `reference` on the stay record, no migration), shown in the summary ("marked as booked by you, reference Conf 88/12") and prefilled when editing. It is only what the traveler typed: never checked, never required, nothing uploaded, and the same plain-text rule as the rest of the record (no control characters). It is not sent to the AI or the chat.
+
+Verification: backend tests (default empty, a value kept, over-length and control characters refused; 644 backend tests) and a frontend test (validator and summary; 251 frontend tests); typecheck and build. Live, signed in, on the disposable trip: saved "Conf 88/12" on a booked stay, the summary showed it, editing prefilled it, axe found nothing, and I removed the stay.
+

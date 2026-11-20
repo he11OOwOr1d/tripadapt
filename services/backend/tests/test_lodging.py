@@ -68,6 +68,8 @@ def test_a_searched_stay_may_carry_its_retained_place_id():
         dict(
             name="A", place_id="7a5c1f0e-33d8-4a8e-9b7d-0d6e2f7f9a11"
         ),  # no searched place behind it
+        dict(name="A", reference="x" * 101),
+        dict(name="A", reference="PNR\nINJECT"),
         dict(name="A", booked_nights=0),
         dict(name="A", booked_nights=366),
         dict(name="A", booked_nights="many"),
@@ -234,3 +236,8 @@ def test_a_stay_is_not_locked_by_default_and_a_lock_is_not_a_booking():
     assert stay(name="Haveli").lodging.locked is False
     locked = stay(name="Haveli", locked=True).lodging
     assert locked.locked is True and locked.booked is False
+
+
+def test_a_stay_may_carry_the_travelers_own_confirmation_reference():
+    assert stay(name="Haveli").lodging.reference == ""
+    assert stay(name="Haveli", reference="Conf 88/12").lodging.reference == "Conf 88/12"
