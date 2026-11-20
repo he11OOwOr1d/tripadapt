@@ -1064,3 +1064,7 @@ fieldset.live-acceptance { border-inline: 0; min-width: 0; }
 .lodging-add button { min-height: 44px; padding: .6rem .9rem; font: inherit; color: inherit; background: transparent; border: 1px solid currentColor; border-radius: .25rem; cursor: pointer; }
 .lodging-add button:disabled { opacity: .55; cursor: not-allowed; }
 .lodging-add button:focus-visible { outline: 3px solid #476442; outline-offset: 3px; }
+.calendar-export { margin: 1.25rem 0; padding: 1rem; border: 1px solid #bdc4b4; border-radius: .25rem; }
+.calendar-export h2 { margin: 0 0 .5rem; }
+.calendar-export p { max-width: 65ch; line-height: 1.5; }
+.calendar-export button { min-height: 44px; padding: .5rem .9rem; font: inherit; }

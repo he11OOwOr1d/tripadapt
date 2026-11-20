@@ -956,3 +956,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026. At 390 px the stay panels and forms and the journey form have no overflow and no short controls, and axe is clean. No code changed; stays removed. Committed locally; not pushed.
 
+## 209. Add a calendar file export
+
+20 November 2026. "See the whole trip" can download a .ics of activities, stays and journeys, made in the browser for trips with exact dates. A check against an independent validator found unescaped semicolons that my own test had mirrored (fixed). 258 frontend tests pass; verified live on the disposable trip (file intercepted, 2 events, axe clean). Not verified in a real calendar app. Committed locally; not pushed. See [the calendar note](../calendar-export-learning.md).
+

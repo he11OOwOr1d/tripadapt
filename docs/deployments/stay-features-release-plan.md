@@ -5,7 +5,7 @@
 ## What is in the batch
 
 - **Backend:** four new optional fields on each journey's travel preference (`departure`, `arrival`, `reference`, `booked`, `arrival_buffer`, `departure_buffer`, `locked`); `POST /journeys/from-stay`, `/journeys/to-stay` and `/journeys/intercity` (a driving estimate between two mapped places, including a starting point chosen from the map search); an optional `place_id`, `booked_nights`, `first_night`, `last_night`, `locked` and `reference` on a stay record, and `extra_lodgings` (up to four more stays per destination); the AI day planner and chat read the stay; the readiness context offers a searched stay as a known location. OpenAPI snapshot regenerated.
-- **Frontend:** the stay journey section with check-in and check-out notes, an intercity drive-estimate button on the arrival and departure cards, linked costs in the stay panel, the stay in the restore review, keyboard focus fixes in the stay form and the chat log, journey booking details with day-view flags, a unique label on the map section, h2 transfer-card headings, and darker muted text in the trip stylesheets (`app/trips/*.css` only; the locked landing and `app/design/` are untouched).
+- **Frontend:** the stay journey section with check-in and check-out notes, an intercity drive-estimate button on the arrival and departure cards, a calendar (.ics) download in the whole-trip view, linked costs in the stay panel, the stay in the restore review, keyboard focus fixes in the stay form and the chat log, journey booking details with day-view flags, a unique label on the map section, h2 transfer-card headings, and darker muted text in the trip stylesheets (`app/trips/*.css` only; the locked landing and `app/design/` are untouched).
 - **No migration, no new environment variable, no new dependency.** The intercity endpoint has a per-process in-memory cache (six hours), lost on restart; on Render's free tier a cold start clears it. The AI features use the existing Groq key; route checks use the existing Geoapify backend key.
 
 ## Order
@@ -35,7 +35,8 @@ Use a dedicated QA trip, record its baseline, restore it afterwards, and do not 
 11. "See the whole trip" on a trip with two or more mapped destinations: press "Estimate all … mapped journeys"; each journey gets a time and distance and the total equals their sum.
 12. On a disposable trip, open a destination's day, add a 09:00 visit, record an arrival of 10:00 on its arrival card and a departure of 09:30 on its moving-on card: the visit shows both flags; remove the details afterwards.
 13. A booked stay with "Nights you booked" different from the destination's nights shows the mismatch note, and the trip dates show on a trip with exact dates; set the nights equal and the note disappears.
-14. Look at the page once on a visible window: the darker muted text and the stay pin have only been checked by numbers and DOM so far.
+14. On a trip with exact dates and a stay or a recorded journey: "See the whole trip", "Download a calendar file", open the file in a real calendar app (Google, Apple or Outlook) and confirm the stay (all-day) and journey land on the right dates and times.
+15. Look at the page once on a visible window: the darker muted text and the stay pin have only been checked by numbers and DOM so far.
 
 ## Known gaps carried into the release
 

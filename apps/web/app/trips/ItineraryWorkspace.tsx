@@ -32,6 +32,7 @@ import LodgingPanel from "./LodgingPanel";
 import StayJourney from "./StayJourney";
 import IntercityEstimate from "./IntercityEstimate";
 import RouteDrives from "./RouteDrives";
+import CalendarExport from "./CalendarExport";
 import TransferBooking from "./TransferBooking";
 import { originPlace, stopPlace, withTravelHours } from "../../lib/trips/intercity";
 import { stayDates } from "../../lib/trips/stay-dates";
@@ -300,6 +301,7 @@ export default function ItineraryWorkspace({
                 </section>
               ))}
               <RouteDrives trip={trip} />
+              <CalendarExport trip={trip} />
               {stats.unallocated !== null && stats.unallocated > 0 && (
                 <p className="day-open-note">
                   {stats.unallocated} nights are still open in your trip.{" "}
