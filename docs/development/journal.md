@@ -948,3 +948,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026. PRD FR-07 for transfers: each recorded journey gets "Keep this journey fixed"; "Change nights between stays" refuses a change that would move a locked journey's day until it is unlocked. 645 backend and 252 frontend tests pass; verified live and signed in. Committed locally; not pushed. See [the booking note](../transfer-bookings-learning.md).
 
+## 207. Live-check several stays in the AI planner, the fresh-start list and the restore review
+
+20 November 2026. Closed the three gaps left by phase 3 on the disposable trip: both stays are offered in the fresh-start check, a real Groq proposal for a stay-change day cited "returning to the evening stay", and the restore review lists both stays (and showed "nights 1" for one night, now fixed). Accepted one proposal on the disposable trip to get a restorable version (it stays in its history). 252 frontend tests pass. Committed locally; not pushed.
+

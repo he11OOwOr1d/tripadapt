@@ -184,7 +184,7 @@ The remaining surfaces were finished in phase 3 below.
 - **Fresh-start check.** Every searched stay of the destination can be offered under "Mapped places in this plan", each still verified against its retained record.
 - **Rebalance warning.** The "Check your booking" lines now cover every booked stay of a changed destination, using each stay's own nights: for a destination going from 4 to 3 nights, a booked stay for nights 3 to 4 now covers 1 night and is listed, one for nights 1 to 2 is untouched and is not, and an unbooked stay is never listed. The preview's list keys no longer collide when two stays share a destination.
 - **Restore review.** It names every stay with its nights ("Staying at Haveli (nights 1-2); then Lake view (nights 3-4, marked as booked by you) (your own record, not confirmed with the stay)").
-- **Verification.** Backend tests for the rebalance case above, the planner seeing the right stay by day (and none beyond the ranges), the evidence helper, and the readiness list accepting another stay; 637 backend and 248 frontend tests pass; typecheck and build. Not verified live: the AI planner with several stays, the fresh-start list with several stays, and the restore review (no accepted version to restore); all are covered by tests only.
+- **Verification.** Backend tests for the rebalance case above, the planner seeing the right stay by day (and none beyond the ranges), the evidence helper, and the readiness list accepting another stay; 637 backend and 248 frontend tests pass; typecheck and build. These three were verified live afterwards; see the next section.
 
 ### Review follow-up on several stays (20 November 2026)
 
@@ -221,4 +221,14 @@ Verification: backend tests for the default, for lock not implying booked, and f
 PRD FR-07 asks for optional external confirmation references on committed items, "without requiring document uploads". Journeys had one; stays did not. A stay now has an optional **Confirmation number or note** (up to 100 plain characters, `reference` on the stay record, no migration), shown in the summary ("marked as booked by you, reference Conf 88/12") and prefilled when editing. It is only what the traveler typed: never checked, never required, nothing uploaded, and the same plain-text rule as the rest of the record (no control characters). It is not sent to the AI or the chat.
 
 Verification: backend tests (default empty, a value kept, over-length and control characters refused; 644 backend tests) and a frontend test (validator and summary; 251 frontend tests); typecheck and build. Live, signed in, on the disposable trip: saved "Conf 88/12" on a booked stay, the summary showed it, editing prefilled it, axe found nothing, and I removed the stay.
+
+### Several stays: the three live checks (20 November 2026)
+
+On the disposable trip (Jaipur, 2 nights) with two searched stays, ITC Rajputana for night 1 and Chotiwala for night 2:
+
+- **Fresh-start check.** "Check a fresh start for today" with the saved draft listed both under "Mapped places in this plan" (Chotiwala, ITC Rajputana).
+- **AI planner on a stay-change day.** I ran "Plan this day with AI" on day 2 with a real Groq call and a local worker. The proposal was five blocks inside 09:00 to 18:00 (a meal at 09:15, a park, two museums, a rest break), and the model's own explanation said it was "ending early enough to return to the evening stay", which is direct evidence that the new `stay_tonight` context reached it and shaped the day. (This is one run: it shows the path works and the model used the context, not that proposals are measurably better.)
+- **Restore review.** I accepted that proposal (the trip is disposable) to get a version, opened Plan history and "Review restore of version 3", and opened "Stay and travel preferences to restore": it listed "Staying at ITC Rajputana (nights 1); then Chotiwala (nights 2)". That exposed a wording bug, a single night read "nights 1"; it now reads "night 1" (the same rule as everywhere else). I discarded the review without restoring.
+
+Afterwards I removed the five accepted activities and both stays. The accepted version (version 3) stays in that trip's history because accepted versions cannot be removed; the trip is disposable. Two mistakes of mine along the way, noted for honesty: I force-closed dialogs from the script, which desynchronised the page until I reloaded it, and my first attempt to read the proposal missed because of that. Not verified: the hosted app, a screenshot.
 
