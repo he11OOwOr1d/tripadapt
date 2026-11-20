@@ -3,7 +3,7 @@ import type { DayEntry } from "./itinerary";
 import { routeLegs } from "./planning";
 
 type Prefs = NonNullable<Trip["travelPreferences"]>;
-export type TransferBooking = { departure: string; arrival: string; reference: string; booked: boolean; arrival_buffer: number; departure_buffer: number };
+export type TransferBooking = { departure: string; arrival: string; reference: string; booked: boolean; locked: boolean; arrival_buffer: number; departure_buffer: number };
 export const BUFFER_MAX = 240;
 
 export const REFERENCE_MAX = 100;
@@ -18,7 +18,7 @@ export function finishBooking(input: TransferBooking): { booking: TransferBookin
   if (reference.length > REFERENCE_MAX || !plain(reference)) return { error: `Keep the reference to ${REFERENCE_MAX} plain characters.` };
   for (const minutes of [input.arrival_buffer, input.departure_buffer])
     if (!Number.isSafeInteger(minutes) || minutes < 0 || minutes > BUFFER_MAX) return { error: `Enter a buffer from 0 to ${BUFFER_MAX} minutes, or leave it blank.` };
-  return { booking: { departure: input.departure, arrival: input.arrival, reference, booked: input.booked, arrival_buffer: input.arrival_buffer, departure_buffer: input.departure_buffer } };
+  return { booking: { departure: input.departure, arrival: input.arrival, reference, booked: input.booked, locked: input.locked, arrival_buffer: input.arrival_buffer, departure_buffer: input.departure_buffer } };
 }
 
 /** Immutable update of one journey's booking fields; the mode, hours, nights and allowance stay as they were. */
@@ -27,13 +27,14 @@ export function withTransferBooking(prefs: Trip["travelPreferences"], key: strin
   return { ...prefs, [key]: { ...previous, ...booking } };
 }
 
-export const hasBooking = (p?: Prefs[string]) => !!p && !!(p.departure || p.arrival || p.reference || p.booked || p.arrival_buffer || p.departure_buffer);
+export const hasBooking = (p?: Prefs[string]) => !!p && !!(p.departure || p.arrival || p.reference || p.booked || p.locked || p.arrival_buffer || p.departure_buffer);
 
 /** One honest line about what the traveler entered. */
 export function bookingSummary(p?: Prefs[string]): string | null {
   if (!hasBooking(p) || !p) return null;
   return [
     p.booked ? "Marked as booked by you" : "Your planned times",
+    p.locked ? "kept fixed" : "",
     p.departure && `departs ${p.departure}`,
     p.arrival && `arrives ${p.arrival}`,
     p.reference && `reference ${p.reference}`,

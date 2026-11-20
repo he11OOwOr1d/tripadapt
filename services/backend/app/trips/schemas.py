@@ -146,6 +146,9 @@ class TravelPreference(StrictModel):
     arrival: str = Field(default="", pattern=r"^$|^([01][0-9]|2[0-3]):[0-5][0-9]$")
     reference: str = Field(default="", max_length=100)
     booked: bool = False
+    # "Keep fixed": automatic changes that would move this journey to another day
+    # are refused until the traveler unlocks it. Not a booking.
+    locked: bool = False
     # Visible assumptions, in minutes: time to settle in after arriving, and time
     # to be at the station or gate before departing. Zero means none is assumed.
     arrival_buffer: int = Field(default=0, ge=0, le=240)

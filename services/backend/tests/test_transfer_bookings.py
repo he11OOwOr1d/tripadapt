@@ -15,6 +15,7 @@ def test_a_journey_without_booking_details_is_unchanged():
     assert preference.departure == "" and preference.arrival == ""
     assert preference.reference == "" and preference.booked is False
     assert preference.arrival_buffer == 0 and preference.departure_buffer == 0
+    assert preference.locked is False
 
 
 def test_booking_details_are_recorded_as_entered():

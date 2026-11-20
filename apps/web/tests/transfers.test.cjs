@@ -9,18 +9,18 @@ const trip=(stops,prefs,acts)=>({origin:'Delhi',stops,returnToOrigin:true,travel
 const legKey=(trp,i)=>planning.routeLegs(trp)[i].key;
 
 test('a booking is validated like the server does and trimmed',()=>{
-  const ok=J(t.finishBooking({departure:'09:15',arrival:'',reference:'  PNR 4X  ',booked:true,arrival_buffer:30,departure_buffer:90}));
-  assert.deepEqual(ok,{booking:{departure:'09:15',arrival:'',reference:'PNR 4X',booked:true,arrival_buffer:30,departure_buffer:90}});
+  const ok=J(t.finishBooking({departure:'09:15',arrival:'',reference:'  PNR 4X  ',booked:true,locked:true,arrival_buffer:30,departure_buffer:90}));
+  assert.deepEqual(ok,{booking:{departure:'09:15',arrival:'',reference:'PNR 4X',booked:true,locked:true,arrival_buffer:30,departure_buffer:90}});
   for(const bad of [{departure:'24:00'},{departure:'9:15'},{arrival:'noon'},{reference:'x'.repeat(101)},{reference:'a\nb'},{reference:'a\x07'},{arrival_buffer:-1},{arrival_buffer:241},{departure_buffer:1.5},{departure_buffer:NaN}]){
-    assert.ok('error' in t.finishBooking({departure:'',arrival:'',reference:'',booked:false,arrival_buffer:0,departure_buffer:0,...bad}),JSON.stringify(bad));
+    assert.ok('error' in t.finishBooking({departure:'',arrival:'',reference:'',booked:false,locked:false,arrival_buffer:0,departure_buffer:0,...bad}),JSON.stringify(bad));
   }
 });
 test('saving a booking changes only the booking fields of that journey',()=>{
   const prefs={a:{mode:'Rail',hours:'5',overnight:1,rate:'20',basis:'vehicle'},b:{mode:'',hours:'',overnight:0,rate:'',basis:'person'}};
-  const next=J(t.withTransferBooking(prefs,'a',{departure:'09:00',arrival:'12:00',reference:'R',booked:true,arrival_buffer:20,departure_buffer:60}));
-  assert.deepEqual(next.a,{mode:'Rail',hours:'5',overnight:1,rate:'20',basis:'vehicle',departure:'09:00',arrival:'12:00',reference:'R',booked:true,arrival_buffer:20,departure_buffer:60});
+  const next=J(t.withTransferBooking(prefs,'a',{departure:'09:00',arrival:'12:00',reference:'R',booked:true,locked:false,arrival_buffer:20,departure_buffer:60}));
+  assert.deepEqual(next.a,{mode:'Rail',hours:'5',overnight:1,rate:'20',basis:'vehicle',departure:'09:00',arrival:'12:00',reference:'R',booked:true,locked:false,arrival_buffer:20,departure_buffer:60});
   assert.deepEqual(next.b,prefs.b);
-  assert.deepEqual(J(t.withTransferBooking(undefined,'k',{departure:'',arrival:'10:00',reference:'',booked:false,arrival_buffer:0,departure_buffer:0})).k,{mode:'',hours:'',overnight:0,rate:'',basis:'person',departure:'',arrival:'10:00',reference:'',booked:false,arrival_buffer:0,departure_buffer:0});
+  assert.deepEqual(J(t.withTransferBooking(undefined,'k',{departure:'',arrival:'10:00',reference:'',booked:false,locked:false,arrival_buffer:0,departure_buffer:0})).k,{mode:'',hours:'',overnight:0,rate:'',basis:'person',departure:'',arrival:'10:00',reference:'',booked:false,locked:false,arrival_buffer:0,departure_buffer:0});
   assert.equal(prefs.a.departure,undefined);
 });
 test('the summary says what was entered and that it was not checked',()=>{
@@ -107,5 +107,10 @@ test('inconsistent times never produce overlapping rows',()=>{
   // a gap that starts after the departure is all journey
   const late=trip([stop('s1',0)],{[legKey(one,1)]:{mode:'',hours:'',overnight:0,rate:'',basis:'person',departure:'10:00'}},[]);
   assert.deepEqual(J(t.splitForJourneys([{type:'gap',start:660,end:1080}],late,'s1',1)),[{type:'journey',start:660,end:1080,label:'On the move from your recorded departure at 10:00'}]);
+});
+test('a fixed journey counts as details and is named in the summary',()=>{
+  assert.equal(t.hasBooking({locked:true}),true);
+  assert.equal(t.bookingSummary({locked:true,arrival:'10:00'}),'Your planned times · kept fixed · arrives 10:00. As you entered it; not checked with the supplier.');
+  assert.match(t.bookingSummary({booked:true,locked:true,departure:'09:00'}),/^Marked as booked by you · kept fixed · departs 09:00/);
 });
 

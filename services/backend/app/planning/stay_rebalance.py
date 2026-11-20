@@ -77,6 +77,23 @@ def _activity(a, stop_name):
     )
 
 
+def shifted_journeys(plan: PlanInput, new_nights):
+    """Journeys whose day changes: (leg, preference, shift in nights)."""
+    stops = list(plan.stops)
+    moved = []
+    for index, leg in enumerate(plan_legs(plan)):
+        entry = plan.preferences.travel_preferences.get(leg["key"])
+        if entry is None:
+            continue
+        shift = sum(
+            new_nights.get(s.client_id, s.desired_nights or 0) - (s.desired_nights or 0)
+            for s in stops[:index]
+        )
+        if shift:
+            moved.append((leg, entry, shift))
+    return moved
+
+
 def booked_journeys(plan: PlanInput, new_nights):
     """Booked journeys that fall on a different day after the change.
 
@@ -157,6 +174,22 @@ def rebalance_stays(plan: PlanInput, body: RebalanceInput):
             "Unlock "
             f"{'it' if len(locked) == 1 else 'them'} in the stay panel first, or "
             "choose other stays. Nothing changed.",
+        )
+
+    pinned = [
+        f"{leg['from']} to {leg['to']}"
+        for leg, entry, _ in shifted_journeys(plan, new_nights)
+        if entry.locked
+    ]
+    if pinned:
+        raise RebalanceConflict(
+            "REBALANCE_JOURNEY_LOCKED",
+            f"{'This journey is' if len(pinned) == 1 else 'These journeys are'} kept "
+            f"fixed, so {'its' if len(pinned) == 1 else 'their'} day would not move "
+            f"automatically: {'; '.join(pinned)}. Unlock "
+            f"{'it' if len(pinned) == 1 else 'them'} on the journey card first, or "
+            "choose a change that leaves "
+            f"{'it' if len(pinned) == 1 else 'them'} alone. Nothing changed.",
         )
 
     # A stay with N nights spans local day offsets 0..N (arrival to departure).

@@ -11225,6 +11225,11 @@
             "title": "Booked",
             "default": false
           },
+          "locked": {
+            "type": "boolean",
+            "title": "Locked",
+            "default": false
+          },
           "arrival_buffer": {
             "type": "integer",
             "maximum": 240.0,

@@ -65,6 +65,8 @@ export type Trip = {
       arrival?: string;
       reference?: string;
       booked?: boolean;
+      /** "Keep fixed": automatic changes that would move this journey to another day are refused until unlocked. Not a booking. */
+      locked?: boolean;
       /** Minutes to settle in after arriving and to be at the gate before departing; 0 or absent means none assumed. */
       arrival_buffer?: number;
       departure_buffer?: number;
@@ -346,6 +348,7 @@ export function isTrip(value: unknown): value is Trip {
         (p.arrival === undefined || (typeof p.arrival === "string" && /^$|^([01][0-9]|2[0-3]):[0-5][0-9]$/.test(p.arrival))) &&
         (p.reference === undefined || (typeof p.reference === "string" && p.reference.length <= 100 && ![...p.reference].some((c) => c.charCodeAt(0) < 32 || c.charCodeAt(0) === 127))) &&
         (p.booked === undefined || typeof p.booked === "boolean") &&
+        (p.locked === undefined || typeof p.locked === "boolean") &&
         (p.arrival_buffer === undefined || (Number.isSafeInteger(p.arrival_buffer) && Number(p.arrival_buffer) >= 0 && Number(p.arrival_buffer) <= 240)) &&
         (p.departure_buffer === undefined || (Number.isSafeInteger(p.departure_buffer) && Number(p.departure_buffer) >= 0 && Number(p.departure_buffer) <= 240)),
     ) &&

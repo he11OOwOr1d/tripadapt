@@ -944,3 +944,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026. PRD FR-07: an optional confirmation number or note on a stay, as entered, never checked or sent to the AI. 644 backend and 251 frontend tests pass; verified live and signed in. Committed locally; not pushed.
 
+## 206. Let a journey be kept fixed
+
+20 November 2026. PRD FR-07 for transfers: each recorded journey gets "Keep this journey fixed"; "Change nights between stays" refuses a change that would move a locked journey's day until it is unlocked. 645 backend and 252 frontend tests pass; verified live and signed in. Committed locally; not pushed. See [the booking note](../transfer-bookings-learning.md).
+

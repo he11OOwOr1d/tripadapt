@@ -253,6 +253,32 @@ def test_a_booked_journey_that_moves_to_another_day_is_listed_with_how_far():
     assert [j["shift_nights"] for j in longer["booked_journeys"]] == [2]
 
 
+def test_a_locked_journey_blocks_a_change_that_would_move_its_day():
+    p, one, two, _ = plan()
+    legs = plan_legs(p)
+    prefs = p.preferences.travel_preferences
+
+    def journey(**extra):
+        return TravelPreference(
+            mode="Rail", hours="", overnight=0, rate="", basis="person", **extra
+        )
+
+    # Jaipur to Udaipur follows Jaipur's nights; the return follows both.
+    prefs[legs[1]["key"]] = journey(locked=True)
+    with pytest.raises(RebalanceConflict) as blocked:
+        rebalance_stays(p, RebalanceInput(stop_id=two, delta_nights=1, counterpart=one))
+    assert blocked.value.code == "REBALANCE_JOURNEY_LOCKED"
+    assert "Jaipur to Udaipur" in blocked.value.detail
+    # A locked journey that the change does not move is no obstacle: lengthening
+    # Udaipur moves only the return journey, not Jaipur to Udaipur.
+    rebalance_stays(
+        p, RebalanceInput(stop_id=two, delta_nights=1, counterpart="trip_length")
+    )
+    # Unlocked, the same change goes through.
+    prefs[legs[1]["key"]] = journey()
+    rebalance_stays(p, RebalanceInput(stop_id=two, delta_nights=1, counterpart=one))
+
+
 def test_shrinking_a_stay_never_drops_activities_silently():
     p, one, two, acts = plan()
     body = dict(stop_id=one, delta_nights=1, counterpart=two)
