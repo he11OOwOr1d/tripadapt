@@ -16,7 +16,13 @@ from pydantic import Field, model_validator
 from app.planning.cost_coverage import project_costs
 from app.planning.live_acceptance import planned_visit_date
 from app.planning.validation import validate_plan
-from app.trips.schemas import PlanInput, StrictModel, expected_nights, stays_of
+from app.trips.schemas import (
+    PlanInput,
+    StrictModel,
+    expected_nights,
+    plan_legs,
+    stays_of,
+)
 
 
 class Relocation(StrictModel):
@@ -69,6 +75,37 @@ def _activity(a, stop_name):
         start=a.local_start_time.strftime("%H:%M"),
         protected=a.fixed or a.booked or a.resolved,
     )
+
+
+def booked_journeys(plan: PlanInput, new_nights):
+    """Booked journeys that fall on a different day after the change.
+
+    A journey sits at the end of the stay before it, so it moves by the change in
+    the total nights of every stay before it. Overnight journey nights are the
+    same before and after, so they cancel out.
+    """
+    stops = list(plan.stops)
+    result = []
+    for index, leg in enumerate(plan_legs(plan)):
+        entry = plan.preferences.travel_preferences.get(leg["key"])
+        if entry is None or not entry.booked:
+            continue
+        shift = sum(
+            new_nights[s.client_id] - (s.desired_nights or 0) for s in stops[:index]
+        )
+        if shift:
+            result.append(
+                dict(
+                    key=leg["key"],
+                    origin=leg["from"],
+                    destination=leg["to"],
+                    shift_nights=shift,
+                    departure=entry.departure,
+                    arrival=entry.arrival,
+                    reference=entry.reference,
+                )
+            )
+    return result
 
 
 def rebalance_stays(plan: PlanInput, body: RebalanceInput):
@@ -333,6 +370,9 @@ def rebalance_stays(plan: PlanInput, body: RebalanceInput):
             and expected_nights(preference, stay, s.desired_nights or 0)
             != expected_nights(preference, stay, new_nights[s.client_id])
         ],
+        # Journeys the traveler marked as booked whose day moves because the nights
+        # before them changed. The app cannot change the ticket; the traveler must.
+        booked_journeys=booked_journeys(plan, new_nights),
         notice="A draft change you chose. Stay allowances follow the new nights; "
         "nothing is booked, cancelled or refunded. Review and accept the draft to "
         "change your accepted plan.",

@@ -8,7 +8,7 @@ from app.planning.stay_rebalance import (
     RebalanceInput,
     rebalance_stays,
 )
-from app.trips.schemas import Lodging, PlanInput
+from app.trips.schemas import Lodging, PlanInput, TravelPreference, plan_legs
 
 
 def plan(**changes):
@@ -186,6 +186,50 @@ def test_a_locked_stay_blocks_a_change_to_its_nights_until_unlocked():
         p, RebalanceInput(stop_id=two, delta_nights=1, counterpart=one)
     )
     assert [s.desired_nights for s in candidate.stops] == [3, 5]
+
+
+def test_a_booked_journey_that_moves_to_another_day_is_listed_with_how_far():
+    p, one, two, _ = plan()
+    legs = plan_legs(p)
+    prefs = p.preferences.travel_preferences
+    # legs: start to Jaipur, Jaipur to Udaipur, Udaipur back to the start
+    prefs[legs[1]["key"]] = TravelPreference(
+        mode="Rail",
+        hours="",
+        overnight=0,
+        rate="",
+        basis="person",
+        departure="09:00",
+        reference="PNR 7",
+        booked=True,
+    )
+    prefs[legs[2]["key"]] = TravelPreference(
+        mode="Bus", hours="", overnight=0, rate="", basis="person", booked=False
+    )
+    prefs[legs[0]["key"]] = TravelPreference(
+        mode="Air", hours="", overnight=0, rate="", basis="person", booked=True
+    )
+    # Jaipur 4 -> 3 nights, Udaipur 4 -> 5: Jaipur-to-Udaipur follows 1 fewer night;
+    # the start-to-Jaipur journey (before any stay) does not move; the unbooked
+    # return does move but is not a commitment.
+    _, summary = rebalance_stays(
+        p, RebalanceInput(stop_id=two, delta_nights=1, counterpart=one)
+    )
+    assert [
+        (
+            j["origin"],
+            j["destination"],
+            j["shift_nights"],
+            j["departure"],
+            j["reference"],
+        )
+        for j in summary["booked_journeys"]
+    ] == [("Jaipur", "Udaipur", -1, "09:00", "PNR 7")]
+    # Lengthening the trip shifts only the journeys after the stay that grows.
+    _, longer = rebalance_stays(
+        p, RebalanceInput(stop_id=one, delta_nights=2, counterpart="trip_length")
+    )
+    assert [j["shift_nights"] for j in longer["booked_journeys"]] == [2]
 
 
 def test_shrinking_a_stay_never_drops_activities_silently():

@@ -30,3 +30,9 @@ test('booked stays in a reply are optional, and must be well formed when present
  assert.equal(h.isRebalanceSummary({...summary(),booked_stays:[]},req,false),true);
  for(const bad of [{booked_stays:'x'},{booked_stays:[{...booked,nights_after:4}]},{booked_stays:[{...booked,stay:5}]},{booked_stays:[{...booked,booked_nights:1.5}]}])assert.equal(h.isRebalanceSummary({...summary(),...bad},req,false),false,JSON.stringify(bad));
 });
+test('booked journeys in a reply are optional, and must be well formed when present',()=>{const h=harness();
+ const j={key:'k',origin:'Jaipur',destination:'Udaipur',shift_nights:-1,departure:'09:00',arrival:'',reference:'PNR 7'};
+ assert.equal(h.isRebalanceSummary({...summary(),booked_journeys:[j]},req,false),true);
+ assert.equal(h.isRebalanceSummary({...summary(),booked_journeys:[]},req,false),true);
+ for(const bad of [{booked_journeys:'x'},{booked_journeys:[{...j,shift_nights:0}]},{booked_journeys:[{...j,shift_nights:1.5}]},{booked_journeys:[{...j,origin:5}]},{booked_journeys:[{...j,reference:null}]}])assert.equal(h.isRebalanceSummary({...summary(),...bad},req,false),false,JSON.stringify(bad));
+});

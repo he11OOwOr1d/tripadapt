@@ -932,3 +932,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026. PRD FR-07: a lock is separate from a booking. Stays get "Keep this stay fixed"; "Change nights between stays" refuses to alter a destination with a locked stay until it is unlocked. 640 backend and 249 frontend tests pass; verified live and signed in (blocked, then allowed after unlocking, axe clean, stay removed). Journeys are not lockable yet. Committed locally; not pushed. See [the learning note](../lodging-learning.md).
 
+## 203. Warn when changing nights moves a booked journey
+
+20 November 2026. The "Change nights between stays" preview now lists booked journeys that fall on a different day, with how far and the traveler's own details. 641 backend and 250 frontend tests pass; verified live and signed in. Committed locally; not pushed. See [the booking note](../transfer-bookings-learning.md).
+
