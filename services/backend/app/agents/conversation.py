@@ -31,14 +31,38 @@ class Decision(StrictModel):
     focus_stop_id: str
 
 
+def night_span(stay):
+    if stay.first_night is None:
+        return ""
+    if stay.first_night == stay.last_night:
+        return f"night {stay.first_night}"
+    return f"nights {stay.first_night}\u2013{stay.last_night}"
+
+
 def stay_note(plan, stop):
     """Where the traveler says they stay, worded as their own record, never a booking."""
     preference = plan.preferences.stay_preferences.get(stop.client_id)
-    lodging = preference.lodging if preference else None
-    if lodging is None:
+    if preference is None:
         return ""
-    booked = ", marked as booked by you" if lodging.booked else ""
-    return f"staying at {lodging.name}{booked}; your own record, not confirmed with the stay"
+    stays = [s for s in [preference.lodging, *preference.extra_lodgings] if s]
+    if not stays:
+        return ""
+    tail = "; your own record, not confirmed with the stay"
+    if len(stays) == 1 and stays[0].first_night is None:
+        booked = ", marked as booked by you" if stays[0].booked else ""
+        return f"staying at {stays[0].name}{booked}{tail}"
+    parts = []
+    for stay in stays:
+        notes = [
+            n
+            for n in (
+                night_span(stay),
+                "marked as booked by you" if stay.booked else "",
+            )
+            if n
+        ]
+        parts.append(stay.name + (f" ({', '.join(notes)})" if notes else ""))
+    return "staying at " + "; then ".join(parts) + tail
 
 
 def journey_lines(plan):

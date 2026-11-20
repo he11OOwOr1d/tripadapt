@@ -7,7 +7,7 @@ import test_trips
 from pydantic import SecretStr
 from sqlalchemy import select
 
-from app.agents.conversation import respond
+from app.agents.conversation import respond, stay_note
 from app.api.identity import TrustedIdentity, verified_identity
 from app.config import settings
 from app.jobs.worker import claim, publish_reply
@@ -518,3 +518,40 @@ def test_route_summary_lists_recorded_journeys_as_the_travelers_own_entries():
         in text
     )
     assert text.count("→") == 1
+
+
+def test_summary_and_day_answers_name_every_stay_with_its_nights():
+    stop = str(uuid4())
+    plan = PlanInput.model_validate(
+        {
+            "stops": [
+                {
+                    "client_id": stop,
+                    "name": "Udaipur",
+                    "timezone": "UTC",
+                    "desired_nights": 4,
+                }
+            ]
+        }
+    )
+    plan.preferences.stay_preferences[stop] = StayPreference(
+        style="",
+        rate="",
+        basis="room",
+        lodging=Lodging(name="Haveli", first_night=1, last_night=2),
+        extra_lodgings=[
+            Lodging(name="Lake view", first_night=3, last_night=4, booked=True)
+        ],
+    )
+    note = stay_note(plan, plan.stops[0])
+    assert note == (
+        "staying at Haveli (nights 1\u20132); then Lake view (nights 3\u20134, marked as booked by you)"
+        "; your own record, not confirmed with the stay"
+    )
+    # A single stay without nights keeps the earlier wording.
+    plan.preferences.stay_preferences[stop] = StayPreference(
+        style="", rate="", basis="room", lodging=Lodging(name="Haveli", booked=True)
+    )
+    assert stay_note(plan, plan.stops[0]).startswith(
+        "staying at Haveli, marked as booked by you;"
+    )

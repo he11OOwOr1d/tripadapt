@@ -76,3 +76,61 @@ test('a booked stay that no longer matches the plan’s nights is flagged, and o
   assert.equal(out.bookedNightsNote(stay,0),null);
   assert.equal(out.bookedNightsNote(null,2),null);
 });
+test('a stay’s nights are validated like the backend: both or neither, in order',()=>{
+  assert.equal(out.isLodging({name:'A',first_night:1,last_night:2}),true);
+  assert.equal(out.isLodging({name:'A',first_night:null,last_night:null}),true);
+  for(const bad of [{first_night:2},{last_night:2},{first_night:3,last_night:2},{first_night:0,last_night:1},{first_night:1,last_night:366},{first_night:1.5,last_night:2},{first_night:'1',last_night:2}])assert.equal(out.isLodging({name:'A',...bad}),false,JSON.stringify(bad));
+  assert.equal(out.lodgingSummary({name:'Lake view',first_night:3,last_night:4,booked:true,booked_nights:2}),'Lake view · nights 3–4 · marked as booked by you for 2 nights');
+  assert.equal(out.lodgingSummary({name:'Hostel',first_night:5,last_night:5}),'Hostel · night 5 · not marked as booked');
+});
+test('several stays must have their own nights and never share one',()=>{
+  const e=(name,a,b)=>({name,first_night:a,last_night:b});
+  assert.equal(out.validStays({lodging:{name:'Main'},extra_lodgings:[e('B',3,4),e('C',5,5)]}),true);
+  assert.equal(out.validStays({lodging:e('Main',1,2),extra_lodgings:[e('B',3,4)]}),true);
+  assert.equal(out.validStays({lodging:e('Main',1,3),extra_lodgings:[e('B',3,4)]}),false);
+  assert.equal(out.validStays({extra_lodgings:[e('A',1,3),e('B',3,4)]}),false);
+  assert.equal(out.validStays({extra_lodgings:[{name:'No range'}]}),false);
+  assert.equal(out.validStays({extra_lodgings:[1,2,3,4,5].map(i=>e('S'+i,i,i))}),false);
+  assert.equal(out.validStays({}),true);
+});
+test('other stays are added, replaced and removed without touching the main stay or other destinations',()=>{
+  const prefs={a:{style:'Hotel',rate:'1',basis:'room',lodging:{name:'Main'}},b:{style:'',rate:'',basis:'room'}};
+  const one=J(out.withExtraLodging(prefs,'a',null,{name:'B',first_night:3,last_night:3}));
+  assert.deepEqual(one.a.extra_lodgings,[{name:'B',first_night:3,last_night:3}]);assert.deepEqual(one.a.lodging,{name:'Main'});assert.deepEqual(one.b,prefs.b);
+  const two=J(out.withExtraLodging(one,'a',0,{name:'B2',first_night:3,last_night:4}));assert.equal(two.a.extra_lodgings[0].name,'B2');
+  const none=J(out.withExtraLodging(two,'a',0,null));assert.equal('extra_lodgings' in none.a,false);assert.deepEqual(none.a.lodging,{name:'Main'});
+  assert.deepEqual(J(out.withExtraLodging(undefined,'k',null,{name:'X',first_night:1,last_night:1})).k.extra_lodgings,[{name:'X',first_night:1,last_night:1}]);
+  assert.deepEqual(J(out.staysOf(two.a)).map(s=>s.name),['Main','B2']);
+});
+test('coverage notes name nights with no stay or beyond the plan, and stay quiet otherwise',()=>{
+  const e=(name,a,b)=>({name,first_night:a,last_night:b});
+  assert.deepEqual(J(out.coverageNotes(undefined,3)),[]);
+  assert.deepEqual(J(out.coverageNotes({lodging:{name:'M'}},3)),[]);
+  assert.deepEqual(J(out.coverageNotes({lodging:{name:'M'},extra_lodgings:[e('B',3,3)]},3)),[]);
+  assert.deepEqual(J(out.coverageNotes({extra_lodgings:[e('B',3,4)]},4)),['No stay is recorded for nights 1–2.']);
+  assert.deepEqual(J(out.coverageNotes({lodging:e('M',1,1),extra_lodgings:[e('B',3,3)]},4)),['No stay is recorded for night 2 and night 4.']);
+  assert.deepEqual(J(out.coverageNotes({lodging:{name:'M'},extra_lodgings:[e('B',3,5)]},3)),['B is set for nights 3–5, but your plan has 3 nights here.']);
+});
+test('the stay for a night is the one whose nights hold it, else the main stay',()=>{
+  const pref={lodging:{name:'Main'},extra_lodgings:[{name:'B',first_night:3,last_night:4}]};
+  assert.equal(out.stayForNight(pref,1).name,'Main');assert.equal(out.stayForNight(pref,3).name,'B');assert.equal(out.stayForNight(pref,4).name,'B');assert.equal(out.stayForNight(pref,5).name,'Main');
+  assert.equal(out.stayForNight({extra_lodgings:[{name:'B',first_night:3,last_night:4}]},1),null);
+  assert.equal(out.stayForNight(undefined,1),null);
+});
+test('the nights a stay is meant to cover are its range, or what the others leave',()=>{
+  const main={name:'Main'},b={name:'B',first_night:3,last_night:4},c={name:'C',first_night:6,last_night:9};
+  const pref={lodging:main,extra_lodgings:[b,c]};
+  assert.equal(out.nightsFor(pref,b,5),2);
+  assert.equal(out.nightsFor(pref,c,7),2);
+  assert.equal(out.nightsFor(pref,main,7),3);
+  assert.equal(out.nightsFor({lodging:main},main,4),4);
+  assert.equal(out.nightsFor(undefined,main,4),4);
+});
+test('a stay without nights spans the unclaimed nights when they form one run',()=>{
+  const main={name:'M'};
+  assert.deepEqual(J(out.unclaimedSpan({lodging:main,extra_lodgings:[{name:'B',first_night:2,last_night:2}]},main,2)),[1,1]);
+  assert.deepEqual(J(out.unclaimedSpan({lodging:main,extra_lodgings:[{name:'B',first_night:3,last_night:4}]},main,4)),[1,2]);
+  assert.deepEqual(J(out.unclaimedSpan({lodging:main},main,3)),[1,3]);
+  assert.equal(out.unclaimedSpan({lodging:main,extra_lodgings:[{name:'B',first_night:2,last_night:2}]},main,3),null,'split run');
+  assert.equal(out.unclaimedSpan({lodging:main,extra_lodgings:[{name:'B',first_night:1,last_night:2}]},main,2),null,'nothing left');
+});

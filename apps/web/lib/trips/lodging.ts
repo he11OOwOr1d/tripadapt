@@ -19,10 +19,14 @@ export type Lodging = {
   booked?: boolean;
   /** Nights the traveler's own booking covers, as entered; never checked with the supplier. */
   booked_nights?: number | null;
+  /** Which of the destination's nights this stay covers (1-based, inclusive); a stay without a range covers every night no other stay claims. */
+  first_night?: number | null;
+  last_night?: number | null;
   check_in?: string;
   check_out?: string;
 };
-export type StayPreferences = Record<string, { style: string; rate: string; basis: "room" | "bed"; lodging?: Lodging | null }>;
+export const MAX_EXTRA_STAYS = 4;
+export type StayPreferences = Record<string, { style: string; rate: string; basis: "room" | "bed"; lodging?: Lodging | null; extra_lodgings?: Lodging[] }>;
 
 export const LODGING_NAME_MAX = 120;
 export const LODGING_ADDRESS_MAX = 200;
@@ -35,7 +39,7 @@ const plain = (v: unknown, max: number) => typeof v === "string" && v.length <= 
 export function isLodging(value: unknown): value is Lodging {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const l = value as Record<string, unknown>;
-  const allowed = ["name", "address", "latitude", "longitude", "external_id", "source", "place_id", "booked", "booked_nights", "check_in", "check_out"];
+  const allowed = ["name", "address", "latitude", "longitude", "external_id", "source", "place_id", "booked", "booked_nights", "first_night", "last_night", "check_in", "check_out"];
   const has = (k: string) => l[k] !== undefined && l[k] !== null;
   const mapped = has("latitude") || has("longitude");
   return (
@@ -44,6 +48,8 @@ export function isLodging(value: unknown): value is Lodging {
     (l.address === undefined || plain(l.address, LODGING_ADDRESS_MAX)) &&
     (l.source === undefined || plain(l.source, 120)) &&
     (l.booked === undefined || typeof l.booked === "boolean") &&
+    has("first_night") === has("last_night") &&
+    (!has("first_night") || (Number.isSafeInteger(l.first_night) && Number.isSafeInteger(l.last_night) && Number(l.first_night) >= 1 && Number(l.last_night) <= 365 && Number(l.first_night) <= Number(l.last_night))) &&
     (!has("booked_nights") || (Number.isSafeInteger(l.booked_nights) && Number(l.booked_nights) >= 1 && Number(l.booked_nights) <= 365)) &&
     (l.check_in === undefined || (typeof l.check_in === "string" && TIME.test(l.check_in))) &&
     (l.check_out === undefined || (typeof l.check_out === "string" && TIME.test(l.check_out))) &&
@@ -88,7 +94,8 @@ export function lodgingSummary(lodging: Lodging | null | undefined): string {
   if (!lodging) return "No place to stay recorded yet.";
   const times = [lodging.check_in && `check-in ${lodging.check_in}`, lodging.check_out && `check-out ${lodging.check_out}`].filter(Boolean).join(", ");
   const nights = lodging.booked && lodging.booked_nights ? ` for ${lodging.booked_nights} ${lodging.booked_nights === 1 ? "night" : "nights"}` : "";
-  return `${lodging.name}${lodging.booked ? ` · marked as booked by you${nights}` : " · not marked as booked"}${times ? ` · ${times}` : ""}`;
+  const span = lodging.first_night != null && lodging.last_night != null ? ` · ${range(lodging.first_night, lodging.last_night)}` : "";
+  return `${lodging.name}${span}${lodging.booked ? ` · marked as booked by you${nights}` : " · not marked as booked"}${times ? ` · ${times}` : ""}`;
 }
 
 /**
@@ -114,3 +121,84 @@ export function bookedNightsNote(lodging: Lodging | null | undefined, planNights
   return `You marked this stay as booked for ${n(lodging.booked_nights)}, but your plan now has ${n(planNights)} here. Check your booking, or update the nights you booked.`;
 }
 
+type Pref = StayPreferences[string];
+
+/** The destination's stays in order: the main stay, then the others. */
+export const staysOf = (pref?: Pref | null): Lodging[] => [pref?.lodging, ...(pref?.extra_lodgings ?? [])].filter((l): l is Lodging => !!l);
+
+/** Mirrors the backend: each other stay has its own nights, and no two stays share a night. */
+export function validStays(pref: Pref): boolean {
+  const extras = pref.extra_lodgings ?? [];
+  if (extras.length > MAX_EXTRA_STAYS || !extras.every((e) => isLodging(e) && e.first_night != null)) return false;
+  const taken: [number, number][] = [];
+  for (const stay of staysOf(pref)) {
+    if (stay.first_night == null || stay.last_night == null) continue;
+    const [a, b] = [stay.first_night, stay.last_night];
+    if (taken.some(([x, y]) => a <= y && x <= b)) return false;
+    taken.push([a, b]);
+  }
+  return true;
+}
+
+/** Immutable update of one of a destination's other stays: add (index null), replace, or remove (lodging null). */
+export function withExtraLodging(prefs: StayPreferences | undefined, stopId: string, index: number | null, lodging: Lodging | null): StayPreferences {
+  const previous = prefs?.[stopId] ?? { style: "", rate: "", basis: "room" as const };
+  const list = [...(previous.extra_lodgings ?? [])];
+  if (index === null) { if (lodging) list.push(lodging); }
+  else if (lodging) list[index] = lodging;
+  else list.splice(index, 1);
+  const { extra_lodgings: _old, ...rest } = previous;
+  void _old;
+  return { ...prefs, [stopId]: list.length ? { ...rest, extra_lodgings: list } : rest };
+}
+
+const range = (a: number, b: number) => (a === b ? `night ${a}` : `nights ${a}–${b}`);
+
+/** Plain notes about which nights the recorded stays cover, for a destination with this many nights. Never a check with any supplier. */
+export function coverageNotes(pref: Pref | undefined, nights: number): string[] {
+  const stays = staysOf(pref);
+  const ranged = stays.filter((s) => s.first_night != null && s.last_night != null);
+  if (!ranged.length || nights < 1) return [];
+  const notes: string[] = [];
+  const claimed = new Set<number>();
+  for (const s of ranged) {
+    const a = s.first_night as number, b = s.last_night as number;
+    if (b > nights) notes.push(`${s.name} is set for ${range(a, b)}, but your plan has ${nights} ${nights === 1 ? "night" : "nights"} here.`);
+    for (let n = a; n <= Math.min(b, nights); n++) claimed.add(n);
+  }
+  const mainCoversRest = !!pref?.lodging && pref.lodging.first_night == null;
+  const open: number[] = [];
+  for (let n = 1; n <= nights; n++) if (!claimed.has(n)) open.push(n);
+  if (open.length && !mainCoversRest) {
+    const spans: string[] = [];
+    let start = open[0], prev = open[0];
+    for (const n of [...open.slice(1), Infinity]) { if (n !== prev + 1) { spans.push(range(start, prev)); start = n; } prev = n; }
+    notes.push(`No stay is recorded for ${spans.join(" and ")}.`);
+  }
+  return notes;
+}
+
+/** The stay for a given night (1-based): the one whose range holds it, else the main stay without a range. */
+export function stayForNight(pref: Pref | undefined, night: number): Lodging | null {
+  const stays = staysOf(pref);
+  return stays.find((s) => s.first_night != null && s.last_night != null && night >= s.first_night && night <= s.last_night) ?? stays.find((s) => s.first_night == null) ?? null;
+}
+
+
+/** How many of the destination's nights a stay is meant to cover: its own range, or every night no other stay claims. */
+export function nightsFor(pref: Pref | undefined, stay: Lodging, nights: number): number {
+  if (stay.first_night != null && stay.last_night != null) return Math.max(0, Math.min(stay.last_night, nights) - stay.first_night + 1);
+  const claimed = new Set<number>();
+  for (const s of staysOf(pref)) if (s !== stay && s.first_night != null && s.last_night != null) for (let n = s.first_night; n <= Math.min(s.last_night, nights); n++) claimed.add(n);
+  return Math.max(0, nights - claimed.size);
+}
+
+/** The first and last night no other stay claims, when they form one unbroken run; null when none is left or the run is split. */
+export function unclaimedSpan(pref: Pref | undefined, stay: Lodging, nights: number): [number, number] | null {
+  const claimed = new Set<number>();
+  for (const s of staysOf(pref)) if (s !== stay && s.first_night != null && s.last_night != null) for (let n = s.first_night; n <= Math.min(s.last_night, nights); n++) claimed.add(n);
+  const open: number[] = [];
+  for (let n = 1; n <= nights; n++) if (!claimed.has(n)) open.push(n);
+  if (!open.length || open[open.length - 1] - open[0] + 1 !== open.length) return null;
+  return [open[0], open[open.length - 1]];
+}

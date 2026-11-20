@@ -40,6 +40,10 @@ class Lodging(StrictModel):
     # How many nights the traveler's own booking covers, as they entered it, so a
     # later change to the plan's nights can be flagged. Never checked with the supplier.
     booked_nights: int | None = Field(default=None, ge=1, le=365)
+    # Which of the destination's nights this stay covers (1-based, inclusive). A
+    # stay without a range covers every night no other stay claims.
+    first_night: int | None = Field(default=None, ge=1, le=365)
+    last_night: int | None = Field(default=None, ge=1, le=365)
     check_in: str = Field(default="", pattern=r"^$|^([01][0-9]|2[0-3]):[0-5][0-9]$")
     check_out: str = Field(default="", pattern=r"^$|^([01][0-9]|2[0-3]):[0-5][0-9]$")
 
@@ -58,6 +62,10 @@ class Lodging(StrictModel):
             raise ValueError("A searched place needs its coordinates")
         if self.place_id and not self.external_id:
             raise ValueError("A place record needs the searched place it came from")
+        if (self.first_night is None) != (self.last_night is None):
+            raise ValueError("Give both the first and the last night, or neither")
+        if self.first_night is not None and self.first_night > self.last_night:
+            raise ValueError("The first night cannot be after the last night")
         return self
 
 
@@ -66,6 +74,24 @@ class StayPreference(StrictModel):
     rate: str = Field(pattern=r"^$|^\d+(\.\d{1,2})?$")
     basis: Literal["room", "bed"]
     lodging: Lodging | None = None
+    # More stays in the same destination, each for its own nights.
+    extra_lodgings: list[Lodging] = Field(default_factory=list, max_length=4)
+
+    @model_validator(mode="after")
+    def stays_do_not_overlap(self):
+        if any(extra.first_night is None for extra in self.extra_lodgings):
+            raise ValueError("Another stay needs the nights it covers")
+        taken = []
+        for stay in [self.lodging, *self.extra_lodgings]:
+            if stay is None or stay.first_night is None:
+                continue
+            if any(
+                stay.first_night <= last and first <= stay.last_night
+                for first, last in taken
+            ):
+                raise ValueError("Two stays cannot cover the same night")
+            taken.append((stay.first_night, stay.last_night))
+        return self
 
 
 class TravelPreference(StrictModel):

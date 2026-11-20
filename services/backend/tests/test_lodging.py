@@ -164,3 +164,67 @@ def test_booked_nights_are_optional_and_recorded_as_entered():
     assert (
         dumped["preferences"]["stay_preferences"]["s1"]["lodging"]["booked_nights"] == 3
     )
+
+
+def stays(primary=None, **kw):
+    return StayPreference.model_validate(
+        dict(style="", rate="", basis="room", lodging=primary, **kw)
+    )
+
+
+def test_a_destination_may_have_several_stays_for_their_own_nights():
+    preference = stays(
+        dict(name="Haveli", first_night=1, last_night=2),
+        extra_lodgings=[
+            dict(name="Lake view", first_night=3, last_night=4, booked=True),
+            dict(name="Hostel", first_night=5, last_night=5),
+        ],
+    )
+    assert [s.name for s in preference.extra_lodgings] == ["Lake view", "Hostel"]
+    # A primary stay with no range covers whatever the others do not.
+    assert (
+        stays(
+            dict(name="Haveli"),
+            extra_lodgings=[dict(name="Hostel", first_night=3, last_night=3)],
+        ).lodging.first_night
+        is None
+    )
+
+
+@pytest.mark.parametrize(
+    "bad",
+    [
+        dict(extra_lodgings=[dict(name="No range")]),
+        dict(extra_lodgings=[dict(name="Half", first_night=2)]),
+        dict(extra_lodgings=[dict(name="Backwards", first_night=4, last_night=2)]),
+        dict(extra_lodgings=[dict(name="Zero", first_night=0, last_night=1)]),
+        dict(
+            extra_lodgings=[
+                dict(name="A", first_night=1, last_night=3),
+                dict(name="B", first_night=3, last_night=4),
+            ]
+        ),
+        dict(
+            extra_lodgings=[
+                dict(name=f"S{i}", first_night=i, last_night=i) for i in range(1, 6)
+            ]
+        ),
+    ],
+)
+def test_invalid_extra_stays_are_rejected(bad):
+    with pytest.raises(ValidationError):
+        stays(None, **bad)
+
+
+def test_a_ranged_primary_may_not_overlap_an_extra_stay():
+    with pytest.raises(ValidationError):
+        stays(
+            dict(name="Haveli", first_night=1, last_night=3),
+            extra_lodgings=[dict(name="Hostel", first_night=2, last_night=4)],
+        )
+
+
+def test_a_single_stay_without_a_range_is_unchanged():
+    assert stays(dict(name="Haveli")).extra_lodgings == []
+    with pytest.raises(ValidationError):
+        Lodging.model_validate(dict(name="A", first_night=2))

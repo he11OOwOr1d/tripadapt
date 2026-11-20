@@ -912,3 +912,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026 (resumed after a gap; the clock showed the 5-hour mark had passed, and the stop hook asked for active work up to it, so I resumed active work). The rebalance warning now matches the stay panel when the new nights equal the booked nights, the timeline split no longer overlaps on inconsistent times, and unchecking "booked" clears stale nights text. 624 backend and 240 frontend tests pass. Committed locally; not pushed.
 
+## 198. Allow several stays in one destination (phase 1)
+
+20 November 2026. PRD FR-04. Each destination can now have up to four other stays besides its main one, each covering its own nights, with per-stay dates, booked-nights checks, coverage notes and chat wording. No migration; existing single stays are unchanged. 634 backend and 247 frontend tests pass; verified live and signed in (add, validation, clash, notes, chat, axe, removal). Phase 2 (map pins and picking the stay for a night in the route checks) is next. Committed locally; not pushed. See [the learning note](../lodging-learning.md).
+

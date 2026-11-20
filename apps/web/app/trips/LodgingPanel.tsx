@@ -5,15 +5,26 @@ import { activitySearchAdapter, type ActivityPlace, type ActivitySearch } from "
 import { LODGING_ADDRESS_MAX, LODGING_NAME_MAX, isLodging, lodgingFromPlace, lodgingSummary, stayCostLines, bookedNightsNote, type Lodging } from "../../lib/trips/lodging";
 import PlaceAttribution from "./PlaceAttribution";
 
-type Draft = { name: string; address: string; check_in: string; check_out: string; booked: boolean; booked_nights: string; place?: ActivityPlace };
+type Draft = { name: string; address: string; check_in: string; check_out: string; booked: boolean; booked_nights: string; first_night: string; last_night: string; place?: ActivityPlace };
 
-const fromLodging = (l?: Lodging | null): Draft => ({ name: l?.name ?? "", address: l?.address ?? "", check_in: l?.check_in ?? "", check_out: l?.check_out ?? "", booked: l?.booked === true, booked_nights: l?.booked_nights ? String(l.booked_nights) : "" });
+const fromLodging = (l?: Lodging | null): Draft => ({ name: l?.name ?? "", address: l?.address ?? "", check_in: l?.check_in ?? "", check_out: l?.check_out ?? "", booked: l?.booked === true, booked_nights: l?.booked_nights ? String(l.booked_nights) : "", first_night: l?.first_night != null ? String(l.first_night) : "", last_night: l?.last_night != null ? String(l.last_night) : "" });
 
 /** Where the traveler sleeps in this destination. Their record, never a booking or a price. */
-export default function LodgingPanel({ stop, lodging, onSave, disabled = false, costs, currency = "", dates }: {
+export default function LodgingPanel({ stop, lodging, onSave, disabled = false, costs, currency = "", dates, title = "Where you’re staying", addLabel = "Add where you’re staying", range, startOpen = false, onDone, expectedNights, taken = [] }: {
   stop: Stop; lodging?: Lodging | null; disabled?: boolean; onSave: (lodging: Lodging | null) => void; costs?: CostRecord[]; currency?: string; dates?: { checkIn: string | null; checkOut: string | null };
+  title?: string; addLabel?: string;
+  /** Offer the nights this stay covers; `required` for a destination's other stays. */
+  range?: { required: boolean };
+  /** Open the form at once (a new stay being added). */
+  startOpen?: boolean;
+  /** Called when the form is saved, cancelled or the stay removed. */
+  onDone?: () => void;
+  /** Nights this stay is meant to cover, for the booked-nights check; defaults to the destination's nights. */
+  expectedNights?: number;
+  /** Nights the destination's other stays already cover, so this one cannot take them. */
+  taken?: [number, number][];
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(startOpen);
   const [draft, setDraft] = useState<Draft>(() => fromLodging(lodging));
   const [page, setPage] = useState<ActivitySearch | null>(null);
   const [busy, setBusy] = useState(false);
@@ -28,7 +39,7 @@ export default function LodgingPanel({ stop, lodging, onSave, disabled = false, 
   useEffect(() => () => { request.current++; abort.current?.abort(); }, []);
 
   function begin() { setDraft(fromLodging(lodging)); setPage(null); setError(""); setNotice(""); setOpen(true); }
-  function close() { request.current++; abort.current?.abort(); setBusy(false); setOpen(false); setPage(null); setError(""); requestAnimationFrame(() => heading.current?.focus()); }
+  function close() { request.current++; abort.current?.abort(); setBusy(false); setOpen(false); setPage(null); setError(""); requestAnimationFrame(() => heading.current?.focus()); onDone?.(); }
 
   async function search() {
     if (busy || !stop.location) return;
@@ -57,9 +68,21 @@ export default function LodgingPanel({ stop, lodging, onSave, disabled = false, 
         { ...(lodging && lodging.name === name ? { latitude: lodging.latitude, longitude: lodging.longitude, external_id: lodging.external_id, source: lodging.source, place_id: lodging.place_id } : {}), name, address: draft.address.trim(), booked: draft.booked, check_in: draft.check_in, check_out: draft.check_out };
     const nightsText = draft.booked_nights.trim();
     if (draft.booked && nightsText !== "" && !(/^\d{1,3}$/.test(nightsText) && Number(nightsText) >= 1 && Number(nightsText) <= 365)) { setError("Enter the nights you booked as a whole number from 1 to 365, or leave it blank."); return; }
-    const { booked_nights: _drop, ...rest } = base;
-    void _drop;
-    const next: Lodging = { ...rest, name, address: draft.address.trim(), booked: draft.booked, check_in: draft.check_in, check_out: draft.check_out, ...(draft.booked && nightsText !== "" ? { booked_nights: Number(nightsText) } : {}) };
+    let nightRange: { first_night?: number; last_night?: number } = {};
+    if (range) {
+      const a = draft.first_night.trim(), b = draft.last_night.trim();
+      if (a === "" && b === "") { if (range.required) { setError("Enter the first and last night this stay covers."); return; } }
+      else {
+        const ok = /^\d{1,3}$/.test(a) && /^\d{1,3}$/.test(b) && Number(a) >= 1 && Number(a) <= Number(b) && Number(b) <= stop.nights;
+        if (!ok) { setError(`Enter the first and last night as whole numbers from 1 to ${stop.nights}, with the first no later than the last.`); return; }
+        const clash = taken.find(([x, y]) => Number(a) <= y && x <= Number(b));
+        if (clash) { setError(`Another stay already covers ${clash[0] === clash[1] ? `night ${clash[0]}` : `nights ${clash[0]}\u2013${clash[1]}`}. Two stays cannot share a night.`); return; }
+        nightRange = { first_night: Number(a), last_night: Number(b) };
+      }
+    }
+    const { booked_nights: _drop, first_night: _f, last_night: _l, ...rest } = base;
+    void _drop; void _f; void _l;
+    const next: Lodging = { ...rest, ...nightRange, name, address: draft.address.trim(), booked: draft.booked, check_in: draft.check_in, check_out: draft.check_out, ...(draft.booked && nightsText !== "" ? { booked_nights: Number(nightsText) } : {}) };
     if (!isLodging(next)) { setError("Enter a name up to 120 characters, with plain text only."); return; }
     onSave(next);
     setNotice(`Saved ${name}. This is your own record: no booking was made or checked.`);
@@ -67,12 +90,12 @@ export default function LodgingPanel({ stop, lodging, onSave, disabled = false, 
   }
   const filledName = draft.name.trim().length > 0;
   const costLines = stayCostLines(costs, stop.id, currency);
-  const bookedNote = bookedNightsNote(lodging, stop.nights);
+  const bookedNote = bookedNightsNote(lodging, expectedNights ?? stop.nights);
   if (stop.nights === 0) return null;
-  return <section className="lodging-panel" aria-label={`Where you're staying in ${stop.name}`}>
+  return <section className="lodging-panel" aria-label={`${title} in ${stop.name}`}>
     <div className="lodging-head">
-      <h3>Where you’re staying</h3>
-      {!open && <button ref={heading} type="button" disabled={disabled} onClick={begin}>{lodging ? "Edit stay" : "Add where you’re staying"}</button>}
+      <h3>{title}</h3>
+      {!open && <button ref={heading} type="button" disabled={disabled} onClick={begin}>{lodging ? "Edit stay" : addLabel}</button>}
     </div>
     {!open && <>
       <p>{lodgingSummary(lodging)}</p>
@@ -88,6 +111,11 @@ export default function LodgingPanel({ stop, lodging, onSave, disabled = false, 
     {open && <form className="lodging-form" onSubmit={(e) => { e.preventDefault(); save(); }}>
       <label>Name of the place<input ref={nameField} value={draft.name} maxLength={LODGING_NAME_MAX} onChange={(e) => setDraft({ ...draft, name: e.target.value, place: draft.place && draft.place.name === e.target.value ? draft.place : undefined })} required /></label>
       <label>Address or note (optional)<input value={draft.address} maxLength={LODGING_ADDRESS_MAX} onChange={(e) => setDraft({ ...draft, address: e.target.value })} /></label>
+      {range && <div className="lodging-times">
+        <label>First night{range.required ? "" : " (optional)"}<input inputMode="numeric" value={draft.first_night} onChange={(e) => setDraft({ ...draft, first_night: e.target.value })} /></label>
+        <label>Last night{range.required ? "" : " (optional)"}<input inputMode="numeric" value={draft.last_night} onChange={(e) => setDraft({ ...draft, last_night: e.target.value })} /></label>
+      </div>}
+      {range && <small>Nights are counted in this destination: 1 to {stop.nights}. Two stays cannot share a night.</small>}
       <div className="lodging-times">
         <label>Check-in<input type="time" value={draft.check_in} onChange={(e) => setDraft({ ...draft, check_in: e.target.value })} /></label>
         <label>Check-out<input type="time" value={draft.check_out} onChange={(e) => setDraft({ ...draft, check_out: e.target.value })} /></label>

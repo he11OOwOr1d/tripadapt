@@ -36,7 +36,7 @@ import TransferBooking from "./TransferBooking";
 import { originPlace, stopPlace, withTravelHours } from "../../lib/trips/intercity";
 import { stayDates } from "../../lib/trips/stay-dates";
 import { hasBooking, mergeIssues, splitForJourneys, transferConflicts, withTransferBooking } from "../../lib/trips/transfers";
-import { withLodging } from "../../lib/trips/lodging";
+import { MAX_EXTRA_STAYS, coverageNotes, nightsFor, staysOf, unclaimedSpan, withExtraLodging, withLodging, type Lodging } from "../../lib/trips/lodging";
 const kindName = {
   custom: "Activity",
   meal: "Meal",
@@ -117,6 +117,8 @@ export default function ItineraryWorkspace({
   const [overview, setOverview] = useState(false);
   const [showRecorded, setShowRecorded] = useState(true);
   const [mapOpen, setMapOpen] = useState(false);
+  const [addingStay, setAddingStay] = useState(false);
+  useEffect(() => { setAddingStay(false); }, [selected]);
   const [mapSelected, setMapSelected] = useState<string | undefined>();
   // A marker click highlights its timeline row and brings it into view; the row button does the reverse.
   const selectOnMap = (id: string) => {
@@ -480,7 +482,26 @@ export default function ItineraryWorkspace({
             </div>}
             {readinessOpen && timeChangeReview && <ReplanningReadiness key={`${current.stop.id}:${localDay}`} tripId={timeChangeReview.account.id} onEditActivity={onReadinessEdit} initialBasis={readinessBasis} onAccepted={timeChangeReview.onAccepted} stopId={current.stop.id} day={localDay-1} onClose={()=>setReadinessOpen(false)} />}
             {delayOpen && timeChangeReview && <DayDelayReview key={`${current.stop.id}:${localDay}`} activities={activities} place={current.stop.name} timezone={current.stop.timezone} review={timeChangeReview} initial={delaySeed} onEditActivity={timeChangeReview.onEditActivity ? (proposal,id)=>{const opened=timeChangeReview.onEditActivity!(proposal,id);if(opened)setDelayOpen(false);return opened;} : undefined} onClose={()=>setDelayOpen(false)} />}
-            <LodgingPanel key={current.stop.id} stop={current.stop} costs={trip.costRecords} currency={trip.currency} dates={stayDates(trip, current.arrivalDay, current.departureDay)} lodging={trip.stayPreferences?.[current.stop.id]?.lodging} disabled={editorOpen} onSave={(lodging) => onUpdate({ stayPreferences: withLodging(trip.stayPreferences, current.stop.id, lodging) })} />
+            {(() => {
+              const pref = trip.stayPreferences?.[current.stop.id];
+              const extras = pref?.extra_lodgings ?? [];
+              const rangesExcept = (skip?: Lodging | null): [number, number][] => staysOf(pref).filter((x) => x !== skip && x.first_night != null && x.last_night != null).map((x) => [x.first_night as number, x.last_night as number]);
+              const when = (stay?: Lodging | null) => {
+                if (stay?.first_night != null && stay.last_night != null) return stayDates(trip, current.arrivalDay + stay.first_night - 1, current.arrivalDay + stay.last_night);
+                if (stay && extras.length) {
+                  const span = unclaimedSpan(pref, stay, current.stop.nights);
+                  return span ? stayDates(trip, current.arrivalDay + span[0] - 1, current.arrivalDay + span[1]) : { checkIn: null, checkOut: null };
+                }
+                return stayDates(trip, current.arrivalDay, current.departureDay);
+              };
+              return <>
+                <LodgingPanel key={current.stop.id} stop={current.stop} costs={trip.costRecords} currency={trip.currency} dates={when(pref?.lodging)} lodging={pref?.lodging} disabled={editorOpen} range={extras.length ? { required: false } : undefined} taken={rangesExcept(pref?.lodging)} expectedNights={pref?.lodging ? nightsFor(pref, pref.lodging, current.stop.nights) : undefined} onSave={(lodging) => onUpdate({ stayPreferences: withLodging(trip.stayPreferences, current.stop.id, lodging) })} />
+                {extras.map((stay, i) => <LodgingPanel key={`${current.stop.id}:extra:${i}`} stop={current.stop} title="Another stay" dates={when(stay)} lodging={stay} disabled={editorOpen} range={{ required: true }} taken={rangesExcept(stay)} expectedNights={nightsFor(pref, stay, current.stop.nights)} onSave={(lodging) => onUpdate({ stayPreferences: withExtraLodging(trip.stayPreferences, current.stop.id, i, lodging) })} />)}
+                {addingStay && <LodgingPanel key={`${current.stop.id}:new`} stop={current.stop} title="Another stay" range={{ required: true }} taken={rangesExcept(null)} startOpen onDone={() => setAddingStay(false)} onSave={(lodging) => { if (lodging) onUpdate({ stayPreferences: withExtraLodging(trip.stayPreferences, current.stop.id, null, lodging) }); }} />}
+                {current.stop.nights > 0 && !addingStay && extras.length < MAX_EXTRA_STAYS && <p className="lodging-add"><button type="button" disabled={editorOpen} onClick={() => setAddingStay(true)}>Add another stay in {current.stop.name}</button></p>}
+                {coverageNotes(pref, current.stop.nights).map((note) => <p key={note} role="status" className="lodging-warning">{note}</p>)}
+              </>;
+            })()}
             <StayJourney key={JSON.stringify([current.stop.id, localDay, trip.stayPreferences?.[current.stop.id]?.lodging?.check_in, trip.stayPreferences?.[current.stop.id]?.lodging?.check_out, trip.stayPreferences?.[current.stop.id]?.lodging?.latitude, trip.stayPreferences?.[current.stop.id]?.lodging?.longitude, activities.map((a) => [a.id, a.start, a.minutes, a.place?.id, a.skipped])])} lodging={trip.stayPreferences?.[current.stop.id]?.lodging} activities={activities} firstDay={localDay === 1} lastDay={localDay === current.days} />
             <DayMapPanel key={`${current.stop.id}:${localDay}`} stop={current.stop} stops={schedule.map((s) => s.stop)} activities={activities} lodging={trip.stayPreferences?.[current.stop.id]?.lodging} open={mapOpen} onOpenChange={setMapOpen} selectedId={mapSelected} onSelect={selectOnMap} />
             <p className="day-window">

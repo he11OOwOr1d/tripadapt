@@ -1060,3 +1060,7 @@ fieldset.live-acceptance { border-inline: 0; min-width: 0; }
 .lodging-panel .lodging-warning { border-left: 4px solid #87602f; padding-left: .75rem; color: #5d4220; }
 .rebalance-booked { border-left: 4px solid #87602f; padding-left: .75rem; color: #5d4220; max-width: 65ch; line-height: 1.5; }
 .day-gap.day-journey { font-style: italic; }
+.lodging-add { margin: .5rem 0 1rem; }
+.lodging-add button { min-height: 44px; padding: .6rem .9rem; font: inherit; color: inherit; background: transparent; border: 1px solid currentColor; border-radius: .25rem; cursor: pointer; }
+.lodging-add button:disabled { opacity: .55; cursor: not-allowed; }
+.lodging-add button:focus-visible { outline: 3px solid #476442; outline-offset: 3px; }
