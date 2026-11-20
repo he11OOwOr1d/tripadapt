@@ -904,3 +904,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026. "Change nights between stays" ignored a stay marked as booked. The preview now lists each booked stay whose nights change, as a warning (not a block), and the preview's headings no longer skip a level. 623 backend and 238 frontend tests pass; verified live and signed in (previewed, not applied). Committed locally; not pushed. See [the learning note](../lodging-learning.md).
 
+## 196. Show recorded journeys on the day timeline
+
+20 November 2026. Open gaps before a recorded arrival (first day) and after a recorded departure (last day) now read as "On the move" instead of "time to leave open"; activities are untouched. One pure function, 239 frontend tests; verified live and signed in, axe clean, arrival removed afterwards. Committed locally; not pushed. See [the booking note](../transfer-bookings-learning.md).
+

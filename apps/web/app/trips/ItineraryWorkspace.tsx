@@ -35,7 +35,7 @@ import RouteDrives from "./RouteDrives";
 import TransferBooking from "./TransferBooking";
 import { originPlace, stopPlace, withTravelHours } from "../../lib/trips/intercity";
 import { stayDates } from "../../lib/trips/stay-dates";
-import { hasBooking, mergeIssues, transferConflicts, withTransferBooking } from "../../lib/trips/transfers";
+import { hasBooking, mergeIssues, splitForJourneys, transferConflicts, withTransferBooking } from "../../lib/trips/transfers";
 import { withLodging } from "../../lib/trips/lodging";
 const kindName = {
   custom: "Activity",
@@ -156,7 +156,7 @@ export default function ItineraryWorkspace({
   const activities = trip.activities.filter(
     (a) => a.stopId === current.stop.id && a.day === localDay,
   );
-  const entries = dayTimeline(activities),
+  const entries = splitForJourneys(dayTimeline(activities), trip, current.stop.id, localDay),
     conflicts = mergeIssues(dayConflicts(trip, current.stop.id, localDay), transferConflicts(trip, current.stop.id, localDay));
   const transfers = [
     ...(localDay === 1 && current.inbound
@@ -492,7 +492,18 @@ export default function ItineraryWorkspace({
             {activities.some(a=>a.completed||a.skipped)&&<div className="day-recorded-controls"><label><input type="checkbox" checked={showRecorded} onChange={e=>setShowRecorded(e.target.checked)}/> Show recorded outcomes</label>{!showRecorded&&<p role="status">{activities.filter(a=>a.completed||a.skipped).length} completed or missed {activities.filter(a=>a.completed||a.skipped).length===1?"record":"records"} hidden. Completed time stays occupied; missed activities leave their time open.</p>}</div>}
             <div className="day-timeline">
               {visibleDayEntries(entries, showRecorded).map((entry) =>
-                entry.type === "gap" ? (
+                entry.type === "journey" ? (
+                  <div className="day-gap day-journey" key={`journey-${entry.start}`}>
+                    <time>
+                      {clock(entry.start)}
+                      <span>–{clock(entry.end)}</span>
+                    </time>
+                    <div>
+                      <strong>On the move</strong>
+                      <span>{entry.label}</span>
+                    </div>
+                  </div>
+                ) : entry.type === "gap" ? (
                   <div className="day-gap" key={`gap-${entry.start}`}>
                     <time>
                       {clock(entry.start)}

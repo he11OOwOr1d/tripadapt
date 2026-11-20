@@ -86,10 +86,12 @@ export function dayConflicts(trip: Trip, stopId: string, day: number) {
 }
 export type DayEntry =
   | { type: "activity"; activity: Activity }
-  | { type: "gap"; start: number; end: number };
+  | { type: "gap"; start: number; end: number }
+  /** Time the traveler's own recorded journey occupies: before an arrival or after a departure. */
+  | { type: "journey"; start: number; end: number; label: string };
 /** Filter presentation after calculating occupancy; completed time stays occupied. */
 export function visibleDayEntries(entries: DayEntry[], showRecorded: boolean): DayEntry[] {
-  return showRecorded ? entries : entries.filter(entry => entry.type === "gap" || (!entry.activity.completed && !entry.activity.skipped));
+  return showRecorded ? entries : entries.filter(entry => entry.type !== "activity" || (!entry.activity.completed && !entry.activity.skipped));
 }
 export function dayTimeline(activities: Activity[]): DayEntry[] {
   const sorted = [...activities].sort(

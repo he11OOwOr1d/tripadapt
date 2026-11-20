@@ -78,3 +78,23 @@ test('buffers widen the margin and say so, and are shown even without a recorded
   assert.equal(t.hasBooking({arrival_buffer:30}),true);
 });
 
+test('time taken by a recorded journey shows as travel, not as open time, and activities are untouched',()=>{
+  const stops=[stop('s1',2)];
+  const base=trip(stops,{},[]);
+  const prefs={[legKey(base,0)]:{mode:'',hours:'',overnight:0,rate:'',basis:'person',arrival:'10:00'},[legKey(base,1)]:{mode:'',hours:'',overnight:0,rate:'',basis:'person',departure:'17:00'}};
+  const trp=trip(stops,prefs,[]);
+  const gap=(a,b)=>({type:'gap',start:a,end:b});
+  const brief=v=>J(v).map(e=>e.type==='gap'?`gap ${e.start}-${e.end}`:e.type==='journey'?`journey ${e.start}-${e.end}`:'activity');
+  assert.deepEqual(brief(t.splitForJourneys([gap(480,1320)],trp,'s1',1)),['journey 480-600','gap 600-1320']);
+  assert.deepEqual(brief(t.splitForJourneys([gap(480,1320)],trp,'s1',3)),['gap 480-1020','journey 1020-1320']);
+  assert.deepEqual(brief(t.splitForJourneys([gap(480,1320)],trp,'s1',2)),['gap 480-1320']);
+  const act1={type:'activity',activity:act('a','s1',1,'09:00',60)};
+  assert.deepEqual(brief(t.splitForJourneys([gap(480,540),act1,gap(600,1320)],trp,'s1',1)),['journey 480-540','activity','gap 600-1320']);
+  assert.deepEqual(brief(t.splitForJourneys([gap(660,900)],trp,'s1',1)),['gap 660-900']);
+  const one=trip([stop('s1',0)],{},[]);
+  const both=trip([stop('s1',0)],{[legKey(one,0)]:{mode:'',hours:'',overnight:0,rate:'',basis:'person',arrival:'10:00'},[legKey(one,1)]:{mode:'',hours:'',overnight:0,rate:'',basis:'person',departure:'17:00'}},[]);
+  assert.deepEqual(brief(t.splitForJourneys([gap(480,1320)],both,'s1',1)),['journey 480-600','gap 600-1020','journey 1020-1320']);
+  assert.deepEqual(brief(t.splitForJourneys([gap(480,1320)],trip(stops,{},[]),'s1',1)),['gap 480-1320']);
+  assert.deepEqual(brief(t.splitForJourneys([gap(480,1320)],trp,'missing',1)),['gap 480-1320']);
+  assert.match(J(t.splitForJourneys([gap(480,1320)],trp,'s1',1))[0].label,/until your recorded arrival at 10:00/);
+});

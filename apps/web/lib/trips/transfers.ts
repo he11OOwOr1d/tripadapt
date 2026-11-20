@@ -1,4 +1,5 @@
 import type { Trip } from "./adapter";
+import type { DayEntry } from "./itinerary";
 import { routeLegs } from "./planning";
 
 type Prefs = NonNullable<Trip["travelPreferences"]>;
@@ -80,3 +81,33 @@ export function mergeIssues(a: Record<string, string[]>, b: Record<string, strin
   for (const [id, issues] of Object.entries(b)) out[id] = [...(out[id] ?? []), ...issues];
   return out;
 }
+
+/**
+ * Show the hours taken by a recorded journey as travel instead of "unplanned time to leave open":
+ * the time before the recorded arrival on the stop's first day, and after the recorded departure on its last.
+ * Only open gaps change; activities are never moved or hidden (clashes are flagged separately).
+ */
+export function splitForJourneys(entries: DayEntry[], trip: Trip, stopId: string, day: number): DayEntry[] {
+  const index = trip.stops.findIndex((s) => s.id === stopId);
+  if (index < 0) return entries;
+  const legs = routeLegs(trip);
+  const arrival = day === 1 ? trip.travelPreferences?.[legs[index]?.key ?? ""]?.arrival : undefined;
+  const departure = day === trip.stops[index].nights + 1 ? trip.travelPreferences?.[legs[index + 1]?.key ?? ""]?.departure : undefined;
+  if (!arrival && !departure) return entries;
+  const minutes = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3));
+  const arrive = arrival ? minutes(arrival) : -1, leave = departure ? minutes(departure) : 1441;
+  const out: DayEntry[] = [];
+  for (const entry of entries) {
+    if (entry.type !== "gap") { out.push(entry); continue; }
+    let { start, end } = entry;
+    if (arrival && start < arrive) {
+      out.push({ type: "journey", start, end: Math.min(end, arrive), label: `On the move until your recorded arrival at ${arrival}` });
+      start = Math.min(end, arrive);
+    }
+    const open = start < Math.min(end, leave) ? { type: "gap" as const, start, end: Math.min(end, leave) } : null;
+    if (open) out.push(open);
+    if (departure && end > leave) out.push({ type: "journey", start: Math.max(start, leave), end, label: `On the move from your recorded departure at ${departure}` });
+  }
+  return out;
+}
+
