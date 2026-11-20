@@ -8,7 +8,7 @@ TripAdapt is the repository and engineering name. **Elsewhere** is the product n
 
 [Live UI review](https://elsewhere-ui-review.vercel.app) · [Trip planner](https://elsewhere-ui-review.vercel.app/trips/new) · [Design decisions](docs/architecture/design-decisions.md) · [Repository structure](docs/architecture/repository-structure.md)
 
-> **Current stage — 20 November 2026:** `main` includes the landing and creation flow, Supabase account autosave, editable itineraries, grounded Groq planning with reviewed proposals, accepted-plan history and restoration, weather/delay/fatigue/remaining-day replanning, cost records with currency, conversion and tax handling, Geoapify/OpenStreetMap place discovery, opening-hours and route checks (Google was removed), an itinerary map (MapLibre with Geoapify tiles), and a recorded stay for each destination. Local work after that (committed on `main` locally, not yet pushed or deployed): route checks from and to the stay, drive estimates between destinations including a whole-route panel, journeys booked elsewhere with day-view flags and an AI planner that respects them, booked-stay nights checks, and a broad accessibility pass. Still open: reviews/discovery feed, train/bus/flight schedules (only driving estimates exist), several stays in one destination, full-trip generation and an always-on worker. See [current status](docs/development/status.md) and the [release plan](docs/deployments/stay-features-release-plan.md).
+> **Current stage — 20 November 2026:** `main` includes the landing and creation flow, Supabase account autosave, editable itineraries, grounded Groq planning with reviewed proposals, accepted-plan history and restoration, weather/delay/fatigue/remaining-day replanning, cost records with currency, conversion and tax handling, Geoapify/OpenStreetMap place discovery, opening-hours and route checks (Google was removed), an itinerary map (MapLibre with Geoapify tiles), and a recorded stay for each destination. Local work after that (committed on `main` locally, not yet pushed or deployed): route checks from and to the stay, drive estimates between destinations including a whole-route panel, journeys booked elsewhere with day-view flags and an AI planner that respects them, several stays per destination, stays and journeys that can be kept fixed, booked-stay and booked-journey checks, and a broad accessibility pass. Still open: reviews/discovery feed, train/bus/flight schedules (only driving estimates exist), full-trip generation and an always-on worker. See [current status](docs/development/status.md) and the [release plan](docs/deployments/stay-features-release-plan.md).
 
 ## What works now
 
@@ -56,7 +56,7 @@ npm --prefix apps/web run build
 npm --prefix apps/web test
 ```
 
-The npm regression suite has 238 tests; the backend suite has 623 tests (as of 20 November 2026, on the local branch). Checks cover account mapping, autosave, schedule logic, scoped proposals/recovery and provider lookup boundaries. Browser reviews cover desktop and 390px/320px phone layouts. [Journey implementation and verification](docs/trip-creation-journey.md).
+The npm regression suite has 252 tests; the backend suite has 645 tests (as of 20 November 2026, on the local branch). Checks cover account mapping, autosave, schedule logic, scoped proposals/recovery and provider lookup boundaries. Browser reviews cover desktop and 390px/320px phone layouts. [Journey implementation and verification](docs/trip-creation-journey.md).
 
 ## Full-stack local development
 
