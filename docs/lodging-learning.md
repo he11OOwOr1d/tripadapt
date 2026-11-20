@@ -186,3 +186,16 @@ The remaining surfaces were finished in phase 3 below.
 - **Restore review.** It names every stay with its nights ("Staying at Haveli (nights 1-2); then Lake view (nights 3-4, marked as booked by you) (your own record, not confirmed with the stay)").
 - **Verification.** Backend tests for the rebalance case above, the planner seeing the right stay by day (and none beyond the ranges), the evidence helper, and the readiness list accepting another stay; 637 backend and 248 frontend tests pass; typecheck and build. Not verified live: the AI planner with several stays, the fresh-start list with several stays, and the restore review (no accepted version to restore); all are covered by tests only.
 
+### Review follow-up on several stays (20 November 2026)
+
+A review of the several-stays commits found, and I fixed:
+
+- **A silent loss of the main stay's nights.** A main stay given a night range while other stays existed kept it after they were removed, but the form then hid the range fields, so saving dropped the range without a word (and the page reported nights with no stay). The main stay's range fields now stay available whenever it has a range or other stays exist.
+- **The AI planner on a day that changes stays.** It was told only about the stay the traveler wakes up at, so "leave time to get back" pointed at the wrong place on a change-over day. The day context now carries `stay_tonight` (name and whether it has a map location) when the evening stay differs from the morning one, and the prompt says to leave time to get back to it; a backend test reads the actual JSON key for three days (change-over, same stay all day, and a day inside the second stay). Distances to candidates are still measured from the morning stay.
+- **Stable panels.** The other-stay panels were keyed by array position, so removing one could hand its half-edited form to a neighbour, and they all had the same accessible name. They are now keyed by their nights and name and titled "Another stay (nights 3-4)".
+- **A duplicate comment** in the readiness code was removed.
+
+Reviewed and left as is: when "Change nights between stays" shortens a destination, a stay whose range then points past the plan's end is not warned about in the preview (only booked stays whose covered nights change are); after applying, the page's coverage note says so ("<stay> is set for nights 3-5, but your plan has 3 nights here"). Readiness lists every searched stay of the destination, not only the one for that night, which is harmless extra choice.
+
+638 backend and 248 frontend tests pass; typecheck and build pass. Not re-run live.
+

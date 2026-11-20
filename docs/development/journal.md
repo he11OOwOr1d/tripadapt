@@ -924,3 +924,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026. The AI planner, the fresh-start list, the rebalance warning and the restore review now understand several stays and pick the stay for a night; shared backend helpers mirror the frontend's. 637 backend and 248 frontend tests pass; not re-run live for these four (tests only). Committed locally; not pushed.
 
+## 201. Fix what the review of the several-stays work found
+
+20 November 2026. Kept the main stay's night fields available (no silent range loss), told the AI planner about tonight's stay on a stay-change day, made the other-stay panels stable and distinguishable, removed a duplicate comment. 638 backend and 248 frontend tests pass; not re-run live. Committed locally; not pushed.
+

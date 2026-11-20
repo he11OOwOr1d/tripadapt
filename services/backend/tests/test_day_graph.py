@@ -291,3 +291,29 @@ def test_the_model_sees_the_stay_for_the_night_before_the_day():
     assert "Lake view" in seen(3) and "Haveli" not in seen(3)
     # Beyond every recorded range no stay is claimed, so none is named.
     assert "Haveli" not in seen(6) and "Lake view" not in seen(6)
+
+
+def test_a_day_that_changes_stays_tells_the_model_where_the_traveler_ends_up():
+    plan, stop = base()
+    plan.preferences.stay_preferences[stop] = StayPreference(
+        style="",
+        rate="",
+        basis="room",
+        lodging=Lodging(name="Haveli", first_night=1, last_night=2),
+        extra_lodgings=[Lodging(name="Lake view", first_night=3, last_night=5)],
+    )
+
+    def tonight(day):
+        provider = RecordingProvider([answer("10:00")])
+        run_day_graph(plan, stop, day, uuid4(), provider)
+        # The key as data (the prompt also names it in prose).
+        return any(
+            '"stay_tonight": {' in (message.get("content") or "")
+            for entry in provider.seen
+            for message in json.loads(entry)
+        )
+
+    # Day offset 2 starts at the Haveli (night 2) and ends at the Lake view (night 3).
+    assert tonight(2) is True
+    assert tonight(0) is False  # the same stay all day
+    assert tonight(3) is False  # the Lake view in the morning and the evening
