@@ -92,3 +92,21 @@ test('a journey keeps the same id when stops are added elsewhere, and an unnamed
   assert.equal(beyond,null);
 });
 
+test('converting a wall-clock time to UTC and back lands on the same wall-clock time, in many zones on every day of 2026',()=>{
+  const zones=['Asia/Kolkata','Asia/Kathmandu','America/New_York','Europe/London','Europe/Paris','Australia/Sydney','Pacific/Auckland','America/Sao_Paulo','Africa/Cairo','Asia/Tokyo'];
+  const wall=(d,tz)=>{const p=new Intl.DateTimeFormat('en-CA',{timeZone:tz,hourCycle:'h23',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}).formatToParts(d);const g=t=>p.find(x=>x.type===t).value;return `${g('year')}-${g('month')}-${g('day')} ${g('hour')}:${g('minute')}`;};
+  let checked=0;const gaps=[];
+  for(const tz of zones)for(let n=0;n<365;n++){
+    const date=new Date(Date.UTC(2026,0,1+n)).toISOString().slice(0,10);
+    for(const time of ['00:30','12:00','23:45']){
+      const got=wall(c.zonedToUtc(date,time,tz),tz),want=`${date} ${time}`;
+      if(got!==want)gaps.push(`${tz} ${want} -> ${got}`);
+      checked++;
+    }
+  }
+  assert.equal(checked,zones.length*365*3);
+  // The only acceptable misses are local times that do not exist (the clock skipped them); they land later, within the hour.
+  const asMs=s=>{const [d,h]=s.split(' ');return Date.parse(`${d}T${h}:00Z`);};
+  for(const g of gaps){const [from,got]=g.split(' -> ');const want=from.split(' ').slice(-2).join(' ');const diff=asMs(got)-asMs(want);assert.ok(diff>0&&diff<=3600000,g);}
+  assert.ok(gaps.length<=zones.length*3,`too many nonexistent times: ${gaps.length}`);
+});
