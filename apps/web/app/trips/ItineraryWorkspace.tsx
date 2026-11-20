@@ -36,7 +36,7 @@ import TransferBooking from "./TransferBooking";
 import { originPlace, stopPlace, withTravelHours } from "../../lib/trips/intercity";
 import { stayDates } from "../../lib/trips/stay-dates";
 import { hasBooking, mergeIssues, splitForJourneys, transferConflicts, withTransferBooking } from "../../lib/trips/transfers";
-import { MAX_EXTRA_STAYS, coverageNotes, nightsFor, staysOf, unclaimedSpan, withExtraLodging, withLodging, type Lodging } from "../../lib/trips/lodging";
+import { MAX_EXTRA_STAYS, coverageNotes, nightsFor, stayForNight, staysOf, unclaimedSpan, withExtraLodging, withLodging, type Lodging } from "../../lib/trips/lodging";
 const kindName = {
   custom: "Activity",
   meal: "Meal",
@@ -502,8 +502,8 @@ export default function ItineraryWorkspace({
                 {coverageNotes(pref, current.stop.nights).map((note) => <p key={note} role="status" className="lodging-warning">{note}</p>)}
               </>;
             })()}
-            <StayJourney key={JSON.stringify([current.stop.id, localDay, trip.stayPreferences?.[current.stop.id]?.lodging?.check_in, trip.stayPreferences?.[current.stop.id]?.lodging?.check_out, trip.stayPreferences?.[current.stop.id]?.lodging?.latitude, trip.stayPreferences?.[current.stop.id]?.lodging?.longitude, activities.map((a) => [a.id, a.start, a.minutes, a.place?.id, a.skipped])])} lodging={trip.stayPreferences?.[current.stop.id]?.lodging} activities={activities} firstDay={localDay === 1} lastDay={localDay === current.days} />
-            <DayMapPanel key={`${current.stop.id}:${localDay}`} stop={current.stop} stops={schedule.map((s) => s.stop)} activities={activities} lodging={trip.stayPreferences?.[current.stop.id]?.lodging} open={mapOpen} onOpenChange={setMapOpen} selectedId={mapSelected} onSelect={selectOnMap} />
+            <StayJourney key={JSON.stringify([current.stop.id, localDay, staysOf(trip.stayPreferences?.[current.stop.id]).map((x) => [x.latitude, x.longitude, x.check_in, x.check_out, x.first_night, x.last_night]), activities.map((a) => [a.id, a.start, a.minutes, a.place?.id, a.skipped])])} lodging={stayForNight(trip.stayPreferences?.[current.stop.id], Math.max(1, localDay - 1))} backLodging={stayForNight(trip.stayPreferences?.[current.stop.id], Math.min(localDay, current.stop.nights))} several={staysOf(trip.stayPreferences?.[current.stop.id]).length > 1} activities={activities} firstDay={localDay === 1} lastDay={localDay === current.days} />
+            <DayMapPanel key={`${current.stop.id}:${localDay}`} stop={current.stop} stops={schedule.map((s) => s.stop)} activities={activities} lodging={staysOf(trip.stayPreferences?.[current.stop.id])} open={mapOpen} onOpenChange={setMapOpen} selectedId={mapSelected} onSelect={selectOnMap} />
             <p className="day-window">
               Local times · open gaps shown around an 08:00–22:00 planning day
               {transfers.length ? " · allow for untimed transfers" : ""}

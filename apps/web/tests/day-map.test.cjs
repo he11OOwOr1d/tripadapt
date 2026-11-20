@@ -74,3 +74,12 @@ test('the stay widens the bounds so it is never off screen',()=>{
   const m=out.dayMapModel(stop,[act('a','10:00',37.79,-122.41)],{name:'Far',latitude:37.5,longitude:-122.6});
   assert.deepEqual(J(m.bounds),[[-122.6,37.5],[-122.41,37.79]]);
 });
+test('several stays each get their own unnumbered pin, with their nights',()=>{
+  const m=out.dayMapModel(stop,[act('a','10:00',37.79,-122.41)],[{name:'Haveli',latitude:37.775,longitude:-122.41,first_night:1,last_night:2},{name:'Lake view',latitude:37.76,longitude:-122.43,first_night:3,last_night:3,booked:true},{name:'No location'}]);
+  const homes=m.points.filter(p=>p.kind==='lodging');
+  assert.deepEqual(J(homes.map(p=>[p.id,p.order,p.label,p.detail])),[['lodging:s1',0,'Haveli','Your stay · nights 1–2'],['lodging:s1:1',0,'Lake view','Your stay · night 3 · marked booked by you']]);
+  assert.deepEqual(J(m.links),[]);
+  assert.match(out.mapSummary(m),/1 mapped visit shown; your recorded stays are marked/);
+  assert.equal(out.dayMapModel(stop,[],[]).points.filter(p=>p.kind==='lodging').length,0);
+});
+

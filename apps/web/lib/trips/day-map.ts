@@ -63,7 +63,7 @@ function finish(scope: MapScope, points: MapPoint[], unmapped: MapModel["unmappe
 }
 
 /** One destination day: the stay's centre plus mapped visits in timeline order. */
-export function dayMapModel(stop: Stop | undefined, activities: Activity[], lodging?: Lodging | null): MapModel {
+export function dayMapModel(stop: Stop | undefined, activities: Activity[], lodging?: Lodging | Lodging[] | null): MapModel {
   const points: MapPoint[] = [];
   const unmapped: MapModel["unmapped"] = [];
   const centre = stop?.location;
@@ -79,19 +79,21 @@ export function dayMapModel(stop: Stop | undefined, activities: Activity[], lodg
     });
   }
   // Type-only import above: lodging.ts imports this file, so no runtime cycle.
-  const home = lodging && validCoordinates(lodging.latitude, lodging.longitude) ? { lat: lodging.latitude as number, lng: lodging.longitude as number } : null;
-  if (stop && lodging && home) {
-    // The traveler's own record of where they sleep; not part of the visit line.
+  // The traveler's own record of where they sleep; never part of the visit line. One pin for each stay that has a location.
+  const stays = Array.isArray(lodging) ? lodging : lodging ? [lodging] : [];
+  stays.forEach((stay, i) => {
+    if (!stop || !validCoordinates(stay.latitude, stay.longitude)) return;
+    const nights = stay.first_night != null && stay.last_night != null ? (stay.first_night === stay.last_night ? `night ${stay.first_night}` : `nights ${stay.first_night}\u2013${stay.last_night}`) : "";
     points.push({
-      id: LODGING_ID_PREFIX + stop.id,
+      id: LODGING_ID_PREFIX + stop.id + (i ? `:${i}` : ""),
       kind: "lodging",
       order: 0,
-      label: lodging.name,
-      detail: lodging.booked ? "Your stay · marked booked by you" : "Your stay",
-      lng: home.lng,
-      lat: home.lat,
+      label: stay.name,
+      detail: ["Your stay", nights, stay.booked ? "marked booked by you" : ""].filter(Boolean).join(" \u00b7 "),
+      lng: stay.longitude as number,
+      lat: stay.latitude as number,
     });
-  }
+  });
   const ordered = [...activities]
     .filter((a) => !a.skipped)
     .sort((a, b) => a.start.localeCompare(b.start) || a.id.localeCompare(b.id));
@@ -143,6 +145,7 @@ export function mapSummary(model: MapModel): string {
   const n = model.points.filter((p) => p.order > 0).length;
   const what = model.scope === "route" ? (n === 1 ? "destination" : "destinations") : n === 1 ? "mapped visit" : "mapped visits";
   const missing = model.unmapped.length;
-  const stay = model.points.some((p) => p.kind === "lodging") ? "; your recorded stay is marked" : "";
+  const homes = model.points.filter((p) => p.kind === "lodging").length;
+  const stay = homes > 1 ? "; your recorded stays are marked" : homes === 1 ? "; your recorded stay is marked" : "";
   return `${n} ${what} shown${stay}${missing ? `; ${missing} without a map location stay in the list only` : ""}.`;
 }

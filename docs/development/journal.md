@@ -916,3 +916,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026. PRD FR-04. Each destination can now have up to four other stays besides its main one, each covering its own nights, with per-stay dates, booked-nights checks, coverage notes and chat wording. No migration; existing single stays are unchanged. 634 backend and 247 frontend tests pass; verified live and signed in (add, validation, clash, notes, chat, axe, removal). Phase 2 (map pins and picking the stay for a night in the route checks) is next. Committed locally; not pushed. See [the learning note](../lodging-learning.md).
 
+## 199. Several stays: map pins and the stay for a night (phase 2)
+
+20 November 2026. The day map shows a pin per located stay, and the leave-by and way-back checks use the stay of the previous night in the morning and tonight's in the evening, naming them; a missing stay is said, not guessed. 248 frontend tests pass; verified live and signed in with two searched stays. Remaining main-stay-only surfaces: AI context, fresh-start list, restore review, rebalance warning for extra stays. Committed locally; not pushed.
+

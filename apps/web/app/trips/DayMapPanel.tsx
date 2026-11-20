@@ -9,7 +9,7 @@ import { dayMapModel, mapSummary, routeMapModel, type MapScope } from "../../lib
 const DayMap = dynamic(() => import("./DayMap"), { ssr: false, loading: () => <p role="status">Loading the map…</p> });
 
 export default function DayMapPanel({ stop, stops, activities, lodging, open, onOpenChange, selectedId, onSelect }: {
-  stop: Stop; stops: Stop[]; activities: Activity[]; lodging?: Lodging | null; open: boolean; onOpenChange: (open: boolean) => void;
+  stop: Stop; stops: Stop[]; activities: Activity[]; lodging?: Lodging | Lodging[] | null; open: boolean; onOpenChange: (open: boolean) => void;
   selectedId?: string; onSelect: (id: string) => void;
 }) {
   const [scope, setScope] = useState<MapScope>("day");
