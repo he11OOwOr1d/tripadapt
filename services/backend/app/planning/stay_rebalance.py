@@ -16,7 +16,7 @@ from pydantic import Field, model_validator
 from app.planning.cost_coverage import project_costs
 from app.planning.live_acceptance import planned_visit_date
 from app.planning.validation import validate_plan
-from app.trips.schemas import PlanInput, StrictModel
+from app.trips.schemas import PlanInput, StrictModel, expected_nights, stays_of
 
 
 class Relocation(StrictModel):
@@ -305,18 +305,21 @@ def rebalance_stays(plan: PlanInput, body: RebalanceInput):
             dict(
                 stop_id=s.client_id,
                 name=s.name,
-                stay=preference.lodging.name,
-                booked_nights=preference.lodging.booked_nights,
-                nights_before=s.desired_nights,
-                nights_after=new_nights[s.client_id],
+                stay=stay.name,
+                booked_nights=stay.booked_nights,
+                nights_before=expected_nights(preference, stay, s.desired_nights or 0),
+                nights_after=expected_nights(preference, stay, new_nights[s.client_id]),
             )
             for s in plan.stops
             if new_nights[s.client_id] != s.desired_nights
-            and (preference := plan.preferences.stay_preferences.get(s.client_id))
-            and preference.lodging
-            and preference.lodging.booked
+            for preference in [plan.preferences.stay_preferences.get(s.client_id)]
+            for stay in stays_of(preference)
+            if stay.booked
             # A change that lands on the nights the traveler said they booked needs no warning.
-            and preference.lodging.booked_nights != new_nights[s.client_id]
+            and stay.booked_nights
+            != expected_nights(preference, stay, new_nights[s.client_id])
+            and expected_nights(preference, stay, s.desired_nights or 0)
+            != expected_nights(preference, stay, new_nights[s.client_id])
         ],
         notice="A draft change you chose. Stay allowances follow the new nights; "
         "nothing is booked, cancelled or refunded. Review and accept the draft to "

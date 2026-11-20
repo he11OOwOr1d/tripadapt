@@ -289,3 +289,18 @@ def test_mapped_job_publication_and_acceptance_use_retained_place_records(
     assert proposal["generation"]["evidence"] == "mapped_places"
     assert proposal["place_details"][place["id"]]["name"] == place["name"]
     assert test_proposals.accept(client, base, proposal).status_code == 200
+
+
+def test_stay_for_ai_picks_the_stay_before_the_day(context, monkeypatch):
+    _, plan, stop, _ = evidence(context, monkeypatch)
+    plan.preferences.stay_preferences[stop] = StayPreference(
+        style="",
+        rate="",
+        basis="room",
+        lodging=Lodging(name="Haveli", first_night=1, last_night=2),
+        extra_lodgings=[Lodging(name="Lake view", first_night=3, last_night=4)],
+    )
+    names = [
+        (stay_for_ai(plan, plan.stops[0], day) or {}).get("name") for day in range(6)
+    ]
+    assert names == ["Haveli", "Haveli", "Haveli", "Lake view", "Lake view", None]

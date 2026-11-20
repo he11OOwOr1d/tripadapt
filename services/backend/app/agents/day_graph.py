@@ -13,7 +13,13 @@ from langgraph.graph import END, START, StateGraph
 from app.agents.groq_provider import PlanningFailure
 from app.planning.fixture import validate_scope
 from app.planning.validation import validate_plan
-from app.trips.schemas import ActivityInput, PlanInput, StrictModel, plan_legs
+from app.trips.schemas import (
+    ActivityInput,
+    PlanInput,
+    StrictModel,
+    plan_legs,
+    stay_for_night,
+)
 
 AI_ISSUE = {
     "id": "AI_SAMPLE_EVIDENCE:plan",
@@ -164,9 +170,10 @@ def run_day_graph(
         context["traveler_recorded_arrival"] = arrival
     if departure:
         context["traveler_recorded_departure"] = departure
-    preference = plan.preferences.stay_preferences.get(stop.client_id)
-    if preference and preference.lodging:
-        stay = preference.lodging
+    stay = stay_for_night(
+        plan.preferences.stay_preferences.get(stop.client_id), max(1, day)
+    )
+    if stay:
         context["stay"] = {
             "name": stay.name,
             "address": stay.address,

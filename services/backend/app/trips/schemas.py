@@ -94,6 +94,38 @@ class StayPreference(StrictModel):
         return self
 
 
+def stays_of(preference):
+    """A destination's stays in order: the main one, then the others."""
+    if preference is None:
+        return []
+    return [s for s in [preference.lodging, *preference.extra_lodgings] if s]
+
+
+def stay_for_night(preference, night):
+    """The stay whose nights hold this (1-based) night, else the main stay without a range."""
+    stays = stays_of(preference)
+    for stay in stays:
+        if (
+            stay.first_night is not None
+            and stay.first_night <= night <= stay.last_night
+        ):
+            return stay
+    return next((s for s in stays if s.first_night is None), None)
+
+
+def expected_nights(preference, stay, nights):
+    """How many of a destination's nights a stay is meant to cover: its own range, or what the others leave."""
+    if stay.first_night is not None:
+        return max(0, min(stay.last_night, nights) - stay.first_night + 1)
+    claimed = {
+        n
+        for other in stays_of(preference)
+        if other is not stay and other.first_night is not None
+        for n in range(other.first_night, min(other.last_night, nights) + 1)
+    }
+    return max(0, nights - len(claimed))
+
+
 class TravelPreference(StrictModel):
     mode: str = Field(max_length=100)
     hours: str = Field(pattern=r"^$|^\d+(\.\d{1,2})?$")

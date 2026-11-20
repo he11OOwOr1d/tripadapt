@@ -319,18 +319,21 @@ def test_a_searched_stay_is_offered_as_a_known_location_only_when_its_record_exi
         db.commit()
         return row
 
-    def locations(row, external_id="node/777"):
+    def locations(row, external_id="node/777", as_extra=False):
+        hotel = Lodging(
+            name="Hotel Aurora",
+            latitude=35.02,
+            longitude=135.75,
+            external_id=external_id,
+            place_id=row.id,
+            **(dict(first_night=2, last_night=3) if as_extra else {}),
+        )
         plan.preferences.stay_preferences[stop.client_id] = StayPreference(
             style="",
             rate="",
             basis="room",
-            lodging=Lodging(
-                name="Hotel Aurora",
-                latitude=35.02,
-                longitude=135.75,
-                external_id=external_id,
-                place_id=row.id,
-            ),
+            lodging=Lodging(name="Main stay") if as_extra else hotel,
+            extra_lodgings=[hotel] if as_extra else [],
         )
         db.commit()
         trip = client.post(
@@ -345,6 +348,8 @@ def test_a_searched_stay_is_offered_as_a_known_location_only_when_its_record_exi
         return [p["name"] for p in ctx["known_locations"]]
 
     assert locations(place(stop.place_reference_id)) == ["Hotel Aurora"]
+    # Another stay in the destination is offered the same way.
+    assert locations(place(stop.place_reference_id), as_extra=True) == ["Hotel Aurora"]
     # A stay whose id points at a different place than it names is never offered.
     assert locations(place(stop.place_reference_id), "node/999") == []
     # A record the server does not hold is never offered.

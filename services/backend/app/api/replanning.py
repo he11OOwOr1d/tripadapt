@@ -24,7 +24,7 @@ from app.planning.readiness import (
     scoped_day,
 )
 from app.planning.remaining_day import RemainingDayInput
-from app.trips.schemas import StrictModel
+from app.trips.schemas import StrictModel, stays_of
 
 Basis = Literal["accepted", "draft"]
 
@@ -129,9 +129,11 @@ def replan_context(
     }
     # A searched stay can be where the traveler is; the destination check below
     # keeps a stale or foreign record out.
-    preference = plan.preferences.stay_preferences.get(stop.client_id)
-    stay = preference.lodging if preference else None
-    if stay and stay.place_id:
+    # Searched stays can be where the traveler is; the destination check below
+    # keeps a stale or foreign record out.
+    for stay in stays_of(plan.preferences.stay_preferences.get(stop.client_id)):
+        if not stay.place_id:
+            continue
         record = db.get(DiscoveredPlace, stay.place_id)
         # The stay's record must be the place the traveler searched for.
         if record and record.payload.get("external_id") == stay.external_id:

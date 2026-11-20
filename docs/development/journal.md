@@ -920,3 +920,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 
 20 November 2026. The day map shows a pin per located stay, and the leave-by and way-back checks use the stay of the previous night in the morning and tonight's in the evening, naming them; a missing stay is said, not guessed. 248 frontend tests pass; verified live and signed in with two searched stays. Remaining main-stay-only surfaces: AI context, fresh-start list, restore review, rebalance warning for extra stays. Committed locally; not pushed.
 
+## 200. Several stays: finish the remaining surfaces (phase 3)
+
+20 November 2026. The AI planner, the fresh-start list, the rebalance warning and the restore review now understand several stays and pick the stay for a night; shared backend helpers mirror the frontend's. 637 backend and 248 frontend tests pass; not re-run live for these four (tests only). Committed locally; not pushed.
+

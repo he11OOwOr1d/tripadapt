@@ -269,3 +269,25 @@ def test_a_recorded_journey_that_leaves_no_time_adds_nothing_and_skips_the_model
     assert result is not plan
     # The publish boundary accepts an empty, honest proposal as well.
     validate_ai_candidate(plan, result, stop, 0, uuid4(), metadata)
+
+
+def test_the_model_sees_the_stay_for_the_night_before_the_day():
+    plan, stop = base()
+    plan.preferences.stay_preferences[stop] = StayPreference(
+        style="",
+        rate="",
+        basis="room",
+        lodging=Lodging(name="Haveli", first_night=1, last_night=2),
+        extra_lodgings=[Lodging(name="Lake view", first_night=3, last_night=5)],
+    )
+
+    def seen(day):
+        provider = RecordingProvider([answer("10:00")])
+        run_day_graph(plan, stop, day, uuid4(), provider)
+        return "".join(provider.seen)
+
+    assert "Haveli" in seen(0) and "Lake view" not in seen(0)
+    assert "Haveli" in seen(2)  # the morning of day 3 follows night 2
+    assert "Lake view" in seen(3) and "Haveli" not in seen(3)
+    # Beyond every recorded range no stay is claimed, so none is named.
+    assert "Haveli" not in seen(6) and "Lake view" not in seen(6)

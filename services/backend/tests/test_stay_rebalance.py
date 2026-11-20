@@ -126,6 +126,37 @@ def test_a_change_that_lands_on_the_booked_nights_is_not_flagged():
     assert summary["booked_stays"] == []
 
 
+def test_only_the_booked_stays_whose_nights_actually_change_are_flagged():
+    p, one, two, _ = plan()
+    prefs = p.preferences.stay_preferences
+    prefs[one] = prefs[one].model_copy(
+        update=dict(
+            lodging=Lodging(
+                name="Haveli", booked=True, booked_nights=2, first_night=1, last_night=2
+            ),
+            extra_lodgings=[
+                Lodging(
+                    name="Hostel",
+                    booked=True,
+                    booked_nights=2,
+                    first_night=3,
+                    last_night=4,
+                ),
+                Lodging(name="Lake view", first_night=5, last_night=5),
+            ],
+        )
+    )
+    # Jaipur goes from 4 to 3 nights: the Hostel (nights 3-4) now covers 1 night.
+    # The Haveli (nights 1-2) is unaffected, and an unbooked stay is never listed.
+    _, summary = rebalance_stays(
+        p, RebalanceInput(stop_id=two, delta_nights=1, counterpart=one)
+    )
+    assert [
+        (b["stay"], b["nights_before"], b["nights_after"])
+        for b in summary["booked_stays"]
+    ] == [("Hostel", 2, 1)]
+
+
 def test_shrinking_a_stay_never_drops_activities_silently():
     p, one, two, acts = plan()
     body = dict(stop_id=one, delta_nights=1, counterpart=two)

@@ -10,6 +10,7 @@ from app.config import settings
 from app.discovery.activities import retain
 from app.persistence.models import DiscoveredPlace, PlaceReference
 from app.providers.activities import DiscoveryFailure, distance
+from app.trips.schemas import stay_for_night
 
 BREAKS = [
     {"id": "meal", "label": "Meal break", "kind": "meal", "minutes": 60},
@@ -119,10 +120,11 @@ def gather_places(db, stop, candidate_ids, progress, stay=None):
     return [c for c in catalog if c.get("place_id") or c["id"] in selected], ids
 
 
-def stay_for_ai(plan, stop):
-    """The traveler's recorded stay for this destination as plain evidence, or None."""
-    preference = plan.preferences.stay_preferences.get(stop.client_id)
-    lodging = preference.lodging if preference else None
+def stay_for_ai(plan, stop, day=0):
+    """The stay the traveler sleeps at before this day (0-based offset), as plain evidence, or None."""
+    lodging = stay_for_night(
+        plan.preferences.stay_preferences.get(stop.client_id), max(1, day)
+    )
     if lodging is None:
         return None
     return {

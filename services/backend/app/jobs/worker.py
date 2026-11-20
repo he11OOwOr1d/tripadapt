@@ -339,7 +339,7 @@ def run_once():
                                 stop,
                                 reply.get("candidate_ids") if reply else None,
                                 progress,
-                                stay_for_ai(plan, stop),
+                                stay_for_ai(plan, stop, scope["local_day_offset"]),
                             )
                         if reply:
                             reply["text"] = (
