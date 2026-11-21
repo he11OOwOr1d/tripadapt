@@ -22,6 +22,12 @@ export type AgendaItem = {
   open: AgendaOpen | null;
   /** Sort key within the day: a local time (HH:MM). */
   sort: string;
+  /**
+   * Where the line sits on the day's clock, in minutes after local midnight, for a line with real times; null for the
+   * all-day lines of a stay. A span that runs past midnight stops at midnight. A journey is as long as it really takes.
+   */
+  startMin: number | null;
+  endMin: number | null;
 };
 
 export type AgendaDay = {
@@ -37,6 +43,8 @@ export type AgendaDay = {
   open: AgendaOpen | null;
   items: AgendaItem[];
 };
+
+const minutesOf = (time: string | null): number | null => (time && /^\d{2}:\d{2}$/.test(time) ? Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5)) : null);
 
 /**
  * The plan date by date, for a trip with exact dates (null otherwise). Every day of the trip is listed, including
@@ -88,6 +96,7 @@ export function agendaDays(trip: Trip): AgendaDay[] | null {
           when: time ? (role === "check-in" ? `from ${time}` : `by ${time}`) : "", note, skipped: false, open: openFor(e, date),
           // A check-out is a morning thing and a check-in an evening one when no time was recorded.
           sort: role === "check-out" ? (time ?? "00:00") : role === "check-in" ? (time ?? "23:59") : "00:00",
+          startMin: null, endMin: null,
         });
       }
       continue;
@@ -102,15 +111,22 @@ export function agendaDays(trip: Trip): AgendaDay[] | null {
       when = `${e.start.time}–${e.end.time}${nextDay ? " (next day)" : ""}`;
     }
     const place = e.kind === "activity" && e.location && e.location !== e.title && e.location !== stopName(e.stopId) ? e.location : "";
+    const startMin = minutesOf(e.start.time);
+    // How far the line reaches on its own day. A journey lasts as long as it really takes, whatever the clocks at each end say.
+    const lasts = e.startUtc && e.endUtc ? Math.round((e.endUtc.getTime() - e.startUtc.getTime()) / 60000) : 0;
+    const endMin = startMin === null ? null : e.kind === "journey" ? Math.min(startMin + lasts, 1440) : nextDay ? 1440 : minutesOf(e.end.time);
     dayOf(e.start.date).items.push({
       key: `${e.id}:${e.start.date}`, eventId: e.id, kind: e.kind, role: "event", title: e.title, when,
       note: e.kind === "journey" ? e.details.join(". ") : place, skipped: e.skipped, open: openFor(e, e.start.date), sort: e.start.time ?? "00:00",
+      startMin, endMin,
     });
     // An overnight journey also shows on the day it arrives.
     if (e.kind === "journey" && !e.marker && nextDay) {
       dayOf(e.end.date).items.push({
         key: `${e.id}:${e.end.date}:arrival`, eventId: e.id, kind: "journey", role: "arrival", title: `Arrival: ${e.title}`,
         when: `arrives ${e.end.time} (${e.end.zone})`, note: "", skipped: false, open: openFor(e, e.end.date), sort: e.end.time ?? "00:00",
+        // the rest of the journey: from the start of the day to the arrival
+        startMin: 0, endMin: minutesOf(e.end.time),
       });
     }
   }

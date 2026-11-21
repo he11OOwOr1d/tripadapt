@@ -1111,3 +1111,43 @@ fieldset.live-acceptance { border-inline: 0; min-width: 0; }
   .trip-agenda .agenda-item > button, .trip-agenda .agenda-item > div { grid-template-columns: minmax(0, 1fr); }
   .trip-agenda .agenda-note { grid-column: 1; }
 }
+
+/* The grid view: days as columns against a local clock. Wide screens only; the list stays the default. */
+.trip-agenda .agenda-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .6rem; }
+.trip-agenda .agenda-head h2 { margin: 0; }
+.trip-agenda .agenda-view { display: inline-flex; border: 1px solid #476442; border-radius: .25rem; overflow: hidden; }
+.trip-agenda .agenda-view button { min-height: 44px; min-width: 44px; padding: .4rem .9rem; font: inherit; color: inherit; background: transparent; border: 0; cursor: pointer; }
+.trip-agenda .agenda-view button[aria-pressed="true"] { background: #283d32; color: #f8f7f1; }
+.trip-agenda .agenda-view button:focus-visible { outline: 3px solid #476442; outline-offset: -3px; }
+.trip-grid .grid-nav { display: flex; align-items: center; justify-content: space-between; gap: .6rem; margin: .4rem 0 .6rem; }
+.trip-grid .grid-nav p { margin: 0; font-size: 13px; text-align: center; }
+.trip-grid .grid-nav button { min-height: 44px; padding: .4rem .8rem; font: inherit; color: inherit; background: transparent; border: 1px solid currentColor; border-radius: .25rem; cursor: pointer; }
+.trip-grid .grid-nav button:disabled { opacity: .55; cursor: not-allowed; }
+.trip-grid .grid-nav button:focus-visible { outline: 3px solid #476442; outline-offset: 2px; }
+.trip-grid .grid-body { display: grid; border: 1px solid #c9cfbf; border-radius: .25rem; background: #fbfaf2; }
+.trip-grid .grid-head { height: 3.5rem; box-sizing: border-box; padding: .4rem .5rem; display: grid; align-content: center; gap: .1rem; border-bottom: 1px solid #c9cfbf; font-size: 13px; line-height: 1.25; min-width: 0; }
+.trip-grid .grid-head time { font-weight: 600; font-size: 14px; }
+.trip-grid .grid-head span { color: #4d5a43; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.trip-grid .grid-col { border-left: 1px solid #c9cfbf; min-width: 0; }
+.trip-grid .grid-axis .grid-hours { position: relative; }
+.trip-grid .grid-axis .grid-hours span { position: absolute; right: .35rem; font-size: 11px; color: #4d5a43; transform: translateY(-.55em); }
+.trip-grid .grid-axis .grid-hours span:first-child { transform: none; }
+.trip-grid ul { list-style: none; margin: 0; padding: 0; }
+.trip-grid .grid-allday { box-sizing: border-box; border-bottom: 1px solid #c9cfbf; display: grid; align-content: start; gap: 2px; padding: 0 .15rem; }
+.trip-grid .grid-chip > button, .trip-grid .grid-chip > div { display: block; width: 100%; height: 42px; box-sizing: border-box; padding: .2rem .4rem; font: inherit; font-size: 12px; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: inherit; background: #f4efe0; border: 1px solid #cfc6a6; border-left: 4px double #6b5b2f; border-radius: .2rem; }
+.trip-grid .grid-chip > button { cursor: pointer; }
+.trip-grid .grid-chip > button:hover, .trip-grid .grid-block > button:hover { filter: brightness(.96); }
+.trip-grid .grid-hours { position: relative; background-image: repeating-linear-gradient(to bottom, #dde1d3 0, #dde1d3 1px, transparent 1px, transparent 56px); }
+.trip-grid .grid-block { position: absolute; box-sizing: border-box; }
+.trip-grid .grid-block > button, .trip-grid .grid-block > div { display: flex; flex-direction: column; gap: 1px; width: 100%; height: 100%; box-sizing: border-box; overflow: hidden; padding: .2rem .35rem; text-align: left; font: inherit; font-size: 12px; line-height: 1.25; color: inherit; background: #e4e9d4; border: 1px solid #b5c0a2; border-left: 4px solid #476442; border-radius: .2rem; }
+.trip-grid .grid-block > button { cursor: pointer; }
+.trip-grid .grid-block.kind-journey > button, .trip-grid .grid-block.kind-journey > div { background: #dbe6ea; border-color: #a9bfc7; border-left: 4px dashed #3d5a66; }
+.trip-grid .grid-block:focus-within, .trip-grid .grid-block:hover { z-index: 3; }
+.trip-grid button:focus-visible { outline: 3px solid #476442; outline-offset: 1px; }
+.trip-grid .grid-block-time { font-size: 11px; color: #34422f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.trip-grid .grid-block-title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
+.trip-grid .grid-block.is-skipped .grid-block-title { text-decoration: line-through; }
+.trip-grid .grid-note { font-size: 13px; margin: .6rem 0 0; color: #4d5a43; max-width: 65ch; }
+/* The full text of a block, shown on hover or focus without covering or resizing anything: it takes no clicks and is hidden from assistive technology. */
+.trip-grid .grid-block:hover, .trip-grid .grid-block:focus-within { z-index: 4; }
+.trip-grid .grid-block:hover::after, .trip-grid .grid-block:focus-within::after { content: attr(data-full) / ""; position: absolute; left: 0; top: 100%; margin-top: 2px; min-width: 11rem; max-width: 16rem; box-sizing: border-box; padding: .4rem .55rem; background: #1f2a22; color: #f8f7f1; border-radius: .25rem; font-size: 12px; line-height: 1.35; white-space: normal; pointer-events: none; z-index: 6; }

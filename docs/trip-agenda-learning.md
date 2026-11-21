@@ -1,6 +1,6 @@
 # Date-by-date view (the agenda): learning note
 
-21 November 2026. Step 2 of the in-app calendar plan: a read-only view of the plan date by date, in the whole-trip view ("See the whole trip"), above the road-time and calendar-file panels. The time-grid view (days as columns on a wide screen) is not built yet.
+21 November 2026. Step 2 of the in-app calendar plan: a read-only view of the plan date by date, in the whole-trip view ("See the whole trip"), above the road-time and calendar-file panels. A time-grid view (days as columns on a wide screen) is built on the same lines; see the last section.
 
 ## What it shows
 
@@ -26,3 +26,17 @@
 
 - A trip whose route covers fewer days than its dates (the "3 nights still open" case) lists only the route's days; the open nights are noted below it as before.
 - Times use the zone typed or found for each destination; a destination with a zone that is not real makes the view say it could not be built, as the calendar file does.
+
+## The grid view (21 November 2026)
+
+A "List | Grid" switch appears on the date-by-date section when the window is at least 1200 px wide; the list stays the default and the only view below that. Narrowing the window while in the grid brings the list back. The choice is not remembered between visits.
+
+- **Layout.** Five days to a page (Earlier days / Later days), the axis shared by every column on the page (always 08:00 to 20:00, stretched to cover anything earlier or later), a band above the hours for the stay lines (check-in, staying, check-out), and blocks placed against each day's own clock. A short event is drawn at least half an hour tall so it can be read and pressed.
+- **Overlaps.** `packLanes` puts events that overlap, directly or through a chain, side by side in equal lanes; an event with nothing beside it gets the whole width, and one that ends exactly when the next starts does not count as overlapping.
+- **Journeys.** A journey is drawn from its departure for as long as it really takes (the difference between the two instants), so a flight across time zones is not drawn with the false length its two clock times suggest. One that crosses midnight is drawn up to midnight and carries on from midnight in the next day's column. Each day is drawn against its own clock, so a flight crossing midnight in two zones is drawn in two parts.
+- **Model.** `lib/trips/trip-grid.ts` (`packLanes`, `gridPages`) is pure, with 8 tests, including the cases that decide lane widths and a realistic trip with a flight from India to Paris. I broke it four ways on purpose; the first attempt missed one (a touching span widening its neighbours' lane count), so I added that case and it is now caught.
+- **Read-only, and accessible.** The DOM order is day by day, then by time, each column a labelled section with lists; the gridlines and hour labels are decorative. A block is a button with its visible text plus hidden text saying which day it opens, so it reads the same as in the list. Pressing Enter on a block opens that day.
+- **Crowded days.** With three events at once each lane is about 40 px wide, which cannot hold a title. Hovering or focusing a block shows its full text in a small pop-up. My first version widened the focused block over its neighbours; axe correctly flagged that it left the covered neighbour too small to hit (WCAG 2.2 target size), so the pop-up is now text only: it never takes clicks, never resizes anything, and is hidden from assistive technology (the content is already in the button). The list view shows every event at full size.
+- **Sizes.** The all-day chips are 44 px tall; time blocks follow the time scale and are never under 30 px, above the 24 px WCAG 2.2 minimum but below this project's usual 44 px, which a time scale cannot give a short event. The list view is the full-size alternative.
+- **Checks.** 301 frontend tests pass; on the local page with a 3-destination trip (overlapping activities, a skipped one, a night market, a bus and an overnight flight to Paris): 5 columns, 11 blocks and no two blocks overlapping on screen, no control under 24 px, axe clean (also while a block is focused), no page overflow, paging to the second page works, Enter on a focused block opens the right day, and the switch appears only at 1200 px and wider.
+- **Not checked:** the hosted app and signed-in trips (not deployed), a screen reader, a phone or touch device (the grid is not offered there), trips with very many events in a day, and remembering the chosen view.
