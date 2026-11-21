@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { TRIP_ERASURE_DAYS, deletedNotice } from "../../lib/trips/trip-delete";
 export default function TripLibrary({
   open,
   loading,
@@ -23,8 +24,8 @@ export default function TripLibrary({
   onMore: () => void;
   onNew: () => void;
   onRetry: () => void;
-  /** Delete one trip. Resolves to null when it is gone, or to a message saying why it was not deleted. */
-  onDelete: (id: string) => Promise<string | null>;
+  /** Delete one trip. `problem` is null once it is gone, else says why it was not deleted; `eraseAfter` is when it will be erased. */
+  onDelete: (id: string) => Promise<{ problem: string | null; eraseAfter: string | null }>;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [confirming, setConfirming] = useState<string | null>(null);
@@ -46,11 +47,11 @@ export default function TripLibrary({
   async function remove(row: { id: string; title: string }) {
     setDeleting(row.id);
     setFailure("");
-    const problem = await onDelete(row.id);
+    const { problem, eraseAfter } = await onDelete(row.id);
     setDeleting(null);
     if (problem) { setFailure(problem); return; }
     setConfirming(null);
-    setNotice(`Deleted “${row.title}”.`);
+    setNotice(deletedNotice(row.title, eraseAfter));
     // The row is gone, so keyboard focus would be lost; start from the top of the list.
     fresh.current?.focus();
   }
@@ -112,7 +113,7 @@ export default function TripLibrary({
               {confirming === row.id ? (
                 <div className="library-confirm" role="group" aria-label={`Delete ${row.title}?`}>
                   <p>
-                    Delete “{row.title}”? It leaves your account now and any planning in progress stops. This can’t be undone from the app.
+                    Delete “{row.title}”? It is hidden from your account now and permanently erased after {TRIP_ERASURE_DAYS} days. Any planning in progress stops. This can’t be undone from the app.
                   </p>
                   {failure && <p role="alert">{failure}</p>}
                   <div>

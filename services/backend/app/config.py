@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import SecretStr
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -21,6 +21,11 @@ class Settings(BaseSettings):
     supabase_url: str = ""
     auth_audience: str = "authenticated"
     cors_origins: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
+    # A deleted trip is hidden at once and permanently erased after this many days. At least one, so a typo can never mean "now".
+    trip_retention_days: int = Field(default=30, ge=1, le=3650)
+    trip_purge_enabled: bool = True
+    trip_purge_interval_minutes: int = Field(default=360, ge=1)
+    trip_purge_batch: int = Field(default=25, ge=1, le=500)
 
 
 settings = Settings()

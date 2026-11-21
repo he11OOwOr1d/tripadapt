@@ -424,17 +424,21 @@ export default function TripWorkbench({
     setNotice("");
     window.history.replaceState(null, "", "/trips/new");
   }
-  /** Delete a trip from the account. Returns null once it is gone, or a message saying why it was not deleted. */
-  async function deleteAccount(id: string): Promise<string | null> {
+  /** Delete a trip from the account: no problem once it is gone, else a message saying why it was not deleted. */
+  async function deleteAccount(id: string): Promise<{ problem: string | null; eraseAfter: string | null }> {
     const isOpen = account?.id === id;
     // Let an in-flight save of the open trip finish first, so it cannot land after the delete. Its result no longer matters.
     if (isOpen) { try { await autosave.flush(); } catch { /* the trip is being deleted; an unsynced edit is not worth keeping */ } }
+    let eraseAfter: string | null = null;
     try {
-      await accountTripAdapter.remove(id);
+      eraseAfter = (await accountTripAdapter.remove(id)).eraseAfter;
     } catch (error) {
-      return error instanceof SignInRequired
-        ? "Sign in again to delete this trip. Nothing was deleted."
-        : "This trip could not be deleted. Nothing was changed; try again in a moment.";
+      return {
+        problem: error instanceof SignInRequired
+          ? "Sign in again to delete this trip. Nothing was deleted."
+          : "This trip could not be deleted. Nothing was changed; try again in a moment.",
+        eraseAfter: null,
+      };
     }
     setAccountRows((rows) => (rows ? rows.filter((row) => row.id !== id) : rows));
     if (isOpen) {
@@ -442,7 +446,7 @@ export default function TripWorkbench({
       // The device copy of the open trip would otherwise stay in this browser after the trip is gone.
       try { await mockTripAdapter.save(structuredClone(emptyTrip)); } catch { /* storage unavailable: nothing to clear */ }
     }
-    return null;
+    return { problem: null, eraseAfter };
   }
   async function signOut() {
     try {

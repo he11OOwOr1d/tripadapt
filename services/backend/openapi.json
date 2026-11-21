@@ -760,7 +760,7 @@
       },
       "delete": {
         "summary": "Delete Trip",
-        "description": "Hide a trip from its owner at once and stop its planning jobs, in one transaction.\n\nNothing is erased here: the rows stay, marked deleted, until a cleanup job removes them after a recovery window\n(the design's section 14; that job is not built yet). Every route reads trips through `owned`, which ignores\ndeleted ones, and the worker treats a deleted trip as superseded, so nothing can read, edit or publish to it.",
+        "description": "Hide a trip from its owner at once and stop its planning jobs, in one transaction.\n\nNothing is erased here: the rows stay, marked deleted, until `app.jobs.purge` removes them once the recovery window\n(`trip_retention_days`) has passed. Every route reads trips through `owned`, which ignores deleted ones, and the\nworker treats a deleted trip as superseded, so nothing can read, edit or publish to it in the meantime.",
         "operationId": "delete_trip_api_v1_trips__trip_id__delete",
         "security": [
           {
@@ -11451,13 +11451,19 @@
             "type": "string",
             "format": "date-time",
             "title": "Deleted At"
+          },
+          "erase_after": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Erase After"
           }
         },
         "additionalProperties": false,
         "type": "object",
         "required": [
           "id",
-          "deleted_at"
+          "deleted_at",
+          "erase_after"
         ],
         "title": "TripDeleted"
       },

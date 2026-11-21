@@ -2,9 +2,9 @@
 
 Local implementation and verification status. The dated sections below preserve the evidence recorded at each stage.
 
-## Deleting a trip — 21 November 2026 (built locally, not pushed)
+## Deleting and erasing a trip — 21 November 2026 (built locally, not pushed)
 
-PRD FR-11 asks for deleting trips, and `DELETE /trips/{id}` was in the API design but never built. My trips now has a Delete button with an inline confirmation; the trip is hidden at once and its planning jobs stop. Nothing is erased yet: the design's cleanup job is not built, by choice (see [the note](../trip-deletion-learning.md)). Also fixed: the API refused `DELETE` from the browser (CORS), which no automated test could see. 655 backend and 311 frontend tests pass.
+PRD FR-11 asks for deleting trips. My trips now has a Delete button with an inline confirmation; the trip is hidden at once, its planning jobs stop, and after a 30 day recovery window (the owner's choice) it is permanently erased by a background cleanup that runs inside the existing worker. Erasing needed one new migration (0027) that lets a transaction delete the accepted plans of the single trip it is erasing, while keeping them protected from everything else. Also fixed: the API refused `DELETE` from the browser (CORS). 671 backend and 313 frontend tests pass; the erasure was also run against the real database on my own disposable trips. Deploying needs migration 0027 applied first. See [the note](../trip-deletion-learning.md).
 
 ## Stay features and calendar file — 21 November 2026 (pushed and deployed)
 

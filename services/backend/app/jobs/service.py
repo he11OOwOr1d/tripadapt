@@ -6,8 +6,10 @@ and attempt limits remain the authority for claims and restart recovery.
 
 import logging
 import threading
+from time import monotonic
 
 from app.config import settings
+from app.jobs.purge import purge_job
 from app.jobs.worker import run_once
 
 logger = logging.getLogger(__name__)
@@ -19,6 +21,8 @@ class WebServiceWorker:
         self.thread = threading.Thread(
             target=self._run, name="planning-worker", daemon=True
         )
+        # The first cleanup waits a couple of minutes so a restart settles before it touches anything.
+        self.next_purge = monotonic() + 120
 
     @property
     def alive(self):
@@ -41,8 +45,20 @@ class WebServiceWorker:
         if self.alive:
             logger.warning("Worker stopping; unfinished jobs recover through leases.")
 
+    def maybe_purge(self):
+        """Erase trips deleted longer ago than the recovery window, at most once per interval. Never raises."""
+        if not settings.trip_purge_enabled or monotonic() < self.next_purge:
+            return
+        self.next_purge = monotonic() + settings.trip_purge_interval_minutes * 60
+        try:
+            purge_job()
+        except Exception:
+            # No details: they could include database addresses. It is tried again next interval.
+            logger.warning("Deleted-trip cleanup skipped; it will retry later.")
+
     def _run(self):
         while not self.stopped.is_set():
+            self.maybe_purge()
             try:
                 worked = run_once()
             except Exception:

@@ -1,7 +1,7 @@
 import base64
 import hashlib
 import json
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Generic, TypeVar
 from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
@@ -12,6 +12,7 @@ from sqlalchemy import and_, delete, or_, select
 from sqlalchemy.orm import Session
 
 from app.api.identity import current_user, session
+from app.config import settings
 from app.discovery.activities import PlaceDetail, places_by_ids
 from app.discovery.references import ReferencedPlace, reference_view
 from app.jobs.cancel import stop_trip_jobs
@@ -123,6 +124,8 @@ class Page(BaseModel):
 class TripDeleted(StrictModel):
     id: UUID
     deleted_at: datetime
+    # When the hidden trip will be permanently erased.
+    erase_after: datetime
 
 
 class TripList(Envelope[list[TripView]]):
@@ -326,9 +329,9 @@ def delete_trip(
 ):
     """Hide a trip from its owner at once and stop its planning jobs, in one transaction.
 
-    Nothing is erased here: the rows stay, marked deleted, until a cleanup job removes them after a recovery window
-    (the design's section 14; that job is not built yet). Every route reads trips through `owned`, which ignores
-    deleted ones, and the worker treats a deleted trip as superseded, so nothing can read, edit or publish to it.
+    Nothing is erased here: the rows stay, marked deleted, until `app.jobs.purge` removes them once the recovery window
+    (`trip_retention_days`) has passed. Every route reads trips through `owned`, which ignores deleted ones, and the
+    worker treats a deleted trip as superseded, so nothing can read, edit or publish to it in the meantime.
     """
     trip = owned(db, user, trip_id, lock=True)
     if if_match is None:
@@ -341,7 +344,14 @@ def delete_trip(
     trip.lock_version += 1
     trip.updated_at = now
     db.flush()
-    return wrap(request, {"id": trip.id, "deleted_at": now})
+    return wrap(
+        request,
+        {
+            "id": trip.id,
+            "deleted_at": now,
+            "erase_after": now + timedelta(days=settings.trip_retention_days),
+        },
+    )
 
 
 def get_version(db, user, trip_id, version_id):
