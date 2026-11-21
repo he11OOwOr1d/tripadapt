@@ -2,7 +2,7 @@
 
 import hashlib
 import json
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
@@ -15,11 +15,10 @@ from app.api.identity import current_user, session
 from app.api.proposals import plan_input
 from app.api.trips import Envelope, owned, router, wrap
 from app.config import settings
+from app.jobs.cancel import stop_job
 from app.jobs.policy import lifecycle_allows_job
 from app.persistence.models import AppUser, PlanningJob, PlanVersion, SystemProbe
 from app.trips.schemas import StrictModel
-
-TERMINAL = {"succeeded", "failed", "cancelled", "superseded"}
 
 
 class DayScope(StrictModel):
@@ -238,10 +237,6 @@ def cancel_job(
     db: Session = Depends(session),
 ):
     job = owned_job(db, user, job_id, lock=True)
-    if job.status not in TERMINAL:
-        job.cancel_requested = True
-        job.updated_at = datetime.now(timezone.utc)
-        if job.status == "queued":
-            job.status, job.stage = "cancelled", "Cancelled before planning"
+    stop_job(job)
     db.flush()
     return wrap(request, job_view(job))

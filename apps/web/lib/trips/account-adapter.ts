@@ -1,3 +1,4 @@
+import { deleteAccountTrip } from "./trip-delete";
 import { originPointFrom } from "./origin-point";
 import { parseDayCheck, type DayCheckDiagnostic } from "./day-check-feedback";
 import type { ActivityPlace } from "./activity-search";
@@ -284,6 +285,10 @@ function input(trip: Trip) {
   };
 }
 export const accountTripAdapter = {
+  /** Delete a trip from the account: hidden at once, its planning stops. Resolves "gone" if it was already deleted. */
+  async remove(id: string) {
+    return deleteAccountTrip((path, options) => accountRequest(path, options), id);
+  },
   async list(cursor?: string) {
     const result = await accountRequest<TripRow[]>(
       "/trips" + (cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""),

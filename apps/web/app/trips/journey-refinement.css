@@ -166,7 +166,7 @@
   display: grid;
   gap: 10px;
 }
-.library-rows > button {
+.library-rows .library-open {
   display: grid;
   grid-template-columns: 32px 1fr auto;
   align-items: center;
@@ -182,7 +182,7 @@
   font-size: 18px;
   overflow-wrap: anywhere;
 }
-.library-rows > button > span:last-child {
+.library-rows .library-open > span:last-child {
   font-size: 12px;
   color: #5f7455;
 }
@@ -525,11 +525,11 @@
   .trip-library-inner {
     padding: 25px 20px;
   }
-  .library-rows > button {
+  .library-rows .library-open {
     grid-template-columns: 25px 1fr;
     padding: 18px 14px;
   }
-  .library-rows > button > span:last-child {
+  .library-rows .library-open > span:last-child {
     display: none;
   }
   .trip-app .time-budget {
@@ -635,3 +635,19 @@
 .cost-record-list .cost-record-removed { color: #7a5a2c; }
 .trip-app .cost-records-confirm { display: flex; flex-direction: row; gap: 10px; align-items: flex-start; margin-top: 16px; min-height: 44px; }
 .cost-records-confirm small { display: block; color: #55634b; }
+
+/* One trip in the list: the open button, and beside it a Delete that asks first. */
+.library-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: stretch; }
+.library-row .library-open { min-width: 0; }
+.trip-library .library-delete { padding: 0 16px; border: 1px solid #8f3a2c; border-radius: 9px; background: transparent; color: #7a2f23; }
+.trip-library .library-confirm { grid-column: 1 / -1; display: grid; gap: 10px; padding: 14px 16px; border: 1px solid #8f3a2c; border-radius: 9px; background: #fbefe9; }
+.trip-library .library-confirm p { margin: 0; line-height: 1.5; }
+.trip-library .library-confirm > div { display: flex; flex-wrap: wrap; gap: 10px; }
+.trip-library .library-confirm button { padding: 0 18px; border: 1px solid #294d3d; border-radius: 7px; background: transparent; }
+.trip-library .library-confirm .library-danger { background: #7a2f23; border-color: #7a2f23; color: #fff9e9; }
+.trip-library button:disabled { opacity: .6; cursor: not-allowed; }
+.trip-library .library-notice { margin: 0 0 14px; font-size: 14px; }
+@media (max-width: 600px) {
+  .library-row { grid-template-columns: minmax(0, 1fr); }
+  .trip-library .library-delete { min-height: 44px; justify-self: end; }
+}

@@ -57,7 +57,7 @@ app = FastAPI(title="TripAdapt API", version="0.1.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
-    allow_methods=["GET", "POST", "PATCH"],
+    allow_methods=["GET", "POST", "PATCH", "DELETE"],
     allow_headers=["Content-Type", "Authorization", "If-Match", "Idempotency-Key"],
     expose_headers=["ETag", "Location", "X-Request-ID"],
 )

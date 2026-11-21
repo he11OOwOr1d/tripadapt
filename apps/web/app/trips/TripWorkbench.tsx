@@ -405,12 +405,16 @@ export default function TripWorkbench({
       );
       return;
     }
+    resetToNewTrip(false);
+  }
+  /** Leave the current trip for a blank one. Nothing is saved first; callers decide whether that is right. */
+  function resetToNewTrip(keepLibrary: boolean) {
     requestedAccountId.current=null;
     setMapRepair(null);
     setReadinessReturn(null);
     try{sessionStorage.removeItem(recoveryStorageKey);sessionStorage.removeItem(movedPlaceStorageKey);sessionStorage.removeItem(reviewSubmitRetryKey);}catch{}
     setRemovedActivity(null);
-    setLibraryOpen(false);
+    if (!keepLibrary) setLibraryOpen(false);
     setAccount(null);
     setTrip(structuredClone(emptyTrip));
     setCreationStep(0);
@@ -419,6 +423,26 @@ export default function TripWorkbench({
     setView("setup");
     setNotice("");
     window.history.replaceState(null, "", "/trips/new");
+  }
+  /** Delete a trip from the account. Returns null once it is gone, or a message saying why it was not deleted. */
+  async function deleteAccount(id: string): Promise<string | null> {
+    const isOpen = account?.id === id;
+    // Let an in-flight save of the open trip finish first, so it cannot land after the delete. Its result no longer matters.
+    if (isOpen) { try { await autosave.flush(); } catch { /* the trip is being deleted; an unsynced edit is not worth keeping */ } }
+    try {
+      await accountTripAdapter.remove(id);
+    } catch (error) {
+      return error instanceof SignInRequired
+        ? "Sign in again to delete this trip. Nothing was deleted."
+        : "This trip could not be deleted. Nothing was changed; try again in a moment.";
+    }
+    setAccountRows((rows) => (rows ? rows.filter((row) => row.id !== id) : rows));
+    if (isOpen) {
+      resetToNewTrip(true);
+      // The device copy of the open trip would otherwise stay in this browser after the trip is gone.
+      try { await mockTripAdapter.save(structuredClone(emptyTrip)); } catch { /* storage unavailable: nothing to clear */ }
+    }
+    return null;
   }
   async function signOut() {
     try {
@@ -687,6 +711,7 @@ export default function TripWorkbench({
         onMore={() => void listAccount(true)}
         onNew={() => void newTrip()}
         onRetry={() => void listAccount()}
+        onDelete={deleteAccount}
       />
       <div
         className="trip-shell"

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 export default function TripLibrary({
   open,
   loading,
@@ -11,6 +11,7 @@ export default function TripLibrary({
   onMore,
   onNew,
   onRetry,
+  onDelete,
 }: {
   open: boolean;
   loading: boolean;
@@ -22,8 +23,37 @@ export default function TripLibrary({
   onMore: () => void;
   onNew: () => void;
   onRetry: () => void;
+  /** Delete one trip. Resolves to null when it is gone, or to a message saying why it was not deleted. */
+  onDelete: (id: string) => Promise<string | null>;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
+  const [confirming, setConfirming] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [notice, setNotice] = useState("");
+  const [failure, setFailure] = useState("");
+  const keep = useRef<HTMLButtonElement>(null);
+  const fresh = useRef<HTMLButtonElement>(null);
+  // Asking "are you sure?" lands on the safe choice, so a stray Enter keeps the trip.
+  useEffect(() => { if (confirming) keep.current?.focus(); }, [confirming]);
+  // Backing out of the question puts the keyboard back on that trip's Delete button, not on the page behind the dialog.
+  const [returnTo, setReturnTo] = useState<string | null>(null);
+  useEffect(() => {
+    if (!returnTo || confirming) return;
+    dialog.current?.querySelector<HTMLButtonElement>(`[data-delete-for="${CSS.escape(returnTo)}"]`)?.focus();
+    setReturnTo(null);
+  }, [returnTo, confirming]);
+  useEffect(() => { if (!open) { setConfirming(null); setNotice(""); setFailure(""); } }, [open]);
+  async function remove(row: { id: string; title: string }) {
+    setDeleting(row.id);
+    setFailure("");
+    const problem = await onDelete(row.id);
+    setDeleting(null);
+    if (problem) { setFailure(problem); return; }
+    setConfirming(null);
+    setNotice(`Deleted “${row.title}”.`);
+    // The row is gone, so keyboard focus would be lost; start from the top of the list.
+    fresh.current?.focus();
+  }
   useEffect(() => {
     const node = dialog.current;
     if (open && !node?.open) node?.showModal();
@@ -49,10 +79,11 @@ export default function TripLibrary({
             ×
           </button>
         </header>
-        <button className="library-new" onClick={onNew} disabled={loading}>
+        <button ref={fresh} className="library-new" onClick={onNew} disabled={loading}>
           ＋ Start a new trip
         </button>
         {loading && <p role="status">Opening your trips…</p>}
+        {notice && <p role="status" className="library-notice">{notice}</p>}
         {error && (
           <div role="alert">
             <p>{error}</p>
@@ -67,15 +98,45 @@ export default function TripLibrary({
         )}
         <div className="library-rows">
           {rows?.map((row) => (
-            <button
-              key={row.id}
-              onClick={() => onOpen(row.id)}
-              disabled={loading}
-            >
-              <span aria-hidden="true">↗</span>
-              <strong>{row.title}</strong>
-              <span>Open trip</span>
-            </button>
+            <div key={row.id} className="library-row">
+              <button
+                type="button"
+                className="library-open"
+                onClick={() => onOpen(row.id)}
+                disabled={loading || deleting !== null}
+              >
+                <span aria-hidden="true">↗</span>
+                <strong>{row.title}</strong>
+                <span>Open trip</span>
+              </button>
+              {confirming === row.id ? (
+                <div className="library-confirm" role="group" aria-label={`Delete ${row.title}?`}>
+                  <p>
+                    Delete “{row.title}”? It leaves your account now and any planning in progress stops. This can’t be undone from the app.
+                  </p>
+                  {failure && <p role="alert">{failure}</p>}
+                  <div>
+                    <button type="button" ref={keep} onClick={() => { setConfirming(null); setFailure(""); setReturnTo(row.id); }} disabled={deleting !== null}>
+                      Keep it
+                    </button>
+                    <button type="button" className="library-danger" onClick={() => void remove(row)} disabled={deleting !== null}>
+                      {deleting === row.id ? "Deleting…" : "Delete trip"}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className="library-delete"
+                  data-delete-for={row.id}
+                  aria-label={`Delete ${row.title}`}
+                  onClick={() => { setConfirming(row.id); setNotice(""); setFailure(""); }}
+                  disabled={loading || deleting !== null}
+                >
+                  Delete
+                </button>
+              )}
+            </div>
           ))}
         </div>
         {hasMore && (

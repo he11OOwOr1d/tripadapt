@@ -2,6 +2,10 @@
 
 Local implementation and verification status. The dated sections below preserve the evidence recorded at each stage.
 
+## Deleting a trip — 21 November 2026 (built locally, not pushed)
+
+PRD FR-11 asks for deleting trips, and `DELETE /trips/{id}` was in the API design but never built. My trips now has a Delete button with an inline confirmation; the trip is hidden at once and its planning jobs stop. Nothing is erased yet: the design's cleanup job is not built, by choice (see [the note](../trip-deletion-learning.md)). Also fixed: the API refused `DELETE` from the browser (CORS), which no automated test could see. 655 backend and 311 frontend tests pass.
+
 ## Stay features and calendar file — 21 November 2026 (pushed and deployed)
 
 The stay, journey, route-estimate and calendar work (66 commits after `568a6b7`) was pushed to `main` and deployed on 21 November: CI passed, both Vercel projects succeeded, Render answers the new routes, and the signed-in checklist was run on the hosted app on a dedicated QA trip (see [the release record](../deployments/stay-features-release-plan.md)). Since then, the calendar file (.ics) was hardened (local, not yet pushed): every event has `LAST-MODIFIED` and a `SEQUENCE` that rises with each export so a newer file should update events instead of duplicating them, an optional reminder (off by default, timed events only), map positions (`GEO`) and a link back to a saved trip on a secure address. 267 frontend tests pass; the file was parsed by an independent library; not yet imported into a real calendar app. The event logic now lives in one shared module for the file and a future in-app calendar view, and a bug in the released file (a journey with only an arrival time made the download fail) is fixed locally and not yet pushed. A read-only date-by-date view (the agenda) now sits in the whole-trip view, built on the same event list: see [the agenda note](../trip-agenda-learning.md). A wide-screen grid (days as columns, 1200 px and up) is built on the same lines. See [the calendar note](../calendar-export-learning.md).

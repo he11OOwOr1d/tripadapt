@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 from app.api.identity import current_user, session
 from app.discovery.activities import PlaceDetail, places_by_ids
 from app.discovery.references import ReferencedPlace, reference_view
+from app.jobs.cancel import stop_trip_jobs
 from app.persistence.models import (
     Activity,
     AppUser,
@@ -117,6 +118,11 @@ class StopView(StrictModel):
 class Page(BaseModel):
     next_cursor: str | None
     has_more: bool
+
+
+class TripDeleted(StrictModel):
+    id: UUID
+    deleted_at: datetime
 
 
 class TripList(Envelope[list[TripView]]):
@@ -308,6 +314,34 @@ def patch(
     db.flush()
     response.headers["ETag"] = etag(trip)
     return wrap(request, trip)
+
+
+@router.delete("/trips/{trip_id}", status_code=202, response_model=Envelope[TripDeleted])
+def delete_trip(
+    trip_id: UUID,
+    request: Request,
+    if_match: str | None = Header(None),
+    user: AppUser = Depends(current_user),
+    db: Session = Depends(session),
+):
+    """Hide a trip from its owner at once and stop its planning jobs, in one transaction.
+
+    Nothing is erased here: the rows stay, marked deleted, until a cleanup job removes them after a recovery window
+    (the design's section 14; that job is not built yet). Every route reads trips through `owned`, which ignores
+    deleted ones, and the worker treats a deleted trip as superseded, so nothing can read, edit or publish to it.
+    """
+    trip = owned(db, user, trip_id, lock=True)
+    if if_match is None:
+        raise HTTPException(428, "PRECONDITION_REQUIRED")
+    if if_match != etag(trip):
+        raise HTTPException(412, "PRECONDITION_FAILED")
+    stop_trip_jobs(db, trip.id)
+    now = datetime.now(timezone.utc)
+    trip.deleted_at = now
+    trip.lock_version += 1
+    trip.updated_at = now
+    db.flush()
+    return wrap(request, {"id": trip.id, "deleted_at": now})
 
 
 def get_version(db, user, trip_id, version_id):
