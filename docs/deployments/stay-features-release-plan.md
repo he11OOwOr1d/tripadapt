@@ -1,12 +1,21 @@
-# Release plan: stay features and accessibility fixes (not yet deployed)
+# Release: stay features and accessibility fixes (pushed and deployed 21 November 2026)
 
-20 November 2026. A checklist for pushing and deploying the local commits on `main` after `568a6b7` (about 45 commits: stay route checks, intercity and whole-route estimates, journeys booked elsewhere, booked-stay nights, AI and chat awareness, a cache, and accessibility fixes; see `git log 568a6b7..main`) (the stay record deployment). Nothing here has been pushed. `AGENTS.md` says to push or deploy only when the owner asks, so this is a plan to follow on request, not a record of a release. Replace it with a real release note afterwards.
+20 November 2026. A checklist for pushing and deploying the local commits on `main` after `568a6b7` (66 commits: stay route checks, intercity and whole-route estimates, journeys booked elsewhere, booked-stay nights, AI and chat awareness, a cache, and accessibility fixes; see `git log 568a6b7..main`) (the stay record deployment). The owner asked for the deploy on 21 November 2026; see the release record below. The signed-in checks further down are still to be run on the hosted app.
 
 ## What is in the batch
 
 - **Backend:** four new optional fields on each journey's travel preference (`departure`, `arrival`, `reference`, `booked`, `arrival_buffer`, `departure_buffer`, `locked`); `POST /journeys/from-stay`, `/journeys/to-stay` and `/journeys/intercity` (a driving estimate between two mapped places, including a starting point chosen from the map search); an optional `place_id`, `booked_nights`, `first_night`, `last_night`, `locked` and `reference` on a stay record, and `extra_lodgings` (up to four more stays per destination); the AI day planner and chat read the stay; the readiness context offers a searched stay as a known location. OpenAPI snapshot regenerated.
 - **Frontend:** the stay journey section with check-in and check-out notes, an intercity drive-estimate button on the arrival and departure cards, a calendar (.ics) download in the whole-trip view, linked costs in the stay panel, the stay in the restore review, keyboard focus fixes in the stay form and the chat log, journey booking details with day-view flags, a unique label on the map section, h2 transfer-card headings, and darker muted text in the trip stylesheets (`app/trips/*.css` only; the locked landing and `app/design/` are untouched).
 - **No migration, no new environment variable, no new dependency.** The intercity endpoint has a per-process in-memory cache (six hours), lost on restart; on Render's free tier a cold start clears it. The AI features use the existing Groq key; route checks use the existing Geoapify backend key.
+
+## Release record (21 November 2026)
+
+- Pushed `568a6b7..02a1cec` to `main` (no branch or PR). Before pushing, the CI steps passed locally on this exact commit: ruff, 645 backend tests, 261 web tests, typecheck and production build.
+- GitHub CI (`verify`) passed. The commit status shows Vercel `elsewhere-ui-review` and `elsewhere-api` both succeeded.
+- Hosted backend (Render, redeployed from `main` automatically): `/journeys/from-stay`, `/to-stay` and `/intercity` answer 401 unauthenticated (404 before); `/api/v1/health/ready` is ok with the database connected at schema `0026_drop_google_place_id`. No migration was needed.
+- Hosted frontend: the production JavaScript contains the new strings ("Download a calendar file", "Estimate the drive", "Add another stay in", "Road time across your route", "Check from my stay", `extra_lodgings`).
+- One push triggered Render and Vercel at the same time, so the "frontend must not go first" order could not be enforced. Render was already serving the new backend by the time it was checked; any request in the short gap that sent a searched stay to the old backend would have been refused, not saved wrongly.
+- **Not yet done:** the signed-in checks below on the hosted app, and importing the calendar file into a real calendar app.
 
 ## Order
 
