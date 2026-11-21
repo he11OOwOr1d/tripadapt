@@ -36,6 +36,13 @@ A journey between two destinations with only an arrival time recorded makes "Dow
 - Signed-in check on the hosted app, dedicated QA trip, plan snapshot taken before and compared after (identical, no differences at all): with exact dates (4 to 6 December), a mapped stay and two overlapping visits (10:00 and 10:30), the whole-trip view listed 3 days and 5 lines in the right order, the Grid switch was offered at 1280 px, the grid showed 3 columns, the two visits side by side (110 px each, no overlap) and the stay's three lines in the all-day band, and clicking the stay's "Check out" chip opened Jaipur day 3. The first API call after the deploy was slow (cold start) and I polled instead of waiting.
 - Not verified on the hosted app: axe (run locally only), a screen reader, a touch device, trips with many events in a day, and a list line (the click was tested on the grid; list clicks were tested locally).
 
+### Fourth release: remembered view and 3 or 5 days per page (21 November 2026)
+
+- Pushed `9284d60..0c7b205` to `main` (frontend only). CI passed; both Vercel projects succeeded; the hosted JavaScript contains "Days per page" and both storage keys.
+- Signed-in check on the hosted app, dedicated QA trip, plan snapshot taken before and compared after (identical): with exact dates only, a first visit showed the list and stored nothing; choosing Grid stored `grid`; choosing 3 days stored `3` and gave 3 columns; after a reload the grid and the 3-day page size were both still chosen. I removed the two test preference keys afterwards (only those two keys; the sign-in session and everything else in storage were untouched).
+- A first request after the deploy failed once ("Failed to fetch", the API restarting) and succeeded on retry.
+- Not verified on the hosted app: blocked storage (unit tests only), a screen reader, a touch device.
+
 ## Order
 
 1. Push to `main` (no new branch or PR, as instructed earlier). CI should run the same steps that passed locally on Python 3.14.4 and Node 22.23 (see journal entry 177).

@@ -1020,3 +1020,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 ## 224. Remember the view, and choose 3 or 5 days per page
 
 21 November 2026. Two refinements of the grid: the List/Grid choice and the page size are remembered in this browser (a storage helper that falls back on any junk or blocked storage, 3 tests), and the grid can show 3 or 5 days per page (a crowded block went from 43 px to 74 px wide at 3 days); changing the size keeps the first day on screen (a test checks every starting point). 305 frontend tests pass, typecheck and build pass; on the local page the choices survive a reload, axe is clean and the controls are 44 px. Not deployed. See [the agenda note](../trip-agenda-learning.md). Committed locally.
+
+## 225. Deploy the remembered view and the page-size choice
+
+21 November 2026. At the owner's request ("deploy") I pushed `0c7b205` to `main`. CI and both Vercel projects passed and the hosted bundle has the new code. On the hosted app, on the QA trip with exact dates only, a fresh visit showed the list, choosing Grid and 3 days stored both, and a reload kept both; I removed my two test keys and the plan matched its snapshot. One API request failed once while the service restarted and worked on retry. Docs commit is local only.
