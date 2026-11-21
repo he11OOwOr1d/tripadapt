@@ -28,7 +28,7 @@
 
 ### Found after the second release (21 November 2026)
 
-A journey between two destinations with only an arrival time recorded makes "Download a calendar file" fail with "could not be made" in the deployed version (the app stores a missing departure as `""`, and the code only treated `null` as missing). Fixed locally in `trip-events.ts` with tests; **not pushed yet**.
+A journey between two destinations with only an arrival time recorded makes "Download a calendar file" fail with "could not be made" in the deployed version (the app stores a missing departure as `""`, and the code only treated `null` as missing). Fixed in `trip-events.ts` with tests and deployed as `c7a4eec` (21 November 2026, frontend only; CI and both Vercel projects passed). Checked on the hosted app on the QA trip: with a second destination, exact dates and a journey that has only an arrival (15:30, departure blank), the download now says "Downloaded 1 event" with "Arrives: Jaipur to Agra" at `10:00Z` (15:30 IST on 6 December). The plan was restored afterwards and compared with a stored snapshot: the only difference is one empty default journey entry for the removed second destination.
 
 ## Order
 
