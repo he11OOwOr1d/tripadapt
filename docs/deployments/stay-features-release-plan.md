@@ -30,6 +30,12 @@
 
 A journey between two destinations with only an arrival time recorded makes "Download a calendar file" fail with "could not be made" in the deployed version (the app stores a missing departure as `""`, and the code only treated `null` as missing). Fixed in `trip-events.ts` with tests and deployed as `c7a4eec` (21 November 2026, frontend only; CI and both Vercel projects passed). Checked on the hosted app on the QA trip: with a second destination, exact dates and a journey that has only an arrival (15:30, departure blank), the download now says "Downloaded 1 event" with "Arrives: Jaipur to Agra" at `10:00Z` (15:30 IST on 6 December). The plan was restored afterwards and compared with a stored snapshot: the only difference is one empty default journey entry for the removed second destination.
 
+### Third release: the date-by-date view and the grid (21 November 2026)
+
+- Pushed `c7a4eec..9284d60` to `main` (frontend only: no backend, migration or variable change). CI passed; both Vercel projects succeeded; the hosted JavaScript contains the new strings ("Date by date", "Plan this day", "Earlier days", "Later days", "Show the days as", the grid block class).
+- Signed-in check on the hosted app, dedicated QA trip, plan snapshot taken before and compared after (identical, no differences at all): with exact dates (4 to 6 December), a mapped stay and two overlapping visits (10:00 and 10:30), the whole-trip view listed 3 days and 5 lines in the right order, the Grid switch was offered at 1280 px, the grid showed 3 columns, the two visits side by side (110 px each, no overlap) and the stay's three lines in the all-day band, and clicking the stay's "Check out" chip opened Jaipur day 3. The first API call after the deploy was slow (cold start) and I polled instead of waiting.
+- Not verified on the hosted app: axe (run locally only), a screen reader, a touch device, trips with many events in a day, and a list line (the click was tested on the grid; list clicks were tested locally).
+
 ## Order
 
 1. Push to `main` (no new branch or PR, as instructed earlier). CI should run the same steps that passed locally on Python 3.14.4 and Node 22.23 (see journal entry 177).
