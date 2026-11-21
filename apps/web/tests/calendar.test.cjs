@@ -4,7 +4,8 @@ const planning=load('../lib/trips/planning.ts');
 const itinerary=load('../lib/trips/itinerary.ts',{planning});
 const dayMap=load('../lib/trips/day-map.ts',{lodging:{lodgingPoint:()=>null}});
 const lodging=load('../lib/trips/lodging.ts',{'day-map':dayMap});
-const c=load('../lib/trips/calendar.ts',{itinerary,planning,lodging});
+const tripEvents=load('../lib/trips/trip-events.ts',{itinerary,planning,lodging});
+const c=load('../lib/trips/calendar.ts',{'trip-events':tripEvents});
 const J=v=>JSON.parse(JSON.stringify(v));
 const iso=d=>d.toISOString();
 test('a wall-clock time becomes the right UTC instant, including across daylight saving',()=>{
@@ -184,4 +185,15 @@ test('the new properties do not disturb the existing layout of an event',()=>{
   const r=unfold(c.icsCalendar(trip({activities:[act('Fort','s1',1,'10:00',60,{place:{name:'Amber Fort',latitude:26.98,longitude:75.85}})]}),now,{reminderMinutes:15,planUrl:'https://e.example/p'}).text);
   const ev=r.split('BEGIN:VEVENT\r\n')[1].split('END:VEVENT')[0].split('\r\n').filter(Boolean).map(l=>l.split(/[:;]/)[0]);
   assert.deepEqual(ev,['UID','DTSTAMP','LAST-MODIFIED','SEQUENCE','DTSTART','DTEND','SUMMARY','LOCATION','DESCRIPTION','GEO','URL','BEGIN','ACTION','DESCRIPTION','TRIGGER','END']);
+});
+
+test('a journey with only an arrival still makes a file when the departure is saved as an empty string, as the app saves it',()=>{
+  const base=trip({stops:[stop('s1','Jaipur',2),stop('s2','Paris',1,'Europe/Paris')]});
+  const key=planning.routeLegs(base)[1].key;
+  const mk=(p)=>trip({stops:base.stops,travelPreferences:{[key]:{mode:'Flight',hours:'',overnight:0,rate:'',basis:'person',departure:'',arrival:'',reference:'',booked:false,arrival_buffer:0,departure_buffer:0,...p}}});
+  const arrival=unfold(c.icsCalendar(mk({arrival:'12:00'}),now).text);
+  assert.match(arrival,/DTSTART:20261206T110000Z\r\nDTEND:20261206T111500Z\r\nSUMMARY:Arrives: Jaipur to Paris \(Flight\)/);
+  const departure=unfold(c.icsCalendar(mk({departure:'09:00'}),now).text);
+  assert.match(departure,/DTSTART:20261206T033000Z\r\nDTEND:20261206T034500Z\r\nSUMMARY:Departs: Jaipur to Paris \(Flight\)/);
+  assert.equal(c.icsCalendar(mk({}),now),null);
 });

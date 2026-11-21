@@ -26,6 +26,10 @@
 - Signed-in check on the hosted app, dedicated QA trip, plan snapshot taken before and compared after (identical after the restore): with exact dates, a mapped stay and one mapped visit, choosing "1 hour before" and downloading gave 2 events; the visit has a one-hour reminder and the stay none; both have map positions that match the places and a link back to the hosted trip; one sequence number for the export. The file the browser saved was parsed by the independent `icalendar` library.
 - Not verified: importing into Google, Apple or Outlook, and whether a second import updates events in place.
 
+### Found after the second release (21 November 2026)
+
+A journey between two destinations with only an arrival time recorded makes "Download a calendar file" fail with "could not be made" in the deployed version (the app stores a missing departure as `""`, and the code only treated `null` as missing). Fixed locally in `trip-events.ts` with tests; **not pushed yet**.
+
 ## Order
 
 1. Push to `main` (no new branch or PR, as instructed earlier). CI should run the same steps that passed locally on Python 3.14.4 and Node 22.23 (see journal entry 177).
