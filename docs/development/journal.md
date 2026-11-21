@@ -1016,3 +1016,7 @@ The previous GitHub check also exposed Python-version-dependent OpenAPI output: 
 ## 223. Deploy the date-by-date view and the grid
 
 21 November 2026. At the owner's request ("deploy") I pushed `9284d60` to `main`: the agenda and the wide-screen grid. CI and both Vercel projects passed and the hosted bundle has the new code. On the hosted app, on the QA trip, I set exact dates, recorded a mapped stay and two overlapping visits, and checked the list (3 days, 5 lines), the grid (3 columns, the two visits side by side, the stay lines in the band) and that a click opens the right day; then restored the trip and a before/after snapshot was identical. Not verified on the hosted app: axe, a screen reader, a touch device. Docs commit is local only.
+
+## 224. Remember the view, and choose 3 or 5 days per page
+
+21 November 2026. Two refinements of the grid: the List/Grid choice and the page size are remembered in this browser (a storage helper that falls back on any junk or blocked storage, 3 tests), and the grid can show 3 or 5 days per page (a crowded block went from 43 px to 74 px wide at 3 days); changing the size keeps the first day on screen (a test checks every starting point). 305 frontend tests pass, typecheck and build pass; on the local page the choices survive a reload, axe is clean and the controls are 44 px. Not deployed. See [the agenda note](../trip-agenda-learning.md). Committed locally.

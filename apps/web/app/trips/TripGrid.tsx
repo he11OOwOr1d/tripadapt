@@ -1,7 +1,8 @@
 "use client";
-import { useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import type { AgendaDay, AgendaItem } from "../../lib/trips/trip-agenda";
-import { gridPages } from "../../lib/trips/trip-grid";
+import { GRID_DAYS, GRID_DAY_CHOICES, gridPages, pageAfterResize } from "../../lib/trips/trip-grid";
+import { GRID_DAYS_KEY, readPref, writePref } from "../../lib/trips/view-prefs";
 
 const HOUR_PX = 56;
 const CHIP_PX = 44;
@@ -11,7 +12,10 @@ const full = (i: AgendaItem) => [i.when || (i.kind === "stay" ? "All day" : ""),
 
 /** The days as columns against a local clock, five to a page. Read-only: a block opens that day in the day view. */
 export default function TripGrid({ days, onOpen }: { days: AgendaDay[]; onOpen: (stopId: string, day: number) => void }) {
-  const pages = useMemo(() => gridPages(days), [days]);
+  const [per, setPer] = useState<number>(GRID_DAYS);
+  // The remembered page size is read after mount so the first render matches the server's.
+  useEffect(() => { setPer(Number(readPref(GRID_DAYS_KEY, ["3", "5"] as const, String(GRID_DAYS)))); }, []);
+  const pages = useMemo(() => gridPages(days, per), [days, per]);
   const [index, setIndex] = useState(0);
   if (pages.length === 0) return null;
   const at = Math.min(index, pages.length - 1), page = pages[at];
@@ -19,9 +23,13 @@ export default function TripGrid({ days, onOpen }: { days: AgendaDay[]; onOpen: 
   const band = Math.max(...page.columns.map((c) => c.allDay.length)) * CHIP_PX;
   const height = (page.to - page.from) * HOUR_PX;
   const px = (minutes: number) => ((minutes - page.from * 60) * HOUR_PX) / 60;
+  const choose = (size: number) => { if (size === per) return; setIndex(pageAfterResize(at, per, size)); setPer(size); writePref(GRID_DAYS_KEY, String(size)); };
   const press = (item: AgendaItem) => item.open && onOpen(item.open.stopId, item.open.day);
   const hours = Array.from({ length: page.to - page.from }, (_, k) => page.from + k);
   return <div className="trip-grid">
+    <div className="grid-per"><span id="grid-per-label">Days per page</span>
+      <div role="group" aria-labelledby="grid-per-label">{GRID_DAY_CHOICES.map((n) => <button key={n} type="button" aria-pressed={per === n} onClick={() => choose(n)}>{n} days</button>)}</div>
+    </div>
     <div className="grid-nav">
       <button type="button" disabled={at === 0} onClick={() => setIndex(at - 1)}>Earlier days</button>
       <p role="status">{first.label}{first.date !== last.date ? ` to ${last.label}` : ""} · page {at + 1} of {pages.length}</p>

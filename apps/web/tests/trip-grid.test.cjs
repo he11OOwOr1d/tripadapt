@@ -80,3 +80,17 @@ test('on a real trip a flight across time zones is as long as it really takes, a
   assert.deepEqual(J(first.blocks.map(b=>[b.item.title,b.lane,b.lanes])),[['Fort',0,2],['Tour',1,2]]);
   assert.ok(first.allDay.every(i=>i.kind==='stay')||first.allDay.length===0);
 });
+
+test('changing the page size keeps the first day on screen on screen',()=>{
+  // days 0-based: page 1 of 5 starts at day 5; with pages of 3 that day is on page 1 (days 3-5), not page 2
+  assert.equal(grid.pageAfterResize(1,5,3),1);
+  assert.equal(grid.pageAfterResize(2,5,3),3);   // starts at day 10, which is on page 3 (days 9-11)
+  assert.equal(grid.pageAfterResize(1,3,5),0);   // starts at day 3, which is on page 0 (days 0-4)
+  assert.equal(grid.pageAfterResize(3,3,5),1);   // starts at day 9, page 1 (days 5-9)
+  assert.equal(grid.pageAfterResize(0,5,3),0);
+  assert.equal(grid.pageAfterResize(4,5,5),4);
+  for(const bad of [[NaN,5,3],[1,0,3],[1,5,0],[-1,5,3],[1,NaN,3]])assert.equal(grid.pageAfterResize(...bad),0,String(bad));
+  // for every starting point the new page really contains the old first day
+  for(const [a,b] of [[5,3],[3,5]])for(let i=0;i<8;i++){const first=i*a,page=grid.pageAfterResize(i,a,b);assert.ok(page*b<=first&&first<(page+1)*b,`${a}->${b} page ${i}`);}
+  assert.deepEqual(J(grid.GRID_DAY_CHOICES),[3,5]);
+});

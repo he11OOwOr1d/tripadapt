@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { Trip } from "../../lib/trips/adapter";
 import { agendaDays, type AgendaItem } from "../../lib/trips/trip-agenda";
 import TripGrid from "./TripGrid";
+import { AGENDA_VIEW_KEY, readPref, writePref } from "../../lib/trips/view-prefs";
 
 /** The plan date by date, read-only. A line opens that day in the day view; nothing here changes the plan. */
 export default function TripAgenda({ trip, onOpen }: { trip: Trip; onOpen: (stopId: string, day: number) => void }) {
@@ -12,6 +13,9 @@ export default function TripAgenda({ trip, onOpen }: { trip: Trip; onOpen: (stop
   // The grid needs room for five day columns, so it is offered on wide screens only; the list is always available.
   const [view, setView] = useState<"list" | "grid">("list");
   const [wide, setWide] = useState(false);
+  // The remembered view is read after mount so the first render matches the server's.
+  useEffect(() => { setView(readPref(AGENDA_VIEW_KEY, ["list", "grid"] as const, "list")); }, []);
+  const choose = (next: "list" | "grid") => { setView(next); writePref(AGENDA_VIEW_KEY, next); };
   useEffect(() => {
     const query = window.matchMedia("(min-width: 1200px)");
     const sync = () => setWide(query.matches);
@@ -37,8 +41,8 @@ export default function TripAgenda({ trip, onOpen }: { trip: Trip; onOpen: (stop
     <div className="agenda-head">
       <h2 id="trip-agenda-title">Date by date</h2>
       {wide && built.days.length > 0 && <div className="agenda-view" role="group" aria-label="Show the days as">
-        <button type="button" aria-pressed={view === "list"} onClick={() => setView("list")}>List</button>
-        <button type="button" aria-pressed={view === "grid"} onClick={() => setView("grid")}>Grid</button>
+        <button type="button" aria-pressed={view === "list"} onClick={() => choose("list")}>List</button>
+        <button type="button" aria-pressed={view === "grid"} onClick={() => choose("grid")}>Grid</button>
       </div>}
     </div>
     <p>Times are local to the place they happen. Choose a line to open that day. This is your own plan, not confirmed bookings.</p>

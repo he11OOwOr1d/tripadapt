@@ -2,6 +2,18 @@ import type { AgendaDay, AgendaItem } from "./trip-agenda";
 
 /** Days shown side by side on one page of the grid. */
 export const GRID_DAYS = 5;
+/** The page sizes offered. Three days leaves a crowded day about 60% more width per lane. */
+export const GRID_DAY_CHOICES = [3, 5] as const;
+
+/**
+ * The page to show after the page size changes, so the first day on screen stays on screen: page `index` of `oldSize`
+ * days starts at day `index * oldSize`, which lives on page `floor(start / newSize)` of the new size.
+ */
+export function pageAfterResize(index: number, oldSize: number, newSize: number): number {
+  if (!(oldSize >= 1) || !(newSize >= 1) || !(index >= 0)) return 0;
+  return Math.floor((Math.floor(index) * Math.floor(oldSize)) / Math.floor(newSize));
+}
+
 /** A line shorter than this is drawn this tall, so it can be read and pressed. */
 export const MIN_BLOCK_MINUTES = 30;
 
