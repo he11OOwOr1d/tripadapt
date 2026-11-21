@@ -1,5 +1,5 @@
 const {test}=require('node:test');const assert=require('node:assert/strict');const ts=require('typescript');const fs=require('node:fs');const vm=require('node:vm');const path=require('node:path');
-function load(file,deps={}){const out={};vm.runInNewContext(ts.transpileModule(fs.readFileSync(path.resolve(__dirname,file),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports:out,require:n=>deps[n.replace(/^\.\//,'')]??{},Object,Array,String,Number,Math,JSON,Date,Intl,TextEncoder,Set,Map},{});return out;}
+function load(file,deps={}){const out={};vm.runInNewContext(ts.transpileModule(fs.readFileSync(path.resolve(__dirname,file),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports:out,require:n=>deps[n.replace(/^\.\//,'')]??{},Object,Array,String,Number,Math,JSON,Date,Intl,TextEncoder,Set,Map,URL},{});return out;}
 const planning=load('../lib/trips/planning.ts');
 const itinerary=load('../lib/trips/itinerary.ts',{planning});
 const dayMap=load('../lib/trips/day-map.ts',{lodging:{lodgingPoint:()=>null}});
@@ -109,4 +109,79 @@ test('converting a wall-clock time to UTC and back lands on the same wall-clock 
   const asMs=s=>{const [d,h]=s.split(' ');return Date.parse(`${d}T${h}:00Z`);};
   for(const g of gaps){const [from,got]=g.split(' -> ');const want=from.split(' ').slice(-2).join(' ');const diff=asMs(got)-asMs(want);assert.ok(diff>0&&diff<=3600000,g);}
   assert.ok(gaps.length<=zones.length*3,`too many nonexistent times: ${gaps.length}`);
+});
+
+test('every event carries LAST-MODIFIED and a sequence that rises with each export, under the same id',()=>{
+  const t=trip({activities:[act('Fort','s1',1,'10:00',60)]});
+  const a=unfold(c.icsCalendar(t,now).text),b=unfold(c.icsCalendar(t,new Date('2026-11-20T00:01:00Z')).text),later=unfold(c.icsCalendar(t,new Date('2027-01-01T00:00:00Z')).text);
+  const minutes=(d)=>(Date.parse(d)-Date.parse('2020-01-01T00:00:00Z'))/60000;
+  assert.match(a,new RegExp(`UID:activity-Fort@elsewhere.local\r\nDTSTAMP:20261120T000000Z\r\nLAST-MODIFIED:20261120T000000Z\r\nSEQUENCE:${minutes('2026-11-20T00:00:00Z')}\r\n`));
+  const seq=(x)=>Number(x.match(/SEQUENCE:(\d+)/)[1]),uid=(x)=>x.match(/UID:[^\r]+/)[0];
+  assert.equal(seq(b),seq(a)+1);assert.ok(seq(later)>seq(b));
+  assert.equal(uid(a),uid(b));assert.equal(uid(a),uid(later));
+  assert.ok(seq(a)<2147483647);
+  // an export before 2020 (a wrong clock) never writes a negative sequence
+  assert.match(unfold(c.icsCalendar(t,new Date('2019-05-01T00:00:00Z')).text),/SEQUENCE:0\r\n/);
+});
+test('reminders are off unless asked for, only on timed events, and only for sensible lengths',()=>{
+  const prefs={s1:{style:'',rate:'',basis:'room',lodging:{name:'Haveli'}}};
+  const base=trip({activities:[act('Fort','s1',1,'10:00',60,{title:'Amber Fort'})],stayPreferences:prefs});
+  const alarms=(x)=>(x.match(/BEGIN:VALARM/g)||[]).length;
+  assert.equal(alarms(c.icsCalendar(base,now).text),0);
+  assert.equal(alarms(c.icsCalendar(base,now,{}).text),0);
+  assert.equal(alarms(c.icsCalendar(base,now,{reminderMinutes:null}).text),0);
+  const t15=unfold(c.icsCalendar(base,now,{reminderMinutes:15}).text);
+  assert.equal(alarms(t15),1);
+  assert.match(t15,/BEGIN:VALARM\r\nACTION:DISPLAY\r\nDESCRIPTION:Amber Fort\r\nTRIGGER:-PT15M\r\nEND:VALARM\r\nEND:VEVENT/);
+  // the all-day stay has no start time to count back from
+  const stay=t15.split('BEGIN:VEVENT').find(e=>/Stay: Haveli/.test(e));assert.doesNotMatch(stay,/VALARM/);
+  assert.match(unfold(c.icsCalendar(base,now,{reminderMinutes:60}).text),/TRIGGER:-PT1H\r\n/);
+  assert.match(unfold(c.icsCalendar(base,now,{reminderMinutes:1440}).text),/TRIGGER:-P1D\r\n/);
+  assert.match(unfold(c.icsCalendar(base,now,{reminderMinutes:90}).text),/TRIGGER:-PT90M\r\n/);
+  assert.match(unfold(c.icsCalendar(base,now,{reminderMinutes:10080}).text),/TRIGGER:-P7D\r\n/);
+  for(const bad of [0,-5,1.5,NaN,Infinity,10081,'15','',undefined,{}])assert.equal(alarms(c.icsCalendar(base,now,{reminderMinutes:bad}).text),0,String(bad));
+  assert.equal(c.alarmTrigger(15),'-PT15M');assert.equal(c.alarmTrigger(120),'-PT2H');assert.equal(c.alarmTrigger(2880),'-P2D');
+  // a title with a comma or semicolon is escaped in the reminder text too
+  assert.match(unfold(c.icsCalendar(trip({activities:[act('x','s1',1,'10:00',60,{title:'Tea, then; rest'})]}),now,{reminderMinutes:15}).text),/DESCRIPTION:Tea\\, then\\; rest\r\nTRIGGER/);
+});
+test('journeys get a reminder too, one per event',()=>{
+  const base=trip({stops:[stop('s1','Jaipur',2),stop('s2','Paris',1,'Europe/Paris')]});
+  const key=planning.routeLegs(base)[1].key;
+  const mk=(p)=>trip({stops:base.stops,travelPreferences:{[key]:{mode:'Flight',hours:'',overnight:0,rate:'',basis:'person',...p}}});
+  const both=unfold(c.icsCalendar(mk({departure:'09:00',arrival:'12:00'}),now,{reminderMinutes:60}).text);
+  assert.match(both,/DESCRIPTION:Jaipur to Paris \(Flight\)\r\nTRIGGER:-PT1H\r\nEND:VALARM/);
+  assert.equal((both.match(/BEGIN:VALARM/g)||[]).length,1);
+  const one=unfold(c.icsCalendar(mk({arrival:'12:00'}),now,{reminderMinutes:60}).text);
+  assert.match(one,/DESCRIPTION:Arrives: Jaipur to Paris \(Flight\)\r\nTRIGGER:-PT1H/);
+});
+test('map positions are written only when they are real coordinates',()=>{
+  const place=(lat,lon)=>({name:'Spot',latitude:lat,longitude:lon});
+  const geo=(p)=>{const t=unfold(c.icsCalendar(trip({activities:[act('a','s1',1,'10:00',60,{place:p})]}),now).text);return (t.match(/GEO:[^\r]+/)||[null])[0];};
+  assert.equal(geo(place(26.9116927,75.8195024)),'GEO:26.911693;75.819502');
+  assert.equal(geo(place(-33.8688,151.2093)),'GEO:-33.8688;151.2093');
+  assert.equal(geo(place(0,0)),'GEO:0;0');
+  for(const bad of [place(91,10),place(10,181),place(NaN,10),place(10,Infinity),{name:'No coords'},{name:'S',latitude:'26.9',longitude:'75.8'},undefined])assert.equal(geo(bad),null,JSON.stringify(bad));
+  const stay=(l)=>unfold(c.icsCalendar(trip({stayPreferences:{s1:{style:'',rate:'',basis:'room',lodging:{name:'Haveli',...l}}}}),now).text);
+  assert.match(stay({latitude:26.9212173,longitude:75.7893468}),/GEO:26.921217;75.789347/);
+  assert.doesNotMatch(stay({}),/GEO:/);assert.doesNotMatch(stay({latitude:95,longitude:10}),/GEO:/);
+});
+test('a link back to the plan goes on every event, and only a plain http or https address is used',()=>{
+  const prefs={s1:{style:'',rate:'',basis:'room',lodging:{name:'Haveli'}}};
+  const t=trip({activities:[act('Fort','s1',1,'10:00',60)],stayPreferences:prefs});
+  const link='https://elsewhere.example/trips/new?trip=11111111-2222-3333-4444-555555555555';
+  const withLink=unfold(c.icsCalendar(t,now,{planUrl:link}).text);
+  assert.equal((withLink.match(/URL:https:\/\/elsewhere\.example\/trips\/new\?trip=11111111-2222-3333-4444-555555555555\r\n/g)||[]).length,2);
+  assert.equal((withLink.match(/BEGIN:VEVENT/g)||[]).length,2);
+  for(const bad of ['javascript:alert(1)','data:text/plain,hi','file:///etc/passwd','ftp://x.test/a','not a url','','//x.test/a',undefined,42])assert.doesNotMatch(unfold(c.icsCalendar(t,now,{planUrl:bad}).text),/\r\nURL:/,String(bad));
+  // a line break smuggled into the address is refused, so it cannot start another property or event
+  for(const evil of ['https://x.test/a\r\nBEGIN:VEVENT\r\nSUMMARY:Injected','https://x.test/a\nSUMMARY:Injected','https://x.test/a\rX','https://x.test/a b','https://x.test/a\tb','https://x.test/\u0000'])assert.doesNotMatch(c.icsCalendar(t,now,{planUrl:evil}).text,/\r\nURL:|Injected/,JSON.stringify(evil));
+  const sneaky=c.icsCalendar(t,now,{planUrl:'https://x.test/a\r\nBEGIN:VEVENT\r\nSUMMARY:Injected'});
+  assert.equal(sneaky.text.split('\r\n').filter(l=>l==='BEGIN:VEVENT').length,2);
+  assert.ok(!/\r(?!\n)/.test(sneaky.text));
+  for(const line of sneaky.text.split('\r\n'))assert.ok(new TextEncoder().encode(line).length<=75,line);
+});
+test('the new properties do not disturb the existing layout of an event',()=>{
+  const r=unfold(c.icsCalendar(trip({activities:[act('Fort','s1',1,'10:00',60,{place:{name:'Amber Fort',latitude:26.98,longitude:75.85}})]}),now,{reminderMinutes:15,planUrl:'https://e.example/p'}).text);
+  const ev=r.split('BEGIN:VEVENT\r\n')[1].split('END:VEVENT')[0].split('\r\n').filter(Boolean).map(l=>l.split(/[:;]/)[0]);
+  assert.deepEqual(ev,['UID','DTSTAMP','LAST-MODIFIED','SEQUENCE','DTSTART','DTEND','SUMMARY','LOCATION','DESCRIPTION','GEO','URL','BEGIN','ACTION','DESCRIPTION','TRIGGER','END']);
 });

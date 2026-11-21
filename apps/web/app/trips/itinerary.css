@@ -1068,6 +1068,10 @@ fieldset.live-acceptance { border-inline: 0; min-width: 0; }
 .calendar-export h2 { margin: 0 0 .5rem; }
 .calendar-export p { max-width: 65ch; line-height: 1.5; }
 .calendar-export button { min-height: 44px; padding: .5rem .9rem; font: inherit; }
+.calendar-export .calendar-reminder { display: grid; gap: .3rem; max-width: 22rem; }
+.calendar-export select { min-height: 44px; padding: .4rem .6rem; font: inherit; }
+.calendar-export small { display: block; line-height: 1.5; max-width: 65ch; font-size: 13px; }
+.calendar-export :is(button, select):focus-visible { outline: 3px solid #476442; outline-offset: 3px; }
 /* The overview lays its destination rows out as flex rows; these two panels are stacked blocks. */
 .day-overview > section.route-drives,
 .day-overview > section.calendar-export { display: block; padding: 1rem; border: 1px solid #bdc4b4; }
