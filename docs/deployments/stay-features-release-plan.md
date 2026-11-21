@@ -20,6 +20,12 @@
 - **Found:** (a) the "Edit" button on the journey cards is 29 by 44 px at 390 px, under the project's 44 px width (it predates this release; not fixed); (b) removing a destination leaves its journey details in the saved draft with no way to delete them (here a stale `hours: "3.39"` for the removed Agra leg); it matches no leg, so it is inert, and it also predates this release.
 - **QA trip restored:** after the checks the plan matched the saved baseline (dates open-ended, Jaipur 2 nights, no stay, no activities, the two original costs, Delhi as an unmapped start, return to start on) except `travel_preferences`, which now has three more empty default entries and the one stale Agra entry above. The chat history gained messages and two AI proposals were left unaccepted.
 
+### Second release: the calendar file hardening (21 November 2026)
+
+- Pushed `02a1cec..88f75f5` to `main` (frontend only: no backend, migration or variable change). CI passed; both Vercel projects succeeded; the hosted JavaScript contains the new strings (reminder choice, `LAST-MODIFIED`, `VALARM`, `TRIGGER`, `GEO`).
+- Signed-in check on the hosted app, dedicated QA trip, plan snapshot taken before and compared after (identical after the restore): with exact dates, a mapped stay and one mapped visit, choosing "1 hour before" and downloading gave 2 events; the visit has a one-hour reminder and the stay none; both have map positions that match the places and a link back to the hosted trip; one sequence number for the export. The file the browser saved was parsed by the independent `icalendar` library.
+- Not verified: importing into Google, Apple or Outlook, and whether a second import updates events in place.
+
 ## Order
 
 1. Push to `main` (no new branch or PR, as instructed earlier). CI should run the same steps that passed locally on Python 3.14.4 and Node 22.23 (see journal entry 177).
