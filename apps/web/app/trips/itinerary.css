@@ -1074,10 +1074,40 @@ fieldset.live-acceptance { border-inline: 0; min-width: 0; }
 .calendar-export :is(button, select):focus-visible { outline: 3px solid #476442; outline-offset: 3px; }
 /* The overview lays its destination rows out as flex rows; these two panels are stacked blocks. */
 .day-overview > section.route-drives,
-.day-overview > section.calendar-export { display: block; padding: 1rem; border: 1px solid #bdc4b4; }
+.day-overview > section.calendar-export,
+.day-overview > section.trip-agenda { display: block; padding: 1rem; border: 1px solid #bdc4b4; }
 .day-overview > section.route-drives > * + *,
-.day-overview > section.calendar-export > * + * { margin-top: .6rem; }
+.day-overview > section.calendar-export > * + *,
+.day-overview > section.trip-agenda > * + * { margin-top: .6rem; }
 .day-overview > section.route-drives h2,
-.day-overview > section.calendar-export h2 { margin: 0; }
+.day-overview > section.calendar-export h2,
+.day-overview > section.trip-agenda h2 { margin: 0; }
 .day-overview > section.route-drives p,
-.day-overview > section.calendar-export p { font-size: 13px; }
+.day-overview > section.calendar-export p,
+.day-overview > section.trip-agenda > p { font-size: 13px; }
+
+/* The date-by-date view: one block per date, one row per line, the whole row is the button. */
+.trip-agenda { max-width: 100%; }
+.trip-agenda .agenda-days { list-style: none; margin: 0; padding: 0; display: grid; gap: .9rem; }
+.trip-agenda .agenda-day { border-top: 1px solid #bdc4b4; padding-top: .7rem; }
+.trip-agenda .agenda-day h3 { display: flex; flex-wrap: wrap; gap: .2rem .9rem; align-items: baseline; margin: 0 0 .45rem; font-size: 1rem; }
+.trip-agenda .agenda-day h3 span { font-weight: 400; font-size: 13px; color: #4d5a43; }
+.trip-agenda .agenda-items { list-style: none; margin: 0; padding: 0; display: grid; gap: .4rem; }
+.trip-agenda .agenda-item > button, .trip-agenda .agenda-item > div { display: grid; grid-template-columns: minmax(7rem, 13rem) minmax(0, 1fr); gap: .15rem .9rem; align-items: baseline; width: 100%; min-height: 44px; padding: .55rem .75rem; box-sizing: border-box; text-align: left; font: inherit; color: inherit; background: #f6f4ea; border: 1px solid #c9cfbf; border-left: 4px solid #476442; border-radius: .25rem; }
+.trip-agenda .agenda-item > button { cursor: pointer; }
+.trip-agenda .agenda-item > button:hover { background: #ecefdf; }
+.trip-agenda .agenda-item > button:focus-visible { outline: 3px solid #476442; outline-offset: 2px; }
+.trip-agenda .agenda-item.kind-stay > button, .trip-agenda .agenda-item.kind-stay > div { background: #f4efe0; border-left: 4px double #6b5b2f; }
+.trip-agenda .agenda-item.kind-journey > button, .trip-agenda .agenda-item.kind-journey > div { border-left: 4px dashed #3d5a66; }
+.trip-agenda .agenda-when { font-size: 13px; color: #4d5a43; overflow-wrap: anywhere; }
+.trip-agenda .agenda-title { overflow-wrap: anywhere; }
+.trip-agenda .agenda-note { grid-column: 2; font-size: 13px; color: #4d5a43; overflow-wrap: anywhere; }
+.trip-agenda .agenda-item.is-skipped .agenda-title { text-decoration: line-through; }
+.trip-agenda .agenda-skipped { text-decoration: none; display: inline-block; font-size: 13px; }
+.trip-agenda .agenda-empty { margin: 0; font-size: 13px; color: #4d5a43; }
+.trip-agenda .agenda-empty button { min-height: 44px; padding: .4rem .8rem; font: inherit; color: inherit; background: transparent; border: 1px solid currentColor; border-radius: .25rem; cursor: pointer; margin-left: .4rem; }
+.trip-agenda .agenda-empty button:focus-visible { outline: 3px solid #476442; outline-offset: 2px; }
+@media (max-width: 600px) {
+  .trip-agenda .agenda-item > button, .trip-agenda .agenda-item > div { grid-template-columns: minmax(0, 1fr); }
+  .trip-agenda .agenda-note { grid-column: 1; }
+}

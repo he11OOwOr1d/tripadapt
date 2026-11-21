@@ -27,7 +27,8 @@ export function localParts(instant: Date, timeZone: string): { date: string; tim
   return { date: `${g("year")}-${g("month")}-${g("day")}`, time: `${g("hour")}:${g("minute")}` };
 }
 
-const addDays = (iso: string, n: number) => { const d = new Date(iso + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+/** A date (YYYY-MM-DD) moved by whole days. */
+export const addDays = (iso: string, n: number) => { const d = new Date(iso + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
 
 /** One thing on the traveler's plan, placed on a date in the zone where it happens. Never a booking. */
 export type TripEvent = {
@@ -54,6 +55,8 @@ export type TripEvent = {
   details: string[];
   /** A real map position, or null. */
   position: { latitude: number; longitude: number } | null;
+  /** For a stay: its name (may be empty), the check-in and check-out times, the confirmation note and whether the traveler marked it booked, as recorded. Null for everything else. */
+  stay: { name: string; checkIn: string | null; checkOut: string | null; reference: string | null; booked: boolean } | null;
   /** The destination the event belongs to; for a journey, the one it arrives at. */
   stopId: string;
   activityId: string | null;
@@ -96,7 +99,7 @@ export function tripEvents(trip: Trip, options: TripEventOptions = {}): TripEven
       events.push({
         id: `activity-${a.id}`, kind: "activity", title: a.title, allDay: false, marker: false, skipped: !!a.skipped,
         start: { date, time: a.start, zone }, end: { date: end.date, time: end.time, zone }, startUtc, endUtc,
-        location: a.place?.name ?? s.stop.name, details: [s.stop.name], position: position(a.place?.latitude, a.place?.longitude),
+        location: a.place?.name ?? s.stop.name, details: [s.stop.name], position: position(a.place?.latitude, a.place?.longitude), stay: null,
         stopId: s.stop.id, activityId: a.id, legKey: null,
       });
     }
@@ -113,7 +116,7 @@ export function tripEvents(trip: Trip, options: TripEventOptions = {}): TripEven
         start: { date: inDate, time: null, zone }, end: { date: outDate, time: null, zone }, startUtc: null, endUtc: null,
         location: stay.address || s.stop.name,
         details: [times, stay.reference && `Your reference: ${stay.reference}`, stay.booked ? "You marked this as booked" : "Not marked as booked"].filter((x): x is string => !!x),
-        position: position(stay.latitude, stay.longitude), stopId: s.stop.id, activityId: null, legKey: null,
+        position: position(stay.latitude, stay.longitude), stay: { name: stay.name, checkIn: stay.check_in || null, checkOut: stay.check_out || null, reference: stay.reference || null, booked: !!stay.booked }, stopId: s.stop.id, activityId: null, legKey: null,
       });
     }
   }
@@ -129,7 +132,7 @@ export function tripEvents(trip: Trip, options: TripEventOptions = {}): TripEven
     if (!departDate || !arriveDate) return;
     const title = `${leg.from} to ${leg.to}${pref.mode ? ` (${pref.mode})` : ""}`;
     const details = [pref.reference && `Your reference: ${pref.reference}`, pref.booked ? "You marked this as booked" : "Not marked as booked"].filter((x): x is string => !!x);
-    const base = { id: `journey-${from.stop.id}-${to.stop.id}`, kind: "journey" as const, allDay: false, skipped: false, location: null, details, position: null, stopId: to.stop.id, activityId: null, legKey: leg.key };
+    const base = { id: `journey-${from.stop.id}-${to.stop.id}`, kind: "journey" as const, allDay: false, skipped: false, location: null, details, position: null, stay: null, stopId: to.stop.id, activityId: null, legKey: leg.key };
     if (pref.departure && pref.arrival) {
       const startUtc = zonedToUtc(departDate, pref.departure, from.stop.timezone);
       let endDate = arriveDate, endUtc = zonedToUtc(arriveDate, pref.arrival, to.stop.timezone);

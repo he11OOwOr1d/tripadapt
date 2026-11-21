@@ -33,6 +33,7 @@ import StayJourney from "./StayJourney";
 import IntercityEstimate from "./IntercityEstimate";
 import RouteDrives from "./RouteDrives";
 import CalendarExport from "./CalendarExport";
+import TripAgenda from "./TripAgenda";
 import TransferBooking from "./TransferBooking";
 import { originPlace, stopPlace, withTravelHours } from "../../lib/trips/intercity";
 import { stayDates } from "../../lib/trips/stay-dates";
@@ -300,6 +301,7 @@ export default function ItineraryWorkspace({
                   </button>
                 </section>
               ))}
+              <TripAgenda trip={trip} onOpen={(stopId, day) => { onSelect(stopId); onDay(day); setOverview(false); }} />
               <RouteDrives trip={trip} />
               <CalendarExport trip={trip} />
               {stats.unallocated !== null && stats.unallocated > 0 && (
