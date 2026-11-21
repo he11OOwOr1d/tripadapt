@@ -41,6 +41,8 @@ type Plan = {
   preferences: {
     pace: string;
     interests: string[];
+    day_start?: string;
+    day_end?: string;
     return_to_origin?: boolean;
     stay_preferences?: Trip["stayPreferences"];
     travel_preferences?: Trip["travelPreferences"];
@@ -255,6 +257,8 @@ function input(trip: Trip) {
     preferences: {
       pace: trip.pace === "busy" ? "fast" : trip.pace,
       interests: trip.interests ? [trip.interests] : [],
+      day_start: trip.dayStart ?? "",
+      day_end: trip.dayEnd ?? "",
       return_to_origin: trip.returnToOrigin !== false,
       stay_preferences: trip.stayPreferences ?? {},
       travel_preferences: trip.travelPreferences ?? {},
@@ -338,6 +342,8 @@ export const accountTripAdapter = {
       returnToOrigin: p.preferences.return_to_origin ?? true,
       pace: p.preferences.pace === "fast" ? "busy" : p.preferences.pace,
       interests: p.preferences.interests.join(", "),
+      // Only when set, so a trip without hours looks exactly as it did before this setting existed.
+      ...(p.preferences.day_start && p.preferences.day_end ? { dayStart: p.preferences.day_start, dayEnd: p.preferences.day_end } : {}),
       stayPreferences: p.preferences.stay_preferences ?? {},
       travelPreferences: p.preferences.travel_preferences ?? {},
       costRecords: p.costs ?? [],

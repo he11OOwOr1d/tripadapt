@@ -1,6 +1,7 @@
 "use client";
 import CostCoverage from "./CostCoverage";
 import { draftCostSource } from "../../lib/trips/cost-coverage";
+import DayHoursField from "./DayHoursField";
 import BudgetPreference from "./BudgetPreference";
 import CostRecords from "./CostRecords";
 import JourneyImpact from "./JourneyImpact";
@@ -597,6 +598,7 @@ export default function TripCreation({
                         placeholder="Food, forest paths, slow mornings…"
                       />
                     </label>
+                    <DayHoursField start={trip.dayStart ?? ""} end={trip.dayEnd ?? ""} onChange={(hours) => update(hours)} />
                   </details>
                 </>
               )}

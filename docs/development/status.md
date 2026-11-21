@@ -2,6 +2,10 @@
 
 Local implementation and verification status. The dated sections below preserve the evidence recorded at each stage.
 
+## Daily hours — 22 November 2026 (built locally, not pushed)
+
+PRD FR-01's "optional daily hours" now exists: an optional "Your day" start and end in the trip form. The AI planner plans inside it, the day view and "Add activity" follow it, and the wide grid's axis starts from it; with nothing set, nothing changes. 694 backend and 319 frontend tests pass. See [the note](../daily-hours-learning.md).
+
 ## Deleting and erasing a trip — 21 November 2026 (built locally, not pushed)
 
 PRD FR-11 asks for deleting trips. My trips now has a Delete button with an inline confirmation; the trip is hidden at once, its planning jobs stop, and after a 30 day recovery window (the owner's choice) it is permanently erased by a background cleanup that runs inside the existing worker. Erasing needed one new migration (0027) that lets a transaction delete the accepted plans of the single trip it is erasing, while keeping them protected from everything else. Also fixed: the API refused `DELETE` from the browser (CORS). 671 backend and 313 frontend tests pass; the erasure was also run against the real database on my own disposable trips. Deploying needs migration 0027 applied first. See [the note](../trip-deletion-learning.md).

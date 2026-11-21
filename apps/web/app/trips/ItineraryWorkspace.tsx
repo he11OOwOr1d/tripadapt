@@ -37,6 +37,7 @@ import TripAgenda from "./TripAgenda";
 import TransferBooking from "./TransferBooking";
 import { originPlace, stopPlace, withTravelHours } from "../../lib/trips/intercity";
 import { stayDates } from "../../lib/trips/stay-dates";
+import { DEFAULT_SUGGESTED_START, clockText, travelerDay } from "../../lib/trips/traveler-day";
 import { hasBooking, mergeIssues, splitForJourneys, transferConflicts, withTransferBooking } from "../../lib/trips/transfers";
 import { MAX_EXTRA_STAYS, coverageNotes, nightsFor, stayForNight, staysOf, unclaimedSpan, withExtraLodging, withLodging, type Lodging } from "../../lib/trips/lodging";
 const kindName = {
@@ -160,7 +161,8 @@ export default function ItineraryWorkspace({
   const activities = trip.activities.filter(
     (a) => a.stopId === current.stop.id && a.day === localDay,
   );
-  const entries = splitForJourneys(dayTimeline(activities), trip, current.stop.id, localDay),
+  const hours = travelerDay(trip);
+  const entries = splitForJourneys(dayTimeline(activities, hours), trip, current.stop.id, localDay),
     conflicts = mergeIssues(dayConflicts(trip, current.stop.id, localDay), transferConflicts(trip, current.stop.id, localDay));
   const transfers = [
     ...(localDay === 1 && current.inbound
@@ -201,11 +203,13 @@ export default function ItineraryWorkspace({
             current.days,
           ]),
         ).sort((a, b) => a - b);
+  // "Add activity" suggests the first hour that is free inside the traveler's day (09:00 when they have set no hours).
+  const earliest = hours.custom ? hours.start : DEFAULT_SUGGESTED_START;
   const firstGap = entries.find(
-    (e) => e.type === "gap" && e.end - Math.max(e.start, 540) >= 60,
+    (e) => e.type === "gap" && e.end - Math.max(e.start, earliest) >= 60,
   );
   const nextStart =
-    firstGap?.type === "gap" ? clock(Math.max(firstGap.start, 540)) : "09:00";
+    firstGap?.type === "gap" ? clock(Math.max(firstGap.start, earliest)) : clockText(earliest);
   return (
     <div className="day-workspace">
       <aside className="day-route">
@@ -509,7 +513,7 @@ export default function ItineraryWorkspace({
             <StayJourney key={JSON.stringify([current.stop.id, localDay, staysOf(trip.stayPreferences?.[current.stop.id]).map((x) => [x.latitude, x.longitude, x.check_in, x.check_out, x.first_night, x.last_night]), activities.map((a) => [a.id, a.start, a.minutes, a.place?.id, a.skipped])])} lodging={stayForNight(trip.stayPreferences?.[current.stop.id], Math.max(1, localDay - 1))} backLodging={stayForNight(trip.stayPreferences?.[current.stop.id], Math.min(localDay, current.stop.nights))} several={staysOf(trip.stayPreferences?.[current.stop.id]).length > 1} activities={activities} firstDay={localDay === 1} lastDay={localDay === current.days} />
             <DayMapPanel key={`${current.stop.id}:${localDay}`} stop={current.stop} stops={schedule.map((s) => s.stop)} activities={activities} lodging={staysOf(trip.stayPreferences?.[current.stop.id])} open={mapOpen} onOpenChange={setMapOpen} selectedId={mapSelected} onSelect={selectOnMap} />
             <p className="day-window">
-              Local times · open gaps shown around an 08:00–22:00 planning day
+              Local times · {hours.custom ? `open gaps shown within your ${hours.label} day` : "open gaps shown around an 08:00–22:00 planning day"}
               {transfers.length ? " · allow for untimed transfers" : ""}
             </p>
             <DayWeather key={`${current.stop.id}:${localDay}:${date??"flexible"}:${current.stop.location?.reference_id??"unmapped"}:${weatherSeed?.key??"manual"}`} stop={current.stop} visitDate={date} activities={activities} review={timeChangeReview} initial={weatherSeed} />

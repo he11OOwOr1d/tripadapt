@@ -297,11 +297,23 @@ def reconcile_costs(costs, stop_ids, activity_ids, leg_keys):
     return result
 
 
+# The day the AI plans inside when the traveler has not said otherwise (09:00 to 18:00), and the shortest day they may ask for.
+DEFAULT_DAY = (9 * 60, 18 * 60)
+MIN_DAY_MINUTES = 4 * 60
+
+
+def _clock(value: str) -> int:
+    return int(value[:2]) * 60 + int(value[3:5])
+
+
 class Preferences(StrictModel):
     pace: Literal["relaxed", "balanced", "fast"] = "balanced"
     interests: list[str] = Field(default_factory=list, max_length=100)
     preferred_modes: list[str] = Field(default_factory=list, max_length=20)
     return_to_origin: bool = True
+    # The hours the traveler wants to be out and about, "HH:MM" local time. Both or neither: empty means the default day.
+    day_start: str = Field(default="", pattern=r"^$|^([01][0-9]|2[0-3]):[0-5][0-9]$")
+    day_end: str = Field(default="", pattern=r"^$|^([01][0-9]|2[0-3]):[0-5][0-9]$")
     stay_preferences: dict[str, StayPreference] = Field(
         default_factory=dict, max_length=500
     )
@@ -311,6 +323,21 @@ class Preferences(StrictModel):
     # Traveler attests every cost is entered; needed before a strict budget can
     # be checked, since completeness cannot be inferred from the entries.
     costs_confirmed: bool = False
+
+    @model_validator(mode="after")
+    def day_hours_make_sense(self):
+        if bool(self.day_start) != bool(self.day_end):
+            raise ValueError("Set both daily hours, or neither.")
+        if self.day_start and _clock(self.day_end) - _clock(self.day_start) < MIN_DAY_MINUTES:
+            raise ValueError("Daily hours must cover at least four hours, within one day.")
+        return self
+
+
+def day_bounds(preferences: "Preferences") -> tuple[int, int]:
+    """The traveler's hours as minutes after midnight, or the default day."""
+    if preferences.day_start and preferences.day_end:
+        return _clock(preferences.day_start), _clock(preferences.day_end)
+    return DEFAULT_DAY
 
 
 class ActivityInput(StrictModel):

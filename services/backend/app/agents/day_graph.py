@@ -17,6 +17,7 @@ from app.trips.schemas import (
     ActivityInput,
     PlanInput,
     StrictModel,
+    day_bounds,
     plan_legs,
     stay_for_night,
 )
@@ -102,9 +103,10 @@ def planning_window(plan, stop, day):
     """The day's start and end in minutes, narrowed by journeys the traveler recorded.
 
     The traveler's own arrival time limits the first day at a stop and their
-    departure time its last. Without them the window is 09:00 to 18:00.
+    departure time its last. The day itself is the traveler's daily hours, or
+    09:00 to 18:00 when they have not set any.
     """
-    start, end, arrival, departure = 540, 1080, "", ""
+    (start, end), arrival, departure = day_bounds(plan.preferences), "", ""
     legs = plan_legs(plan)
     index = [s.client_id for s in plan.stops].index(stop.client_id)
     prefs = plan.preferences.travel_preferences
@@ -439,7 +441,9 @@ def validate_ai_candidate(
             duration_minutes=ref["minutes"],
         )
         start = item.local_start_time.hour * 60 + item.local_start_time.minute
-        if len(addition.start) != 5 or not 540 <= start <= 1080 - item.duration_minutes:
+        # The outer limit is the traveler's own day; a recorded arrival or departure narrows it further when the plan is made.
+        earliest, latest = day_bounds(base.preferences)
+        if len(addition.start) != 5 or not earliest <= start <= latest - item.duration_minutes:
             raise ValueError("Invalid day window")
         expected.append(item)
     original_ids = {a.logical_id for a in base.activities}

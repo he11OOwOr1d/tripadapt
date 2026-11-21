@@ -94,3 +94,13 @@ test('changing the page size keeps the first day on screen on screen',()=>{
   for(const [a,b] of [[5,3],[3,5]])for(let i=0;i<8;i++){const first=i*a,page=grid.pageAfterResize(i,a,b);assert.ok(page*b<=first&&first<(page+1)*b,`${a}->${b} page ${i}`);}
   assert.deepEqual(J(grid.GRID_DAY_CHOICES),[3,5]);
 });
+
+test("the grid's hours start from the traveler's own day, and still stretch for anything outside it",()=>{
+  const none=grid.gridPages([dayOf('2026-12-04',[])],5,{from:10,to:23})[0];assert.deepEqual([none.from,none.to],[10,23]);
+  const inside=grid.gridPages([dayOf('2026-12-04',[item('a',h(11),h(12))])],5,{from:10,to:23})[0];assert.deepEqual([inside.from,inside.to],[10,23]);
+  const early=grid.gridPages([dayOf('2026-12-04',[item('a',h(7),h(8))])],5,{from:10,to:23})[0];assert.equal(early.from,7);
+  const late=grid.gridPages([dayOf('2026-12-04',[item('a',h(23),1440)])],5,{from:10,to:23})[0];assert.equal(late.to,24);
+  // omitted: the working day as before
+  const omitted=grid.gridPages([dayOf('2026-12-04',[])])[0];assert.deepEqual([omitted.from,omitted.to],[8,20]);
+  assert.deepEqual(J(grid.DEFAULT_GRID_HOURS),{from:8,to:20});
+});

@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import type { AgendaDay, AgendaItem } from "../../lib/trips/trip-agenda";
-import { GRID_DAYS, GRID_DAY_CHOICES, gridPages, pageAfterResize } from "../../lib/trips/trip-grid";
+import { GRID_DAYS, GRID_DAY_CHOICES, gridPages, pageAfterResize, type GridHours } from "../../lib/trips/trip-grid";
 import { GRID_DAYS_KEY, readPref, writePref } from "../../lib/trips/view-prefs";
 
 const HOUR_PX = 56;
@@ -11,11 +11,11 @@ const hourLabel = (h: number) => `${String(h).padStart(2, "0")}:00`;
 const full = (i: AgendaItem) => [i.when || (i.kind === "stay" ? "All day" : ""), i.title, i.skipped ? "skipped" : "", i.note].filter(Boolean).join(" · ");
 
 /** The days as columns against a local clock, five to a page. Read-only: a block opens that day in the day view. */
-export default function TripGrid({ days, onOpen }: { days: AgendaDay[]; onOpen: (stopId: string, day: number) => void }) {
+export default function TripGrid({ days, onOpen, baseHours }: { days: AgendaDay[]; onOpen: (stopId: string, day: number) => void; baseHours?: GridHours }) {
   const [per, setPer] = useState<number>(GRID_DAYS);
   // The remembered page size is read after mount so the first render matches the server's.
   useEffect(() => { setPer(Number(readPref(GRID_DAYS_KEY, ["3", "5"] as const, String(GRID_DAYS)))); }, []);
-  const pages = useMemo(() => gridPages(days, per), [days, per]);
+  const pages = useMemo(() => gridPages(days, per, baseHours), [days, per, baseHours?.from, baseHours?.to]);
   const [index, setIndex] = useState(0);
   if (pages.length === 0) return null;
   const at = Math.min(index, pages.length - 1), page = pages[at];

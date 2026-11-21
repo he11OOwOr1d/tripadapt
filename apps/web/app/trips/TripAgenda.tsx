@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { Trip } from "../../lib/trips/adapter";
 import { agendaDays, type AgendaItem } from "../../lib/trips/trip-agenda";
 import TripGrid from "./TripGrid";
+import { travelerDay } from "../../lib/trips/traveler-day";
 import { AGENDA_VIEW_KEY, readPref, writePref } from "../../lib/trips/view-prefs";
 
 /** The plan date by date, read-only. A line opens that day in the day view; nothing here changes the plan. */
@@ -10,6 +11,9 @@ export default function TripAgenda({ trip, onOpen }: { trip: Trip; onOpen: (stop
   const built = useMemo(() => {
     try { return { days: agendaDays(trip), failed: false }; } catch { return { days: null, failed: true }; }
   }, [trip]);
+  // The grid's axis starts from the traveler's own day when they have set one, and the usual 08:00 to 20:00 otherwise.
+  const day = travelerDay(trip);
+  const gridHours = useMemo(() => (day.custom ? { from: Math.floor(day.start / 60), to: Math.min(24, Math.ceil(day.end / 60)) } : undefined), [day.custom, day.start, day.end]);
   // The grid needs room for five day columns, so it is offered on wide screens only; the list is always available.
   const [view, setView] = useState<"list" | "grid">("list");
   const [wide, setWide] = useState(false);
@@ -46,7 +50,7 @@ export default function TripAgenda({ trip, onOpen }: { trip: Trip; onOpen: (stop
       </div>}
     </div>
     <p>Times are local to the place they happen. Choose a line to open that day. This is your own plan, not confirmed bookings.</p>
-    {built.days.length === 0 ? <p>Add a destination to see your days here.</p> : wide && view === "grid" ? <TripGrid days={built.days} onOpen={onOpen} /> : <ol className="agenda-days">
+    {built.days.length === 0 ? <p>Add a destination to see your days here.</p> : wide && view === "grid" ? <TripGrid days={built.days} onOpen={onOpen} baseHours={gridHours} /> : <ol className="agenda-days">
       {built.days.map((day) => <li key={day.date} className="agenda-day">
         <h3><time dateTime={day.date}>{day.label}</time><span>{day.tripDay ? `Day ${day.tripDay} · ` : ""}{day.place}</span></h3>
         {day.items.length > 0 ? <ul className="agenda-items">{day.items.map(line)}</ul>

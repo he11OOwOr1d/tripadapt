@@ -64,7 +64,11 @@ export function packLanes(spans: { start: number; end: number }[]): { lane: numb
 }
 
 /** The days split into pages of `perPage`, each with the hours it needs and its lines placed. */
-export function gridPages(days: AgendaDay[], perPage: number = GRID_DAYS): GridPage[] {
+/** The hours the axis always covers: a working day, or the traveler's own day. */
+export type GridHours = { from: number; to: number };
+export const DEFAULT_GRID_HOURS: GridHours = { from: 8, to: 20 };
+
+export function gridPages(days: AgendaDay[], perPage: number = GRID_DAYS, base: GridHours = DEFAULT_GRID_HOURS): GridPage[] {
   const size = Math.max(1, Math.floor(perPage));
   const pages: GridPage[] = [];
   for (let i = 0; i < days.length; i += size) {
@@ -79,9 +83,9 @@ export function gridPages(days: AgendaDay[], perPage: number = GRID_DAYS): GridP
       };
     });
     const blocks = columns.flatMap((c) => c.blocks);
-    // Always show a working day, and stretch to fit anything earlier or later.
-    const from = blocks.length ? Math.min(8, Math.floor(Math.min(...blocks.map((b) => b.start)) / 60)) : 8;
-    const to = blocks.length ? Math.max(20, Math.ceil(Math.max(...blocks.map((b) => b.end)) / 60)) : 20;
+    // Always show the base day (a working day, or the traveler's own), and stretch to fit anything earlier or later.
+    const from = blocks.length ? Math.min(base.from, Math.floor(Math.min(...blocks.map((b) => b.start)) / 60)) : base.from;
+    const to = blocks.length ? Math.max(base.to, Math.ceil(Math.max(...blocks.map((b) => b.end)) / 60)) : base.to;
     pages.push({ from: Math.max(0, from), to: Math.min(24, to), columns });
   }
   return pages;

@@ -93,15 +93,16 @@ export type DayEntry =
 export function visibleDayEntries(entries: DayEntry[], showRecorded: boolean): DayEntry[] {
   return showRecorded ? entries : entries.filter(entry => entry.type !== "activity" || (!entry.activity.completed && !entry.activity.skipped));
 }
-export function dayTimeline(activities: Activity[]): DayEntry[] {
+/** The day view's open gaps are drawn inside `window` (the traveler's hours, or 08:00 to 22:00), stretching to fit anything outside it. */
+export function dayTimeline(activities: Activity[], window: { start: number; end: number } = { start: 480, end: 1320 }): DayEntry[] {
   const sorted = [...activities].sort(
     (a, b) => a.start.localeCompare(b.start) || a.id.localeCompare(b.id),
   );
   const occupied = sorted.filter((a) => !a.skipped);
-  const start = Math.min(480, ...occupied.map((a) => clockMinutes(a.start)));
+  const start = Math.min(window.start, ...occupied.map((a) => clockMinutes(a.start)));
   const end = Math.min(
     1440,
-    Math.max(1320, ...occupied.map((a) => clockMinutes(a.start) + a.minutes)),
+    Math.max(window.end, ...occupied.map((a) => clockMinutes(a.start) + a.minutes)),
   );
   const entries: DayEntry[] = [];
   let cursor = start;

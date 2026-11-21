@@ -880,3 +880,14 @@
 .journey-impact li span { font-size: 13px; color: #55634b; }
 .journey-impact-carry { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; }
 .journey-impact button { min-height: 44px; }
+
+/* The optional "Your day" hours in the preferences. */
+.day-hours-field { border: 1px solid #c0cbb0; border-radius: 8px; padding: 12px 14px; margin: 14px 0 0; min-width: 0; }
+.day-hours-field legend { padding: 0 6px; font-weight: 600; }
+.day-hours-field p { margin: 0 0 10px; font-size: 14px; line-height: 1.5; max-width: 60ch; color: #3f4d39; }
+.day-hours-times { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
+.day-hours-times label { display: grid; gap: 4px; }
+.day-hours-times input[type="time"] { min-height: 44px; padding: 6px 10px; font: inherit; }
+.day-hours-times button { min-height: 44px; padding: 6px 14px; font: inherit; color: inherit; background: transparent; border: 1px solid currentColor; border-radius: 6px; cursor: pointer; }
+.day-hours-times button:focus-visible, .day-hours-times input:focus-visible { outline: 3px solid #476442; outline-offset: 2px; }
+.day-hours-field .day-hours-problem { margin: 10px 0 0; color: #7a2f23; }

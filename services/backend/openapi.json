@@ -9058,6 +9058,18 @@
             "title": "Return To Origin",
             "default": true
           },
+          "day_start": {
+            "type": "string",
+            "pattern": "^$|^([01][0-9]|2[0-3]):[0-5][0-9]$",
+            "title": "Day Start",
+            "default": ""
+          },
+          "day_end": {
+            "type": "string",
+            "pattern": "^$|^([01][0-9]|2[0-3]):[0-5][0-9]$",
+            "title": "Day End",
+            "default": ""
+          },
           "stay_preferences": {
             "additionalProperties": {
               "$ref": "#/components/schemas/StayPreference"

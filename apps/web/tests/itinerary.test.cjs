@@ -11,3 +11,21 @@ test('overlapping activities never create false free gaps',()=>{const activities
 test('manual editor rejects crossing midnight and days outside this stay without a seven-day cap',()=>{assert.ok(activityProblems({...activity('late','23:30'),day:1},trip).some(i=>i.includes('midnight')));assert.ok(activityProblems({...activity('wrong','09:00'),day:9},trip).length);assert.equal(activityProblems({...activity('long trip','09:00'),stopId:'b',day:11},trip).length,0);});
 test('shortened or removed destinations retain activities needing a new day',()=>{const a=activity('kept','09:00');const stats=itineraryStats({...trip,stops:[{...trip.stops[0],nights:0}],activities:[{...a,day:3}]});assert.equal(stats.needsDay[0].id,'kept');});
 test('workspace links preserve selected day but reject external or malformed return targets',()=>{const id='12345678-1234-1234-1234-123456789abc';const url=tripUrl(id,{view:'itinerary',stop:id,day:45});assert.equal(tripReturn(url),url);for(const invalid of ['//evil.example','/trips/new?next=https://evil.example','/trips/new?view=itinerary&day=0','/trips/new?trip=bad','/trips/new?view=itinerary&day=2&day=3'])assert.equal(tripReturn(invalid),'/trips/new');});
+test("the day view's open time follows the traveler's hours, and an activity outside them stretches it instead of being hidden",()=>{
+  const gaps=entries=>clone(entries.filter(e=>e.type==='gap').map(e=>[e.start,e.end]));
+  // no window given: the default 08:00 to 22:00, exactly as before hours existed
+  assert.deepEqual(gaps(dayTimeline([])),[[480,1320]]);
+  assert.deepEqual(gaps(dayTimeline([],{start:480,end:1320})),[[480,1320]]);
+  // a late riser's day, and an early riser's
+  assert.deepEqual(gaps(dayTimeline([],{start:600,end:1410})),[[600,1410]]);
+  assert.deepEqual(gaps(dayTimeline([],{start:360,end:900})),[[360,900]]);
+  // an activity inside the day splits it
+  assert.deepEqual(gaps(dayTimeline([activity('one','12:00',60)],{start:600,end:1200})),[[600,720],[780,1200]]);
+  // one before the day starts or after it ends is kept and the day stretches to meet it
+  const early=dayTimeline([activity('early','07:00',60)],{start:600,end:1200});
+  assert.equal(clone(early[0]).type,'activity');assert.deepEqual(gaps(early),[[480,1200]]);
+  const late=dayTimeline([activity('late','21:00',120)],{start:600,end:1200});
+  assert.deepEqual(gaps(late),[[600,1260]]);assert.equal(clone(late.at(-1)).type,'activity');
+  // a window can never push the day past midnight
+  assert.deepEqual(gaps(dayTimeline([activity('night','23:00',180)],{start:600,end:1439})),[[600,1380]]);
+});

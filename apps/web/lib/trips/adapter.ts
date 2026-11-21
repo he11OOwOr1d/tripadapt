@@ -1,3 +1,4 @@
+import { validDayHours } from "./traveler-day";
 import { validCoordinates } from "./day-map";
 import { isActivityPlace, type ActivityPlace } from "./activity-search";
 import type { PlaceResult } from "./place-search";
@@ -38,6 +39,9 @@ export type Trip = {
   currency: string;
   pace: string;
   interests: string;
+  /** The hours the traveler wants to be out and about, HH:MM. Both or neither; absent means the default day. */
+  dayStart?: string;
+  dayEnd?: string;
   origin: string;
   /** Map point for the starting location, set only when it was chosen from a map search. */
   originPoint?: { latitude: number; longitude: number };
@@ -319,6 +323,9 @@ export function isTrip(value: unknown): value is Trip {
   return (
     textFields.every((k) => typeof t[k] === "string") &&
     (t.budgetMode === undefined || t.budgetMode === "target" || t.budgetMode === "strict") &&
+    (t.dayStart === undefined || typeof t.dayStart === "string") &&
+    (t.dayEnd === undefined || typeof t.dayEnd === "string") &&
+    validDayHours(t.dayStart, t.dayEnd) &&
     (t.originPoint === undefined ||
       (!!t.originPoint &&
         typeof t.originPoint === "object" &&
