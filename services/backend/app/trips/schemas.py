@@ -1,5 +1,5 @@
 import json
-from datetime import date, time
+from datetime import date, datetime, time
 from decimal import Decimal
 from typing import Annotated, Literal
 from uuid import UUID
@@ -99,6 +99,53 @@ class StayPreference(StrictModel):
                 raise ValueError("Two stays cannot cover the same night")
             taken.append((stay.first_night, stay.last_night))
         return self
+
+
+class WishPlace(StrictModel):
+    """A place the traveler saved from a nearby-places search. A copy of what the search returned, kept so the shortlist
+    can be shown and the place scheduled later; scheduling it sends only `id`, which the server checks again."""
+
+    id: UUID
+    destination_reference_id: UUID
+    external_id: str = Field(pattern=r"^((node|way|relation)/[1-9][0-9]*|geoapify/[A-Za-z0-9_-]{1,400})$")
+    name: str = Field(min_length=1, max_length=300)
+    category: Literal["museum", "gallery", "attraction", "park", "viewpoint"]
+    latitude: float = Field(ge=-90, le=90, allow_inf_nan=False)
+    longitude: float = Field(ge=-180, le=180, allow_inf_nan=False)
+    source: str = Field(min_length=1, max_length=200)
+    retrieved_at: str = Field(min_length=1, max_length=40)
+
+    @field_validator("name", "source")
+    @classmethod
+    def plain_source(cls, value):
+        return no_controls(value)
+
+    @field_validator("retrieved_at")
+    @classmethod
+    def a_real_moment(cls, value):
+        datetime.fromisoformat(value.replace("Z", "+00:00"))
+        return value
+
+
+class WishItem(StrictModel):
+    """Something the traveler wants to do in a destination, before it has a day or a time. `must` marks the ones that
+    have to be shown again, with a reason, if they are not scheduled. Nothing here is a booking or a promise."""
+
+    id: UUID
+    label: str = Field(min_length=1, max_length=120)
+    note: str = Field(default="", max_length=300)
+    must: bool = False
+    # The traveler's own estimate. None means unknown: planning then assumes an hour and says so.
+    minutes: int | None = Field(default=None, ge=5, le=720)
+    place: WishPlace | None = None
+
+    @field_validator("label", "note")
+    @classmethod
+    def plain_text(cls, value):
+        return no_controls(value)
+
+
+MAX_WISHES_PER_DESTINATION = 30
 
 
 def stays_of(preference):
@@ -320,9 +367,23 @@ class Preferences(StrictModel):
     travel_preferences: dict[str, TravelPreference] = Field(
         default_factory=dict, max_length=501
     )
+    # Places and things the traveler wants in each destination (keyed by the destination's logical id), scheduled or not.
+    shortlists: dict[str, list[WishItem]] = Field(default_factory=dict, max_length=500)
     # Traveler attests every cost is entered; needed before a strict budget can
     # be checked, since completeness cannot be inferred from the entries.
     costs_confirmed: bool = False
+
+    @model_validator(mode="after")
+    def shortlists_are_tidy(self):
+        for wishes in self.shortlists.values():
+            if len(wishes) > MAX_WISHES_PER_DESTINATION:
+                raise ValueError(f"A destination's shortlist holds at most {MAX_WISHES_PER_DESTINATION} places.")
+            if len({w.id for w in wishes}) != len(wishes):
+                raise ValueError("A shortlist cannot repeat an entry.")
+            places = [w.place.id for w in wishes if w.place]
+            if len(set(places)) != len(places):
+                raise ValueError("A place can be on a shortlist only once.")
+        return self
 
     @model_validator(mode="after")
     def day_hours_make_sense(self):

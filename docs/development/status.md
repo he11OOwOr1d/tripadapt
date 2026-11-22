@@ -2,6 +2,10 @@
 
 Local implementation and verification status. The dated sections below preserve the evidence recorded at each stage.
 
+## Shortlist and "not scheduled yet" — 22 November 2026 (built locally, not pushed)
+
+PRD FR-02 and FR-06: each destination now has a shortlist of places and things the traveler wants. Places can be saved from the nearby search or added by hand, marked must-visit and given a length. A must-visit item with no day shows why (fits on day N, or the longest open stretch is too short), in the day view and in a "Not scheduled yet" list on the whole-trip view. Stored in the plan's preferences, no migration. 719 backend and 334 frontend tests pass; checked live and signed in on a QA trip (erased afterwards). **Not done:** the AI planner and chat do not read the shortlist yet; the hosted app. Deploy backend first. See [the learning note](../shortlist-learning.md).
+
 ## Daily hours — 22 November 2026 (pushed and deployed)
 
 PRD FR-01's "optional daily hours" now exists: an optional "Your day" start and end in the trip form. The AI planner plans inside it, the day view and "Add activity" follow it, and the wide grid's axis starts from it; with nothing set, nothing changes. 694 backend and 319 frontend tests pass. See [the note](../daily-hours-learning.md).

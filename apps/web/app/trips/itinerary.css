@@ -841,6 +841,43 @@
 .activity-picked-place { padding: 1rem; background: #f0efdf; margin-bottom: 1rem; }
 .activity-picked-place p, .activity-discovery-credit { font-size: .85rem; line-height: 1.65; }
 .activity-discovery :is(button,select,summary,a):focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+.activity-discovery-actions { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: auto; }
+.activity-discovery-actions button { margin-top: 0; }
+.activity-discovery-note:empty { margin: 0; }
+.activity-discovery-note { font-weight: 600; }
+.activity-discovery button[aria-disabled="true"] { opacity: 1; cursor: default; border-style: dashed; }
+
+/* The shortlist: places the traveler wants in a destination, with the reason when a must-visit one has no day. */
+.shortlist { border-bottom: 1px solid var(--line, #b5bca6); margin: 1.5rem 0; padding-bottom: 1.4rem; min-width: 0; }
+.shortlist h3 { margin: 0 0 .5rem; font-size: 1.15rem; }
+.shortlist h3:focus { outline: none; }
+.shortlist-help, .shortlist-empty { max-width: 66ch; line-height: 1.65; color: #2c3a2a; margin: .4rem 0 .9rem; }
+.shortlist-missing { margin: .4rem 0 .9rem; padding: .7rem .9rem; background: #f3ead1; border-left: 4px solid #7a5a12; color: #3a2d08; font-weight: 600; }
+.shortlist-filter { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1rem; }
+.shortlist button, .shortlist select, .shortlist input:not([type="checkbox"]) { min-height: 44px; padding: .6rem .9rem; border: 1px solid currentColor; border-radius: .25rem; background: transparent; color: inherit; font: inherit; }
+.shortlist button { cursor: pointer; }
+.shortlist button:disabled, .shortlist select:disabled, .shortlist input:disabled { opacity: .6; cursor: not-allowed; }
+.shortlist-filter button[aria-pressed="true"] { background: #283d32; color: #fbf8ed; }
+.shortlist :is(button,select,input,summary):focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+.shortlist-items { list-style: none; padding: 0; margin: 0 0 1.2rem; display: grid; gap: .9rem; }
+.shortlist-item { padding: 1rem; background: #f0efdf; border: 1px solid #c8cbb8; border-left-width: 4px; display: grid; gap: .5rem; min-width: 0; }
+.shortlist-item.shortlist-open { border-left-color: #7a5a12; }
+.shortlist-item.shortlist-scheduled { border-left-color: #2d5a3d; }
+.shortlist-item.shortlist-skipped { border-left-color: #6b6b6b; }
+.shortlist-head { display: flex; flex-wrap: wrap; gap: .4rem 1rem; justify-content: space-between; align-items: baseline; }
+.shortlist-head strong { overflow-wrap: anywhere; }
+.shortlist-status { font-size: .9rem; font-weight: 600; }
+.shortlist-item small { color: #3f4d39; line-height: 1.55; overflow-wrap: anywhere; }
+.shortlist-reason { margin: 0; line-height: 1.6; max-width: 66ch; }
+.shortlist-controls { display: flex; flex-wrap: wrap; gap: .6rem .9rem; align-items: center; }
+.shortlist-check { display: inline-flex; align-items: center; gap: .5rem; min-height: 44px; }
+.shortlist-check input { width: 1.4rem; height: 1.4rem; }
+.shortlist-add { display: grid; gap: .6rem; max-width: 44rem; }
+.shortlist-add h4 { margin: 0; font-size: 1rem; }
+.shortlist-add-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); gap: .5rem .9rem; align-items: end; }
+.shortlist-add-fields input, .shortlist-add-fields select { width: 100%; min-width: 0; }
+.shortlist-add small { color: #3f4d39; line-height: 1.55; }
+.shortlist-problem { margin: 0; color: #8a1c1c; font-weight: 600; }
 
 .place-hours-check { border-block: 1px solid #c8cbb8; margin: 1rem 0; }
 .place-hours-check summary { cursor: pointer; min-height: 44px; padding: .85rem 0; }
@@ -1156,3 +1193,11 @@ fieldset.live-acceptance { border-inline: 0; min-width: 0; }
 .trip-grid .grid-per button { min-height: 44px; min-width: 44px; padding: .4rem .9rem; font: inherit; color: inherit; background: transparent; border: 0; cursor: pointer; }
 .trip-grid .grid-per button[aria-pressed="true"] { background: #283d32; color: #f8f7f1; }
 .trip-grid .grid-per button:focus-visible { outline: 3px solid #476442; outline-offset: -3px; }
+
+.unscheduled-list { margin: 1.5rem 0; padding: 1.1rem 1.2rem; background: #f3ead1; border-left: 4px solid #7a5a12; color: #3a2d08; }
+.unscheduled-list h2 { margin: 0 0 .5rem; font-size: 1.2rem; }
+.unscheduled-list p { line-height: 1.6; max-width: 66ch; margin: .3rem 0; }
+.unscheduled-list ul { list-style: none; padding: 0; margin: .8rem 0 0; display: grid; gap: .9rem; }
+.unscheduled-list li { min-width: 0; overflow-wrap: anywhere; }
+.unscheduled-list button { min-height: 44px; padding: .6rem .9rem; border: 1px solid currentColor; border-radius: .25rem; background: transparent; color: inherit; font: inherit; cursor: pointer; margin-top: .3rem; }
+.unscheduled-list button:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }

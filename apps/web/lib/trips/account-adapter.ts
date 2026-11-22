@@ -7,6 +7,7 @@ import { authConfigured } from "../auth/config";
 import { emptyTrip, isTrip, type Trip } from "./adapter";
 
 import type { PlaceResult } from "./place-search";
+import { shortlistsToApi } from "./shortlist";
 
 type ActivityKind = "custom" | "meal" | "rest" | "free_time";
 type TripRow = {
@@ -46,6 +47,7 @@ type Plan = {
     return_to_origin?: boolean;
     stay_preferences?: Trip["stayPreferences"];
     travel_preferences?: Trip["travelPreferences"];
+    shortlists?: Trip["shortlists"];
     costs_confirmed?: boolean;
   };
   costs?: Trip["costRecords"];
@@ -262,6 +264,7 @@ function input(trip: Trip) {
       return_to_origin: trip.returnToOrigin !== false,
       stay_preferences: trip.stayPreferences ?? {},
       travel_preferences: trip.travelPreferences ?? {},
+      shortlists: shortlistsToApi(trip.shortlists, trip.stops),
       costs_confirmed: trip.costsConfirmed === true,
     },
     costs: trip.costRecords ?? [],
@@ -346,6 +349,8 @@ export const accountTripAdapter = {
       ...(p.preferences.day_start && p.preferences.day_end ? { dayStart: p.preferences.day_start, dayEnd: p.preferences.day_end } : {}),
       stayPreferences: p.preferences.stay_preferences ?? {},
       travelPreferences: p.preferences.travel_preferences ?? {},
+      // Only when there is one, so a trip without a shortlist looks exactly as it did before shortlists existed.
+      ...(Object.keys(p.preferences.shortlists ?? {}).length ? { shortlists: p.preferences.shortlists } : {}),
       costRecords: p.costs ?? [],
       costsConfirmed: p.preferences.costs_confirmed === true,
       stops: stops.data.map((s) => ({

@@ -7,17 +7,18 @@ import type { PlaceResult } from "../../lib/trips/place-search";
 import PlaceAttribution from "./PlaceAttribution";
 
 const categories: [ActivityPlace["category"], string][] = [["museum", "Museums"], ["gallery", "Galleries"], ["attraction", "Attractions"], ["park", "Parks"], ["viewpoint", "Viewpoints"]];
-export default function ActivityDiscovery({ stop, day, onChoose, onLocate }: { stop: Stop; day: number; onChoose: (activity: Activity) => void; onLocate: (place: PlaceResult) => void }) {
+export default function ActivityDiscovery({ stop, day, onChoose, onLocate, saved, onSave }: { stop: Stop; day: number; onChoose: (activity: Activity) => void; onLocate: (place: PlaceResult) => void; /** Ids of places already on this destination's shortlist. */ saved: string[]; /** Saves the place and returns what to tell the traveler: that it was saved, or why it was not. */ onSave: (place: ActivityPlace) => string }) {
   const [locationText, setLocationText] = useState(stop.name);
   const [locationChoice, setLocationChoice] = useState<PlaceResult>();
   const [category, setCategory] = useState<ActivityPlace["category"]>("museum");
   const [page, setPage] = useState<ActivitySearch | null>(null);
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState("");
+  const [saveNote, setSaveNote] = useState("");
   const abort = useRef<AbortController | null>(null);
   const request = useRef(0);
   useEffect(() => () => { request.current++; abort.current?.abort(); }, []);
-  function clear() { request.current++; abort.current?.abort(); setPage(null); setFailure(""); setBusy(false); }
+  function clear() { setSaveNote(""); request.current++; abort.current?.abort(); setPage(null); setFailure(""); setBusy(false); }
   async function search() {
     if (busy || !stop.location) return;
     const controller = new AbortController();
@@ -38,8 +39,8 @@ export default function ActivityDiscovery({ stop, day, onChoose, onLocate }: { s
       <div className="activity-search-controls"><label>What pulls you?<select value={category} onChange={e => { clear(); setCategory(e.target.value as ActivityPlace["category"]); }}>{categories.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label><button onClick={() => void search()} disabled={busy}>{busy ? "Searching nearby…" : "Search nearby places"}</button></div>
       {busy && <p role="status">Looking up mapped places around {stop.name}…</p>}
       {failure && <p role="alert">{failure}</p>}
-      {page && <>{page.notice && <p role="status">{page.notice}</p>}<p role="status">{page.results.length ? `${page.results.length} places found. Choose one to set its day and time.` : "No matching places returned in this area. Try another category, or add an activity yourself. This does not mean there is nothing nearby."}</p><small>{page.cached ? "Cached search" : "Live lookup"} · fetched {new Date(page.retrieved_at).toLocaleString()}. No opening-hours or availability check.</small>
-        <ul className="activity-discovery-results">{page.results.map(place => <li key={place.id}><div><h3>{place.name}</h3><span>{categories.find(([id]) => id === place.category)?.[1]} · mapped place</span></div><PlaceAttribution place={place} /><button onClick={() => onChoose({ id: crypto.randomUUID(), stopId: stop.id, day, title: place.name, kind: "custom", start: "10:00", minutes: 60, fixed: false, completed: false, booked: false, place })}>Set a time for this place</button></li>)}</ul>
+      {page && <>{page.notice && <p role="status">{page.notice}</p>}<p role="status">{page.results.length ? `${page.results.length} places found. Save the ones you like to your shortlist, or set a day and time for one.` : "No matching places returned in this area. Try another category, or add an activity yourself. This does not mean there is nothing nearby."}</p><p role="status" className="activity-discovery-note">{saveNote}</p><small>{page.cached ? "Cached search" : "Live lookup"} · fetched {new Date(page.retrieved_at).toLocaleString()}. No opening-hours or availability check.</small>
+        <ul className="activity-discovery-results">{page.results.map(place => <li key={place.id}><div><h3>{place.name}</h3><span>{categories.find(([id]) => id === place.category)?.[1]} · mapped place</span></div><PlaceAttribution place={place} /><div className="activity-discovery-actions"><button onClick={() => onChoose({ id: crypto.randomUUID(), stopId: stop.id, day, title: place.name, kind: "custom", start: "10:00", minutes: 60, fixed: false, completed: false, booked: false, place })}>Set a time for this place</button><button aria-disabled={saved.includes(place.id)} className={saved.includes(place.id) ? "activity-discovery-saved" : undefined} onClick={() => { if (!saved.includes(place.id)) setSaveNote(onSave(place)); }}>{saved.includes(place.id) ? "On your shortlist" : "Save to shortlist"}</button></div></li>)}</ul>
         <p className="activity-discovery-credit">Data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap contributors · ODbL</a>, via {page.source?.includes("Geoapify") ? <a href="https://www.geoapify.com/" target="_blank" rel="noreferrer">Geoapify</a> : "Overpass"}. Choosing a place makes no reservation.</p>
       </>}
     </div>}

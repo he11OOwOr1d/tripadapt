@@ -10,6 +10,9 @@ import { recoveryIsAccepted, type ReadinessEditHandler, type ReadinessReturn } f
 import type { TimeChangeAccount } from "./TimeChangeReview";
 import JourneyCheck from "./JourneyCheck";
 import ActivityDiscovery from "./ActivityDiscovery";
+import ShortlistPanel from "./ShortlistPanel";
+import UnscheduledList from "./UnscheduledList";
+import { addWish, wishFromPlace } from "../../lib/trips/shortlist";
 import PlaceAttribution from "./PlaceAttribution";
 import { useEffect, useRef, useState } from "react";
 import type { Activity, Trip } from "../../lib/trips/adapter";
@@ -305,6 +308,7 @@ export default function ItineraryWorkspace({
                   </button>
                 </section>
               ))}
+              <UnscheduledList trip={trip} onOpen={(stopId, day) => { onSelect(stopId); onDay(day); setOverview(false); }} />
               <TripAgenda trip={trip} onOpen={(stopId, day) => { onSelect(stopId); onDay(day); setOverview(false); }} />
               <RouteDrives trip={trip} />
               <CalendarExport trip={trip} />
@@ -439,7 +443,8 @@ export default function ItineraryWorkspace({
                 </span>
               </div>
             )}
-            <ActivityDiscovery key={`${current.stop.id}:${current.stop.location?.reference_id ?? "manual"}`} stop={current.stop} day={localDay} onChoose={onAdd} onLocate={place => onUpdate({ stops: trip.stops.map(stop => stop.id === current.stop.id ? { ...stop, name: place.label, timezone: place.timezone, location: place } : stop) })} />
+            <ActivityDiscovery key={`${current.stop.id}:${current.stop.location?.reference_id ?? "manual"}`} stop={current.stop} day={localDay} onChoose={onAdd} saved={(trip.shortlists?.[current.stop.id] ?? []).flatMap(w => w.place ? [w.place.id] : [])} onSave={place => { const wish = wishFromPlace(place); if (!wish) return "Stays are recorded in the stay panel, not on the shortlist."; const added = addWish(trip.shortlists, current.stop.id, wish); if ("error" in added) return added.error; onUpdate({ shortlists: added.shortlists }); return `Saved ${place.name} to your shortlist.`; }} onLocate={place => onUpdate({ stops: trip.stops.map(stop => stop.id === current.stop.id ? { ...stop, name: place.label, timezone: place.timezone, location: place } : stop) })} />
+            <ShortlistPanel key={`${current.stop.id}:shortlist`} trip={trip} stop={current.stop} day={localDay} disabled={editorOpen} onUpdate={onUpdate} onSchedule={onAdd} />
             <div className="day-plan-heading">
               <div>
                 <h2>

@@ -9086,6 +9086,17 @@
             "maxProperties": 501,
             "title": "Travel Preferences"
           },
+          "shortlists": {
+            "additionalProperties": {
+              "items": {
+                "$ref": "#/components/schemas/WishItem"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "maxProperties": 500,
+            "title": "Shortlists"
+          },
           "costs_confirmed": {
             "type": "boolean",
             "title": "Costs Confirmed",
@@ -12257,6 +12268,138 @@
           "horizon_end"
         ],
         "title": "WeatherView"
+      },
+      "WishItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "label": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Label"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 300,
+            "title": "Note",
+            "default": ""
+          },
+          "must": {
+            "type": "boolean",
+            "title": "Must",
+            "default": false
+          },
+          "minutes": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 720.0,
+                "minimum": 5.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minutes"
+          },
+          "place": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WishPlace"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "label"
+        ],
+        "title": "WishItem",
+        "description": "Something the traveler wants to do in a destination, before it has a day or a time. `must` marks the ones that\nhave to be shown again, with a reason, if they are not scheduled. Nothing here is a booking or a promise."
+      },
+      "WishPlace": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "destination_reference_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Destination Reference Id"
+          },
+          "external_id": {
+            "type": "string",
+            "pattern": "^((node|way|relation)/[1-9][0-9]*|geoapify/[A-Za-z0-9_-]{1,400})$",
+            "title": "External Id"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "museum",
+              "gallery",
+              "attraction",
+              "park",
+              "viewpoint"
+            ],
+            "title": "Category"
+          },
+          "latitude": {
+            "type": "number",
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Latitude"
+          },
+          "longitude": {
+            "type": "number",
+            "maximum": 180.0,
+            "minimum": -180.0,
+            "title": "Longitude"
+          },
+          "source": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Source"
+          },
+          "retrieved_at": {
+            "type": "string",
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Retrieved At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "destination_reference_id",
+          "external_id",
+          "name",
+          "category",
+          "latitude",
+          "longitude",
+          "source",
+          "retrieved_at"
+        ],
+        "title": "WishPlace",
+        "description": "A place the traveler saved from a nearby-places search. A copy of what the search returned, kept so the shortlist\ncan be shown and the place scheduled later; scheduling it sends only `id`, which the server checks again."
       }
     },
     "securitySchemes": {

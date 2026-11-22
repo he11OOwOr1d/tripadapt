@@ -3,6 +3,7 @@ import { validCoordinates } from "./day-map";
 import { isActivityPlace, type ActivityPlace } from "./activity-search";
 import type { PlaceResult } from "./place-search";
 import { isLodging, validStays, type Lodging } from "./lodging";
+import { validShortlists, type Shortlists } from "./shortlist";
 /** UI view models, NOT published API schemas. Replace the adapter after OpenAPI is available. */
 export type Stop = {
   id: string;
@@ -53,6 +54,8 @@ export type Trip = {
     string,
     { style: string; rate: string; basis: "room" | "bed"; lodging?: Lodging | null; extra_lodgings?: Lodging[] }
   >;
+  /** Places and things wanted in each destination (keyed by stop id), scheduled or not. */
+  shortlists?: Shortlists;
   costRecords?: CostRecord[];
   /** Traveler attests every cost is entered; required for a strict-budget check. */
   costsConfirmed?: boolean;
@@ -326,6 +329,7 @@ export function isTrip(value: unknown): value is Trip {
     (t.dayStart === undefined || typeof t.dayStart === "string") &&
     (t.dayEnd === undefined || typeof t.dayEnd === "string") &&
     validDayHours(t.dayStart, t.dayEnd) &&
+    validShortlists(t.shortlists) &&
     (t.originPoint === undefined ||
       (!!t.originPoint &&
         typeof t.originPoint === "object" &&
